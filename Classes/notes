@@ -1,0 +1,52 @@
+
+KInterpActor hanging chimes will give off events when struck, their position will sound an ambisonic object in SC
+
+Homing projectiles will send off constant position info, each one tracked with their own Ambisonic object, created and destroyed (or cleared out) on projectile creation/destruction
+
+Center of each world will need to be set for the ambisonics
+
+user position isn't curently used. perhaps a keyboard event will use it to make a given sound
+
+KInterpActor will transmit their positions to act as triggers in SC
+
+
+	local OSCParams OSCParameters;
+	local string OSCHostname;
+	local int OSCPort;
+
+	OSCParameters = spawn(class'OSCParams');
+	OSCHostname = OSCParameters.getOSCHostname();
+	OSCPort = OSCParameters.getOSCPort();
+	
+	//ClientMessage("OSCParameters.getOSCHostname="$OSCHostname$"");
+	
+	psStruct.Hostname = OSCHostname;
+	psStruct.Port = OSCPort;	
+	
+	
+	
+	class OSCHomingProj_ShockBall;
+	
+	
+simulated function Tick(float DeltaTime)
+{
+    local Pawn Target;
+    local float angle, distance, lambda;
+	
+	Super.Tick(DeltaTIme);
+
+    Target = PickTarget(DeltaTime, distance, angle);
+    if ((Target == None) || (angle == 0.0))
+       return;
+ 
+    if (angle <= MaxAngleDelta)
+       Velocity = VSize(Velocity) * Normal(Target.Location - Location);
+    else
+    {
+       lambda = MaxAngleDelta / (angle - MaxAngleDelta);
+       Velocity = Normal(((Normal(Vector(Rotation)) * distance + Location) +
+                lambda * Target.Location) * (1.0 / (1.0 + lambda)) - Location) * VSize(Velocity);
+    }
+    Speed = VSize(Velocity);
+    SetRotation (rotator(Velocity));
+}
