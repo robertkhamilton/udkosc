@@ -1,0 +1,105 @@
+------------------01/09/2012------------------
+
+INSTALL INSTRUCTIONS
+
+udkosc > oscpack_1_0_2
+
+- oscpack_1_0_2.dll
+=> /UDK-2011-12/Binaries/Win32/UserCode/
+
+
+udkosc > Config
+
+- DefaultGame.ini
+- DefaultOSC.ini
+- DefaultUT3OSC.ini
+- DefaultEngine.ini
+- DefaultInput.ini
+
+=> /UDK-2011-12/UDKGame/Config
+
+
+udkosc > Classes
+
+=> /UDK-2011-12/Development/Src/UT3OSC/Classes/
+
+- ActorFactoryOSCInterpActor.uc
+- ActorFactoryOSCKActor.uc
+- ActorFactoryOSCKActorFromStatic.uc
+- ActorFactoryOSCStaticMeshActor.uc
+- ActorFactoryOSCTrigger.uc
+- OSCInterpActor.uc
+- OSCKActor.uc
+- OSCKActorFromStatic.uc
+- OSCParams.uc
+- OSCPawn.uc
+- OSCPlayerController.uc
+- OSCPlayerControllerDLL.uc
+- OSCProj_LinkPlasma.uc
+- OSCProj_SeekingRocket.uc
+- OSCProj_SeekingShockBall.uc
+- OSCProj_SeekingShockBall_original.txt
+- OSCProj_ShockBall.uc
+- OSCSeekingShockBallLight.uc
+- OSCSeqAct_SetGameTIme.uc
+- OSCStaticMeshACtor.uc
+- OSCTrigger.uc
+- OSCWeap_LinkGun.uc
+- OSCWeap_RocketLauncher_Content.uc
+- OSCWeap_SeekingShockRifle.uc
+- OSCWeap_ShockRifle.uc
+- OSCWorldInfo.uc
+- ut3osc.uc
+
+
+
+
+DEV NOTES:
+
+------------------1/07/2012------------------
+
+
+- Added oscpack_1_0_2.dll to G:/UDK/UDK-201-12/Binaries/Win32/UserCode directory
+
+- updated DefaultGame.ini with OSC specfic changes
+
+- added DefaultOSC.ini 
+
+- added DefaultUT3OSC.ini
+
+- updated DefaultEngine.ini to reference UT3OSC packages
+
+- updated DefaultInput.ini with UT3OSC custom key bindings
+
+==========
+
+Full Recompile
+
+ERROR:
+
+G:\UDK\UDK-2011-12\Development\Src\ut3osc\Classes\OSCProj_SeekingShockBall.uc(273) : Error, Unrecognized member 'LocationName' in class 'TriggerVolume'
+
+==========
+
+Volume.uc no longer hsa a Location. WHat happened to it?
+
+Used to have:
+
+var(Location) int LocationPriority;
+var(Location) localized string LocationName;
+
+So in OSCProj_SeekingShockBall.uc we had:
+
+if(InStr(P.LocationName, seekTargetVolumeType)>=0)
+
+- this used to check the name of the TriggerVolume as entered in the editor so that we could seek balls to a given Volume Type, as used in TH in the center ring of lights
+
+
+===========
+
+removed setSeekTargetTriggerVol() and commented out the call to it.
+
+
+=============
+
+NOT LOADING UT3OSC Game TYpe
