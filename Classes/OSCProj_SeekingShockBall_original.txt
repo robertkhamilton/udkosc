@@ -250,11 +250,79 @@ simulated function setSeekTarget()
 	else if(seekTargetClassName=="TriggerVolume")
 	{
 	//`log("setSeekTarget: "$seekTargetClassName);
-		//setSeekTargetTriggerVol();
+		setSeekTargetTriggerVol();
 	}
 	
 }
 
+
+simulated function setSeekTargetTriggerVol()
+{
+/** Currently tracked target - if set, projectile will seek it */
+// 		`log("TriggerVolume:LocationName = "$TriggerVolume(OSCSeekTarget).LocationName);
+	local TriggerVolume P;
+	local TriggerVolume closestP;
+	local float closestDistance;
+	local float currentDistance;
+	local object seekingTarget;
+	local actor localActor;
+	
+	bForceNetUpdate = TRUE; // Force replication
+	
+	closestDistance=-1.0;
+
+	/*
+	 $TriggerVolume(OSCSeekTarget)
+	energy_post
+	counterweight
+
+	based on targetType, target nearest energy_post or counterweight
+	*/
+	//`log("AAA");
+   ForEach AllActors(class'TriggerVolume',P)   
+    {
+	//`log("BBB");
+        if(FastTrace(P.Location,Location))
+        {
+			//`log("CCC");
+			currentDistance = VSize(Location - P.Location);
+			//`log("seekTargetVolumeType: "$seekTargetVolumeType);
+			//`log("P: "$P$"");
+			//`log("InStr: "$(InStr(""$P.LocationName$"", seekTargetVolumeType)));
+			//localActor=P;
+			//`log("TriggerVolume:LocationName = "$TriggerVolume(OSCSeekTarget).LocationName);
+			//`log("GetItemName: "$GetItemName(TriggerVolume(localActor).LocationName));
+			//`log("GetPName: "$P.LocationName);
+			if(InStr(P.LocationName, seekTargetVolumeType)>=0)
+			{
+			
+			//`log("testing: "$P.LocationName);
+			//`log("Instr result: "$InStr(P.LocationName, seekTargetVolumeType));
+			//`log("seekTargetVolumeType: "$seekTargetVolumeType);
+
+			
+			if(closestDistance<0)
+			{
+				closestDistance = currentDistance;
+				closestP = P;
+			} else {
+				if(currentDistance<closestDistance)
+				{
+					closestDistance=currentDistance;
+					closestP=P;
+				}
+			}
+			}
+        }
+	}
+	if( closestP!=none)
+	{
+		OSCSeekTarget=closestP;
+		Incoming=True;
+		//`log("TriggerVolume:LocationName = "$TriggerVolume(OSCSeekTarget).LocationName);
+		}
+	
+}
 
 simulated function setSeekTargetOSCSB()
 {
