@@ -747,12 +747,24 @@ simulated event Landed(vector HitNormal, Actor FloorActor)
 	//showTargetInfo();
 }
 
+function testInputData()
+{
+	`log("AAAAAAAAAAAAAAAAAA");
+	if(localOSCMessageStruct.test > 0.000)
+	{
+	`log("..."$localOSCMessageStruct.test$"...");
+	}
+	
+	
+}
+
 simulated function Tick(float DeltaTime)
 {
 	//local OSCMessageStruct localOSCMessageStruct;
 	
 	
 	localOSCMessageStruct.test = getOSCTestfloat();
+	testInputData(); // rkh testing input data
 	
 	localOSCGameParamsStruct.gameGravity = getOSCGameGravity();
 	localOSCGameParamsStruct.gameSpeed = getOSCGameSpeed();

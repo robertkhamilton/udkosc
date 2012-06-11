@@ -7,7 +7,7 @@
 *******************************************************************************/
 
 //class ut3osc extends GameInfo
-class ut3osc extends UTGame
+class UT3OSC extends UTGame
  config(UT3OSC);
 
 var config string OSCHostname;

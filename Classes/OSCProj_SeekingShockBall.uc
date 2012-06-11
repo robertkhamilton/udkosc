@@ -237,6 +237,8 @@ function setLockHomingTargets(bool val)
 	LockHomingTargets=val;
 }
 
+// Trigger Volume no longer stores LocationName which was the basis for setting volume targets for seeking projectiles. This is all commented out
+// Rob - 4/29/2012
 
 simulated function setSeekTarget()
 {
@@ -245,20 +247,69 @@ simulated function setSeekTarget()
 	if(seekTargetClassName=="OSCProj_ShockBall")
 	{
 	//`log("setSeekTarget: "$seekTargetClassName);
-		setSeekTargetOSCSB();
+	//	setSeekTargetOSCSB();
 	}
 	else if(seekTargetClassName=="TriggerVolume")
 	{
 	//`log("setSeekTarget: "$seekTargetClassName);
-		//setSeekTargetTriggerVol();
+	//	setSeekTargetTriggerVol();
 	}
 	
 }
 
+/*
+simulated function setSeekTargetTriggerVol()
+{
+// Currently tracked target - if set, projectile will seek it 
+// 		`log("TriggerVolume:LocationName = "$TriggerVolume(OSCSeekTarget).LocationName);
 
+	local TriggerVolume P;
+	local TriggerVolume closestP;
+	local float closestDistance;
+	local float currentDistance;
+	local object seekingTarget;
+	local actor localActor;
+	
+	bForceNetUpdate = TRUE; // Force replication
+	
+	closestDistance=-1.0;
+
+	ForEach AllActors(class'TriggerVolume',P)   
+    {
+        if(FastTrace(P.Location,Location))
+        {
+			currentDistance = VSize(Location - P.Location);
+
+			if(InStr(P.LocationName, seekTargetVolumeType)>=0)
+			{
+
+				if(closestDistance<0)
+				{
+					closestDistance = currentDistance;
+					closestP = P;
+				} else {
+				
+					if(currentDistance<closestDistance)
+					{			
+						closestDistance=currentDistance;
+						closestP=P;
+					}	
+				}
+			}
+        }
+	}
+	if( closestP!=none)
+	{
+		OSCSeekTarget=closestP;
+		Incoming=True;
+	}
+	
+}
+*/
+/*
 simulated function setSeekTargetOSCSB()
 {
-/** Currently tracked target - if set, projectile will seek it */
+/// Currently tracked target - if set, projectile will seek it 
 	local OSCProj_ShockBall P;
 	local OSCProj_ShockBall closestP;
 	local float closestDistance;
@@ -293,6 +344,7 @@ simulated function setSeekTargetOSCSB()
 		Incoming=True;
 	}
 }
+*/
 
 simulated function setSeekLocation(vector targetLocation)
 {
