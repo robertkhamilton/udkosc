@@ -18,6 +18,7 @@ var vector object2;
 var vector object3;
 var vector object4;
 var vector object5;
+var Rotator RLeft, RRight;
 
 
 /*
@@ -173,11 +174,13 @@ simulated exec function OSCMove()
 	if(oscmoving)
 	{
 		GotoState('PlayerWalking');
+		Pawn.GotoState('PlayerWalking');
 		oscmoving=false;
 	}
 	else
 	{
 		GotoState('OSCPlayerMoving');
+		Pawn.GotoState('OSCPlayerMoving');
 		oscmoving=true;
 	}
 }
@@ -571,21 +574,52 @@ state OSCPlayerMoving
 		local vector			X,Y,Z, NewAccel;
 		local eDoubleClickDir	DoubleClickMove;
 		local rotator			OldRotation;
+		local rotator			OSCRotation;
 		local bool				bSaveJump;
-		
+		local bool				bOSCJump;
+		local float				OSCJump;
 		//ROB HACKING - adding test vector pulling from OSC
 		local vector			OSCVector, OSCX, OSCY, OSCZ;
+		local float 			OSCGroundSpeed;
+		local vector			OSCCamera;
+		
 		OSCVector.X = localOSCFingerControllerStruct.f1X;
 		OSCVector.Y = localOSCFingerControllerStruct.f1Y;
 		OSCVector.Z = localOSCFingerControllerStruct.f1Z;
+		
+		OSCGroundSpeed = localOSCFingerControllerStruct.f1on;
+		//OSCRotation = (Pitch=localOSCFingerControllerStruct.f2X, Roll=localOSCFingerControllerStruct.f2Y, Yaw=localOSCFIngerControllerStruct.f2Z);
+		
+		OSCRotation.Pitch=localOSCFingerControllerStruct.f2X;
+		OSCRotation.Roll=localOSCFingerControllerStruct.f2Y;
+		OSCRotation.Yaw=localOSCFingerControllerStruct.f2Z;
+		
+		`log("OSCRotation.Pitch = "$OSCRotation.Pitch);
+		`log("OSCRotation.Roll = "$OSCRotation.Roll);
+		`log("OSCRotation.Yaw = "$OSCRotation.Yaw);
+		
+		OSCCamera.X = localOSCFingerControllerStruct.f3X;
+		OSCCamera.Y = localOSCFingerControllerStruct.f3Y;
+		OSCCamera.Z = localOSCFingerControllerStruct.f3Z;
+		OSCPawn(Pawn).setOSCCamera(OSCCamera);
+		
+		OSCJump = localOSCFingerControllerStruct.f2on;
+		
+		bOSCJump = false;
+		
+		if (OSCJump > 0.0) 
+		{
+			bOSCJump = true;
+			bPressedJump = true;
+		}
 		
 		OSCX.X = localOSCFingerControllerStruct.f2X;
 		OSCX.Y = localOSCFingerControllerStruct.f2Y;
 		OSCX.Z = localOSCFingerControllerStruct.f2Z;
 		
-		OSCY.X = localOSCFingerControllerStruct.f3X;
-		OSCY.Y = localOSCFingerControllerStruct.f3Y;
-		OSCY.Z = localOSCFingerControllerStruct.f3Z;
+//		OSCY.X = localOSCFingerControllerStruct.f3X;
+//		OSCY.Y = localOSCFingerControllerStruct.f3Y;
+//		OSCY.Z = localOSCFingerControllerStruct.f3Z;
 
 		OSCZ.X = localOSCFingerControllerStruct.f4X;
 		OSCZ.Y = localOSCFingerControllerStruct.f4Y;
@@ -602,25 +636,42 @@ state OSCPlayerMoving
 
 			// Update acceleration.
 			NewAccel = PlayerInput.aForward*X + PlayerInput.aStrafe*Y;
-			NewAccel.Z	= 0;
+			NewAccel.Z = 0;
 			NewAccel = Pawn.AccelRate * Normal(NewAccel);
 
 			//ROB HACKING
 			NewAccel = OSCVector;
-			
 			
 			if (IsLocalPlayerController())
 			{
 				AdjustPlayerWalkingMoveAccel(NewAccel);
 			}
 
+			// Add OSC speed control
+			Pawn.GroundSpeed = OSCGroundSpeed;
+			
 			DoubleClickMove = PlayerInput.CheckForDoubleClickMove( DeltaTime/WorldInfo.TimeDilation );
 
 			// Update rotation.
 			OldRotation = Rotation;
-			UpdateRotation( DeltaTime );
+			SetRotation(OSCRotation);
+			//UpdateRotation( DeltaTime );
+			//Rotation = OSCRotation;
+			
 			bDoubleJump = false;
 
+			// Add OSC Rotation
+			Pawn.FaceRotation(OSCRotation, DeltaTime);
+			//Pawn.FaceRotation(RInterpTo(OldRotation, OSCRotation, DeltaTIme, 90000, true), DeltaTime);
+			
+			//Add OSC Jump and JumpZ
+			if( bOSCJump == true)
+			{
+				//Pawn.DoJump( bUpdating);
+				//bPressedJump = false
+				Pawn.JumpZ = OSCJump;
+			}
+			
 			if( bPressedJump && Pawn.CannotJumpNow() )
 			{
 				bSaveJump = true;
@@ -633,19 +684,41 @@ state OSCPlayerMoving
 
 			if( Role < ROLE_Authority ) // then save this move and replicate it
 			{
-				ReplicateMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
+				ReplicateMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - OSCRotation);
 			}
 			else
 			{
-				ProcessMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - Rotation);
+				ProcessMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - OSCRotation);
 			}
-			bPressedJump = bSaveJump;
+			//bPressedJump = bSaveJump;
+			bPressedJump = bOSCJump;
 		}
 	}
+	
+	/*
+	function UpdateRotation( float DeltaTime )
+	{
+		local Rotator	DeltaRot, ViewRotation;
+		
+		ViewRotation = Rotation;
+		If (Pawn !=none )
+		{
+			Pawn.SetDesiredRotation(ViewRotation);	
+		}
+		
+		//Calculate Delta to be appled of VIewRotation
+		DeltaRot.Yaw = 0;
+		DeltaRot.Pitch = PlayerInput.aLookUp;
+		ProcessViewRotation ( DeltaTime, ViewRotation, DeltaRot);
+		SetRotation(ViewRotation);
+		
+	}
+*/
 	
 	
 	
 }
+
 
 exec function Test1() {
 	//local int temp;
@@ -845,7 +918,11 @@ simulated function setOSCFingerTouches(OSCFingerController fstruct)
 	`log("fstruct.f1X = "$fstruct.f1X);
 	`log("fstruct.f1Y = "$fstruct.f1Y);
 	`log("fstruct.f1Z = "$fstruct.f1Z);
-
+	`log("fstruct.f1on = "$fstruct.f1on);
+	`log("fstruct.f2X = "$fstruct.f2X);
+	`log("fstruct.f2Y = "$fstruct.f2Y);
+	`log("fstruct.f2Z = "$fstruct.f2Z);
+	`log("fstruct.f2on = "$fstruct.f2on);
 /*	`log("fstruct.1fon: "$fstruct.f1on);
 */	
 	
@@ -854,8 +931,8 @@ simulated function setOSCFingerTouches(OSCFingerController fstruct)
 		fingerTouchArray[0].Z=fstruct.f1Z;
 //	}
 
-	if(fstruct.f2on>0.0)
-	{
+//	if(fstruct.f2on>0.0)
+//	{
 /*
 	`log("fstruct.f2X = "$fstruct.f2X);
 	`log("fstruct.2fon: "$fstruct.f2on);
@@ -863,7 +940,7 @@ simulated function setOSCFingerTouches(OSCFingerController fstruct)
 		fingerTouchArray[1].X=fstruct.f2X;	
 		fingerTouchArray[1].Y=fstruct.f2Y;
 		fingerTouchArray[1].Z=fstruct.f2Z;
-	}
+//	}
 	
 	if(fstruct.f3on>0.0)
 	{
@@ -886,6 +963,14 @@ simulated function setOSCFingerTouches(OSCFingerController fstruct)
 		fingerTouchArray[4].Z=fstruct.f5Z;
 	}
 }
+
+// TODO: hook this to generic OSC call, string title + params can be passed in via OSC
+/*
+function OSCCallExecCommand(string val)
+{
+	ConsoleCommand(val);
+}
+*/
 
 event PlayerTick( float DeltaTime )
 {

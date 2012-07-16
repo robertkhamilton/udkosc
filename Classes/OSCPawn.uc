@@ -41,6 +41,9 @@ var vector OSCFingerSourceMin;
 
 var float seekingTurnRate;
 
+var vector	OSCCamera;
+var bool OSCFreeCamera;
+
 defaultproperties
 {
 	//groundspeed=10000.0
@@ -757,6 +760,58 @@ function testInputData()
 	
 	
 }
+
+function setOSCCamera(vector val)
+{
+	OSCCamera = val;
+}
+
+simulated exec function OSCSetFreeCamera()
+{
+	if(OSCFreeCamera){
+		OSCFreeCamera=false;
+	} else {
+		OSCFreeCamera=true;
+	}
+}
+
+state OSCPlayerMoving
+{
+
+	exec function oscplayermoveTEST2()
+	{
+	
+		`log("PAWN: IN OSCPLAYERMOVING");
+	
+	}
+	
+	simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot, out float out_FOV )
+	{
+		if(OSCFreeCamera) 
+		{
+			//out_CamLoc = Location;
+			out_CamLoc.X = OSCCamera.X;
+			out_CamLoc.Y = OSCCamera.Y;  //1800;
+			out_CamLoc.Z = OSCCamera.Z;  //128;
+		} else {
+
+			out_CamLoc = Location;
+			out_CamLoc.X += OSCCamera.X;
+			out_CamLoc.Y += OSCCamera.Y;  //1800;		
+			out_CamLoc.Z += OSCCamera.Z;  //128;
+		}
+		
+		
+//		out_CamRot.Pitch = 0;
+//		out_CamRot.Yaw = -16384;
+//		out_CamRot.Roll = 0;
+
+		return true;
+
+	}	
+}
+
+
 
 simulated function Tick(float DeltaTime)
 {
