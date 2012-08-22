@@ -1,1 +1,5 @@
 playerMove speed 50.00 2000 1
+playerMove X 50.00 1
+[
+playerMove speed 50.00 2000 1
+]

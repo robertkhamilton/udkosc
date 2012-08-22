@@ -50,7 +50,17 @@ def createSleep(params)
 end
 
 
-def createMove(params, val)
+def createBundle()
+
+# BUNDLE EXAMPLE
+#          msg2 = OSC::Message.new("#{localRoot}/#{k}", "#{$currentVals[k]}")  
+#		  msg = OSC::Bundle.new(NIL, msg2)		  
+	  
+end
+
+
+# Optional timetag value
+def createMove(params, val, *timetag)
   localRoot = OSCROOT + val
   messageArray = Array.new
   noProcessArray = [METHOD, SLEW, USERID, WAIT]
@@ -72,7 +82,16 @@ def createMove(params, val)
 		  #   - for each slew'd val do the same
 		  $currentVals[k] = $currentVals[k] + (v.to_f() / slewCount.to_f())
 						
-          msg = OSC::Message.new("#{localRoot}/#{k}", "#{$currentVals[k]}")                        
+
+          #msg = OSC::Message.new("#{localRoot}/#{k}", "#{$currentVals[k]}")  
+          
+          timeNow=Time.now()
+		  msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, "#{$currentVals[k]}")  
+		  
+# BUNDLE EXAMPLE
+#          msg2 = OSC::Message.new("#{localRoot}/#{k}", "#{$currentVals[k]}")  
+#		  msg = OSC::Bundle.new(NIL, msg2)		  
+		  
           oscMsg = Hash.new
           oscMsg[OSC] = msg
 		  messageArray << oscMsg
@@ -124,7 +143,7 @@ def createPlayerMove(params)
 		  #   - for each slew'd val do the same
 		  $currentVals[k] = $currentVals[k] + v.to_f() / slewCount.to_f()
 						
-          msg = OSC::Message.new("#{localRoot}/#{k}", "#{$currentVals[k]}")                        
+          msg = OSC::Message.new("#{localRoot}/#{k}", "#{$currentVals[k]}")
           oscMsg = Hash.new
           oscMsg[OSC] = msg
 		  messageArray << oscMsg
