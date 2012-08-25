@@ -30,7 +30,7 @@ $currentTime = 0.0
 $currentBlockTime = 0.0
 $inblock = false
 $blockUtime = 0.0
-
+$validCommands = [PLAYERMOVE, CAMERAMOVE, WAIT, STARTBLOCK, ENDBLOCK]
 # Parameters to track slew value
 $currentVals = Hash.new
 
@@ -86,6 +86,9 @@ def preProcessInput(lineArray)
       blockStart = index
     elsif inputArray[0] == ENDBLOCK
       blockHash[blockStart] = index
+    elsif !$validCommands.include?(inputArray[0])
+      puts "INPUT COMMAND #{inputArray[0]} IS INVALID. VALID COMMANDS ARE:", $validCommands
+      Process.exit
     end
   }
 
@@ -95,6 +98,7 @@ end
 
 
 def createSleep(params)
+    puts "createSleep: #{params}"
     messageArray = Array.new
     msg = params[DUR]
     sleepMsg = Hash.new
@@ -187,13 +191,14 @@ def buildHash(val)
         # jump currently uses 3 total params; default val to 1
         params[val[1]] = 1
 
-	  elsif count > 3
-	    (1..count-3).step(2) {|i| params[val[i]] = val[i+1] }
+	    elsif count > 3
+	      (1..count-3).step(2) {|i| params[val[i]] = val[i+1] }
+      end
 
 	    if count.odd?
 	      params[SLEW] = val[count-2]
 	    end
-	  end
+
 
     when CAMERAMOVE
 
@@ -203,8 +208,8 @@ def buildHash(val)
 	    params[SLEW] = val[count-1]
 	  end
 
-	when WAIT
-	  params[DUR] = val[1]
+	  when WAIT
+	    params[DUR] = val[1]
   end
 
   # Track current time in blocks with total time for block
@@ -276,8 +281,10 @@ def sendMessage(queue)
 
   	    aMsg.each_pair do |k,v|
   	      if k == OSCMESSAGE
+            puts "oscmessage"
             @client.send(v)
           elsif k == OSCBUNDLE
+            puts "oscbundle"
 #             puts "K == OSCBUNDLE"
 #             puts "K: #{k}"
 #             puts "V: #{v}"
@@ -295,7 +302,8 @@ def sendMessage(queue)
 =end
    			   @client.send(v)
    			 end
-  	      elsif k == SLEEP
+          elsif k == SLEEP
+            puts "sleep: #{v}"
   	        sleep v.to_f()/1000.0
   	      end
 		end
@@ -367,9 +375,9 @@ def createBlockMessages(val)
   # RETURNS ARRAY OF OSCMESSAGES AND SLEEP CALLS FOR EACH SLEWD VALUE, OR SINGLE MSG FOR NON SLEWD VALUES
   case method
     when PLAYERMOVE
-	  messages = createMove(params, "/#{PLAYERMOVE}")
+	    messages = createMove(params, "/#{PLAYERMOVE}")
     when CAMERAMOVE
-	  messages = createMove(params, "/#{CAMERAMOVE}")
+	    messages = createMove(params, "/#{CAMERAMOVE}")
     when WAIT
       messages = createSleep(params)
     else
@@ -430,10 +438,12 @@ def createSortedBundle(messages)
     end
   end
 
+  lastStarttime = 0.0
+
   # ADD MESSAGES TO AN ARRAY FOR EACH UNIQUE START TIME. THESE WILL BECOME BUNDLES
   uniqueStarttimes.each do |stime|
 
-    lastStarttime = 0.0
+
 
     currentBundle = Array.new
 
@@ -444,13 +454,14 @@ def createSortedBundle(messages)
         currentBundle << mesg.getMsg[OSCMESSAGE]  #mesg.getMsg
       end
 
-	  # ON FIRST MSG PROCESSED LOOK AT LAST START TIME AND ADD SLEEP MSG BEFORE CONTINUING
+	    # ON FIRST MSG PROCESSED LOOK AT LAST START TIME AND ADD SLEEP MSG BEFORE CONTINUING
       if stime != lastStarttime
 
         # ADD SLEEP MSG HASH TO BUNDLE ARRAY ON LAST VAL
-		sleepMsg = Hash.new
-		sleepMsg[SLEEP] = stime
-		bundleArray << sleepMsg
+		    sleepMsg = Hash.new
+        puts "stime: #{stime}, lastStarttime: #{lastStarttime}"
+		    sleepMsg[SLEEP] = stime - lastStarttime
+		    bundleArray << sleepMsg
 
         # UPDATE LAST START TIME
         lastStarttime = stime
@@ -468,6 +479,7 @@ def createSortedBundle(messages)
   return bundleArray
 
 end
+
 
 # INIT CURRENT VALUE HASH
 initCurrentValues
