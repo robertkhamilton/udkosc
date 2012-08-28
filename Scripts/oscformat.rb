@@ -3,20 +3,31 @@ require 'osc-ruby'
 
 # DECLARE CONSTANTS
 HOST = "localhost"
-PORT = "7000"
+#HOST = "10.0.1.100"
+PORT = "7001"
 SPACE = " "
 OSCROOT = "/udkosc/script"
-PLAYERMOVE = "playerMove"
-CAMERAMOVE = "cameraMove"
+PLAYERMOVE = "playermove"
+CAMERAMOVE = "cameramove"
 STARTBLOCK = "["
 ENDBLOCK = "]"
 BLOCK = "block"
 WAIT = "wait"
-PLAYERX = "X"
-PLAYERY = "Y"
-PLAYERZ = "Z"
+PLAYERX = "x"
+PLAYERY = "y"
+PLAYERZ = "z"
 PLAYERSPEED = "speed"
 PLAYERJUMP = "jump"
+PLAYERPITCH = "playerpitch"
+PLAYERYAW = "playeryaw"
+PLAYERROLL = "playerroll"
+CAMERAX = "x"
+CAMERAY = "y"
+CAMERAZ = "z"
+CAMERASPEED = "cameraspeed"
+CAMERAPITCH = "camerapitch"
+CAMERAYAW = "camerayaw"
+CAMERAROLL = "cameraroll"
 SLEW = "slew"
 DUR = "dur"
 SLEWRATE = 20.0 # ms
@@ -25,6 +36,7 @@ USERID = "userid"
 SLEEP = "sleep"
 OSCMESSAGE = "oscmessage"
 OSCBUNDLE = "oscbundle"
+ROTATIONCONSTANT = 182.044403
 
 $currentTime = 0.0
 $currentBlockTime = 0.0
@@ -114,6 +126,7 @@ def createMove(params, val, *timetag)
   localRoot = OSCROOT + val
   messageArray = Array.new
   noProcessArray = [METHOD, SLEW, USERID, WAIT]
+  cameraParams = [CAMERAPITCH, CAMERAYAW, CAMERAYAW]
 
   # If this call has a slew value, create slew set of messages
   if params.has_key?(SLEW)
@@ -121,6 +134,11 @@ def createMove(params, val, *timetag)
     slewCount = params[SLEW].to_i / SLEWRATE.to_i
 
     params.each_pair do |k,v|
+
+      #Scale Camera vals by constant: ROTATIONCONSTANT
+      if cameraParams.include?(k)
+       v = v.to_f() * ROTATIONCONSTANT
+      end
 
       # For data hashes, create a new OSC message and sleep call and pass them back
       if !noProcessArray.include?(k)
@@ -142,7 +160,8 @@ def createMove(params, val, *timetag)
           test << msg3
 		  msg = OSC::Bundle.new(NIL, *test)
 =end
-		  msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, "#{$currentVals[k]}")
+#		  msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, "#{$currentVals[k]}")
+          msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals[k])
 
           oscMsg = Hash.new
           oscMsg[OSCMESSAGE] = msg
@@ -161,7 +180,8 @@ def createMove(params, val, *timetag)
 
     params.each_pair do |k,v|
       if !noProcessArray.include?(k)
-        msg = OSC::Message.new("#{localRoot}/#{k}", "#{params[k]}")
+#        msg = OSC::Message.new("#{localRoot}/#{k}", "#{params[k]}")
+        msg = OSC::Message.new("#{localRoot}/#{k}", params[k].to_f())
         oscMsg = Hash.new
         oscMsg[OSCMESSAGE] = msg
         messageArray << oscMsg
@@ -247,9 +267,9 @@ def createMessages(val)
 
   case method
     when PLAYERMOVE
-	  messages = createMove(params, "/#{PLAYERMOVE}")
+	    messages = createMove(params, "/#{PLAYERMOVE}")
     when CAMERAMOVE
-	  messages = createMove(params, "/#{CAMERAMOVE}")
+	    messages = createMove(params, "/#{CAMERAMOVE}")
     when WAIT
       messages = createSleep(params)
     else
@@ -359,6 +379,16 @@ def initCurrentValues
   $currentVals[PLAYERY] = 0.0
   $currentVals[PLAYERZ] = 0.0
   $currentVals[PLAYERSPEED] = 0.0
+  $currentVals[PLAYERPITCH] = 0.0
+  $currentVals[PLAYERYAW] = 0.0
+  $currentVals[PLAYERROLL] = 0.0
+  $currentVals[CAMERAX] = 0.0
+  $currentVals[CAMERAY] = 0.0
+  $currentVals[CAMERAZ] = 0.0
+  $currentVals[CAMERASPEED] = 0.0
+  $currentVals[CAMERAPITCH] = 0.0
+  $currentVals[CAMERAYAW] = 0.0
+  $currentVals[CAMERAROLL] = 0.0
 
 end
 
