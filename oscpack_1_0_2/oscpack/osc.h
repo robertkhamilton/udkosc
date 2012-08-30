@@ -184,6 +184,29 @@ struct OSCGameParams
 	float gameSpeed;
 };
 
+struct OSCScriptPlayermove
+{
+	float x;
+	float y;
+	float z;
+	float speed;
+	float jump;
+	float id;
+	float fly;
+	float airspeed;
+};
+
+struct OSCScriptCameramove
+{
+	float x;
+	float y;
+	float z;
+	float speed;
+	float pitch;
+	float yaw;
+	float roll;
+};
+
 struct OSCTriggerStruct
 {
 	FString Hostname;
@@ -243,6 +266,10 @@ __declspec(dllexport) float getOSCGameGravity();
 //OSC Coordinate controls by iPad finger controller
 __declspec(dllexport) OSCFingerController* getOSCFingerController();
 __declspec(dllexport)FVector* getOSCFinger1();
+
+// OSC Script calls
+_declspec(dllexport) OSCScriptPlayermove getOSCScriptPlayermove();
+_declspec(dllexport) OSCScriptCameramove getOSCScriptCameramove();
 
 // Initialize the OSC Receiver
 __declspec(dllexport) void initOSCReceiver();

@@ -42,6 +42,9 @@ OSCMessageStruct testStruct;
 OSCGameParams OSCGameParamsStruct;
 static OSCFingerController OSCFingerControllerStruct;
 
+OSCScriptPlayermove OSCScriptPlayermoveStruct;
+OSCScriptCameramove OSCScriptCameramoveStruct;
+
 float f1X, f1Y, f1Z;
 
 namespace osc{
@@ -147,6 +150,71 @@ protected:
                 
                 std::cout << "received '/test2' message with arguments: "
                     << a1 << " " << a2 << " " << a3 << " " << a4 << "\n";
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/x" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+				OSCScriptPlayermoveStruct.x = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/y" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+				OSCScriptPlayermoveStruct.y = a1;
+				}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/z" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+				OSCScriptPlayermoveStruct.z = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/speed" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+				OSCScriptPlayermoveStruct.speed = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/jump" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+				OSCScriptPlayermoveStruct.jump = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/fly" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+				OSCScriptPlayermoveStruct.fly = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/airspeed" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+				OSCScriptPlayermoveStruct.airspeed = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/cameramove/x" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+				OSCScriptCameramoveStruct.x = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/cameramove/y" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+				OSCScriptCameramoveStruct.y = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/cameramove/z" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+				OSCScriptCameramoveStruct.z = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/cameramove/pitch" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+				OSCScriptCameramoveStruct.pitch = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/cameramove/yaw" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+				OSCScriptCameramoveStruct.yaw = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/cameramove/roll" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+				OSCScriptCameramoveStruct.roll = a1;
             } else {
 					osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
 					float a1 = (arg++)->AsFloat();
@@ -181,6 +249,16 @@ __declspec(dllexport) void triggerActivated(OSCTriggerStruct* pState)
 __declspec(dllexport)OSCGameParams getOSCGameParams()
 {
   return OSCGameParamsStruct;
+}
+
+_declspec(dllexport)OSCScriptPlayermove getOSCScriptPlayermove()
+{
+	return OSCScriptPlayermoveStruct;
+}
+
+_declspec(dllexport)OSCScriptCameramove getOSCScriptCameramove()
+{
+	return OSCScriptCameramoveStruct;
 }
 
 __declspec(dllexport)double returnDouble(double a)

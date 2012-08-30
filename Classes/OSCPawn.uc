@@ -164,6 +164,8 @@ struct OSCGameParams
 	var float gameSpeed;
 };
 
+
+
 //Global vars for this class
 var OSCMessageStruct localOSCMessageStruct;
 var OSCGameParams localOSCGameParamsStruct;
@@ -186,6 +188,8 @@ dllimport final function float getOSCTestfloat();
 dllimport final function OSCFingerController getOSCFingerController();
 dllimport final function vector getOSCFinger1();
 dllimport final function initOSCReceiver();
+
+
 //dllimport final function sendOSCPlayerStateTEST(PlayerStateStructTEST a);
 
 //dllimport final function sendMotionState(string currState, vector loc);
@@ -232,10 +236,10 @@ simulated function vector getScaledFingerTouch(int fingerTouch)
 // x range = 0 to 320
 // y range = 0 to 420
 // finger touch ~ 7 to 20
-	`log("OSCFingerSourceMin: "$OSCFingerSourceMin);
-	`log("OSCFingerSourceMax: "$OSCFingerSourceMax);
-	`log("OSCFingerWorldMax: "$OSCFingerWorldMax);
-	`log("OSCFingerWorldMin: "$OSCFingerWorldMin);
+//	`log("OSCFingerSourceMin: "$OSCFingerSourceMin);
+//	`log("OSCFingerSourceMax: "$OSCFingerSourceMax);
+//	`log("OSCFingerWorldMax: "$OSCFingerWorldMax);
+//	`log("OSCFingerWorldMin: "$OSCFingerWorldMin);
 	
 	scaledFingerTouch.X = scaleRange( fingerTouchArray[fingerTouch].X, OSCFingerSourceMin.X, OSCFingerSourceMax.X, OSCFingerWorldMin.X, OSCFingerWorldMax.X);
 	scaledFingerTouch.Y = scaleRange( fingerTouchArray[fingerTouch].Y, OSCFingerSourceMin.Y, OSCFingerSourceMax.Y, OSCFingerWorldMin.Y, OSCFingerWorldMax.Y);
@@ -613,6 +617,7 @@ simulated function getOSCFingerData()
 	
 }
 
+
 simulated function setOSCFingerTouches(OSCFingerController fstruct)
 {
 
@@ -843,6 +848,11 @@ simulated function Tick(float DeltaTime)
 	
 	lastGameGravity = localOSCGameParamsStruct.gameGravity;
 	lastGameSpeed = localOSCGameParamsStruct.gameSpeed;
+	
+
+	
+	
+	
 	
 	//localOSCGameParamsStruct = getOSCGameParams();
 	//setGameSpeed(localOSCGameParamsStruct.gameSpeed);

@@ -66,6 +66,7 @@ var OSCMessageStruct localOSCMessageStruct;
 var OSCFingerController localOSCFingerControllerStruct; // borrowing this for multiparameter testing
 
 
+
 struct MyPlayerStruct
 {
 	var string PlayerName;
@@ -106,6 +107,34 @@ struct PointClickStructTEST
 	var string HitInfo_hitcomponent;
 };
 
+struct OSCScriptPlayermoveStruct
+{
+	var float x;
+	var float y;
+	var float z;
+	var float speed;
+	var float jump;
+	var float id;
+	var float fly;
+	var float airspeed;
+};
+
+struct OSCScriptCameramoveStruct
+{
+	var float x;
+	var float y;
+	var float z;
+	var float speed;
+	var float pitch;
+	var float yaw;
+	var float roll;
+};
+
+// OSC Script structs
+var OSCScriptPlayermoveStruct localOSCScriptPlayermoveStruct;
+var OSCScriptCameramoveStruct localOSCScriptCameramoveStruct;
+
+
 dllimport final function sendOSCmessageTest();
 dllimport final function sendOSCmessageTest2();
 dllimport final function sendOSCmessageTest3(out MyPlayerStruct a);
@@ -116,7 +145,8 @@ dllimport final function OSCMessageStruct getOSCTest();
 //dllimport final function OSCMovementStruct getOSCTest();
 dllimport final function float getOSCTestfloat();
 dllimport final function OSCFingerController getOSCFingerController(); //borrowing this for multiparameter testing
-
+dllimport final function OSCScriptPlayermoveStruct getOSCScriptPlayermove();
+dllimport final function OSCScriptCameramoveStruct getOSCScriptCameramove();
 
 defaultproperties 
 {
@@ -583,24 +613,39 @@ state OSCPlayerMoving
 		local float 			OSCGroundSpeed;
 		local vector			OSCCamera;
 		
-		OSCVector.X = localOSCFingerControllerStruct.f1X;
-		OSCVector.Y = localOSCFingerControllerStruct.f1Y;
-		OSCVector.Z = localOSCFingerControllerStruct.f1Z;
+
+		OSCVector.X = localOSCScriptPlayermoveStruct.x;
+		OSCVector.Y = localOSCScriptPlayermoveStruct.y;
+		OSCVector.Z = localOSCScriptPlayermoveStruct.z;
+		OSCGroundSpeed = localOSCScriptPlayermoveStruct.speed;
+		OSCJump = localOSCScriptPlayermoveStruct.jump;
 		
-		OSCGroundSpeed = localOSCFingerControllerStruct.f1on;
+		//OSCVector.X = localOSCFingerControllerStruct.f1X;		
+		//OSCVector.Y = localOSCFingerControllerStruct.f1Y;
+		//OSCVector.Z = localOSCFingerControllerStruct.f1Z;		
+		//OSCGroundSpeed = localOSCFingerControllerStruct.f1on;
 		//OSCRotation = (Pitch=localOSCFingerControllerStruct.f2X, Roll=localOSCFingerControllerStruct.f2Y, Yaw=localOSCFIngerControllerStruct.f2Z);
 		
-		OSCRotation.Pitch=localOSCFingerControllerStruct.f2X;
-		OSCRotation.Roll=localOSCFingerControllerStruct.f2Y;
-		OSCRotation.Yaw=localOSCFingerControllerStruct.f2Z;
+//		OSCRotation.Pitch=localOSCFingerControllerStruct.f2X;
+//		OSCRotation.Roll=localOSCFingerControllerStruct.f2Y;
+//		OSCRotation.Yaw=localOSCFingerControllerStruct.f2Z;
+
+		OSCRotation.Pitch=localOSCScriptCameramoveStruct.pitch;
+		OSCRotation.Roll=localOSCScriptCameramoveStruct.roll;
+		OSCRotation.Yaw=localOSCScriptCameramoveStruct.yaw;
 		
 		`log("OSCRotation.Pitch = "$OSCRotation.Pitch);
 		`log("OSCRotation.Roll = "$OSCRotation.Roll);
 		`log("OSCRotation.Yaw = "$OSCRotation.Yaw);
 		
-		OSCCamera.X = localOSCFingerControllerStruct.f3X;
-		OSCCamera.Y = localOSCFingerControllerStruct.f3Y;
-		OSCCamera.Z = localOSCFingerControllerStruct.f3Z;
+//		OSCCamera.X = localOSCFingerControllerStruct.f3X;
+//		OSCCamera.Y = localOSCFingerControllerStruct.f3Y;
+//		OSCCamera.Z = localOSCFingerControllerStruct.f3Z;
+		
+		OSCCamera.X = localOSCScriptCameramoveStruct.x;
+		OSCCamera.Y = localOSCScriptCameramoveStruct.y;
+		OSCCamera.Z = localOSCScriptCameramoveStruct.z;
+
 		OSCPawn(Pawn).setOSCCamera(OSCCamera);
 		
 		OSCJump = localOSCFingerControllerStruct.f2on;
@@ -964,6 +1009,29 @@ simulated function setOSCFingerTouches(OSCFingerController fstruct)
 	}
 }
 
+simulated function setOSCScriptCameramoveData(OSCScriptCameramoveStruct fstruct)
+{
+	localOSCScriptCameramoveStruct = fstruct;
+	//`log("fstruct: "$fstruct);
+	`log("localOSCScriptCameramoveStruct.x:  "$localOSCScriptCameramoveStruct.x);
+	`log("localOSCScriptCameramoveStruct.y:  "$localOSCScriptCameramoveStruct.y);
+	`log("localOSCScriptCameramoveStruct.z:  "$localOSCScriptCameramoveStruct.z);
+
+}
+
+simulated function setOSCScriptPlayermoveData(OSCScriptPlayermoveStruct fstruct)
+{
+	localOSCScriptPlayermoveStruct = fstruct;
+
+	`log("localOSCScriptPlayermoveStruct.x:  "$localOSCScriptPlayermoveStruct.x);
+	`log("localOSCScriptPlayermoveStruct.y:  "$localOSCScriptPlayermoveStruct.y);
+	`log("localOSCScriptPlayermoveStruct.z:  "$localOSCScriptPlayermoveStruct.z);
+
+//localOSCScriptPlayermoveStruct.x = getOSCScriptPlayermove();
+}
+
+
+
 // TODO: hook this to generic OSC call, string title + params can be passed in via OSC
 /*
 function OSCCallExecCommand(string val)
@@ -982,6 +1050,11 @@ event PlayerTick( float DeltaTime )
 	{
 		localOSCFingerControllerStruct = getOSCFingerController();
 		setOSCFingerTouches(localOSCFingerControllerStruct);
+		// OSC Script data for OSC control over pawns and camera
+		//`log("Before setSCScriptPlayermoveData");
+		setOSCScriptPlayermoveData(getOSCScriptPlayermove());
+		setOSCScriptCameramoveData(getOSCScriptCameramove());
+		//`log("After setSCScriptPlayermoveData");		
 	}
 	
 	testInputData(); // rkh testing input data
