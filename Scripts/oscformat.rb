@@ -163,7 +163,10 @@ end
 # Optional timetag value
 def createMove(params, val, *timetag)
 
-  localRoot = OSCROOT + val
+  localRoot = OSCROOT + "/" + val
+
+  puts "localRoot: #{localRoot}"
+
   messageArray = Array.new
   noProcessArray = [METHOD, SLEW, USERID, WAIT]
   cameraParams = [CAMERAPITCH, CAMERAYAW, CAMERAYAW]
@@ -188,7 +191,7 @@ def createMove(params, val, *timetag)
 		      #   - find which param it is, take its current value
 		      #   - for i=1 (first val in the slew block) start with currentVal for that param and add the stepp'd slew value
 		      #   - for each slew'd val do the same
-		      $currentVals[k] = $currentVals[k] + (v.to_f() / slewCount.to_f())
+		      $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f() / slewCount.to_f())
 
           timeNow=Time.now()
 =begin
@@ -200,8 +203,7 @@ def createMove(params, val, *timetag)
           test << msg3
 		  msg = OSC::Bundle.new(NIL, *test)
 =end
-          msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals[k])
-
+          msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"])
           oscMsg = Hash.new
           oscMsg[OSCMESSAGE] = msg
 		      messageArray << oscMsg
@@ -220,7 +222,14 @@ def createMove(params, val, *timetag)
     params.each_pair do |k,v|
       if !noProcessArray.include?(k)
 #        msg = OSC::Message.new("#{localRoot}/#{k}", "#{params[k]}")
-        msg = OSC::Message.new("#{localRoot}/#{k}", params[k].to_f())
+#        msg = OSC::Message.new("#{localRoot}/#{k}", params[k].to_f())
+        #$currentVals[k] = $currentVals[k] + (v.to_f())
+
+        $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
+
+        puts "#{val}#{k}"
+
+        msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"])
         oscMsg = Hash.new
         oscMsg[OSCMESSAGE] = msg
         messageArray << oscMsg
@@ -315,9 +324,9 @@ def createMessages(val)
     when CONSOLE
       messages = createConsoleCommand(params, "/#{CONSOLE}")
     when PLAYERMOVE
-	    messages = createMove(params, "/#{PLAYERMOVE}")
+	    messages = createMove(params, "#{PLAYERMOVE}")
     when CAMERAMOVE
-	    messages = createMove(params, "/#{CAMERAMOVE}")
+	    messages = createMove(params, "#{CAMERAMOVE}")
     when WAIT
       messages = createSleep(params)
     else
@@ -420,20 +429,20 @@ end
 
 def initCurrentValues
 
-  $currentVals[PLAYERX] = 0.0
-  $currentVals[PLAYERY] = 0.0
-  $currentVals[PLAYERZ] = 0.0
-  $currentVals[PLAYERSPEED] = 0.0
-  $currentVals[PLAYERPITCH] = 0.0
-  $currentVals[PLAYERYAW] = 0.0
-  $currentVals[PLAYERROLL] = 0.0
-  $currentVals[CAMERAX] = 0.0
-  $currentVals[CAMERAY] = 0.0
-  $currentVals[CAMERAZ] = 0.0
-  $currentVals[CAMERASPEED] = 0.0
-  $currentVals[CAMERAPITCH] = 0.0
-  $currentVals[CAMERAYAW] = 0.0
-  $currentVals[CAMERAROLL] = 0.0
+  $currentVals["#{PLAYERMOVE}#{PLAYERX}"] = 0.0
+  $currentVals["#{PLAYERMOVE}#{PLAYERY}"] = 0.0
+  $currentVals["#{PLAYERMOVE}#{PLAYERZ}"] = 0.0
+  $currentVals["#{PLAYERMOVE}#{PLAYERSPEED}"] = 0.0
+  $currentVals["#{PLAYERMOVE}#{PLAYERPITCH}"] = 0.0
+  $currentVals["#{PLAYERMOVE}#{PLAYERYAW}"] = 0.0
+  $currentVals["#{PLAYERMOVE}#{PLAYERROLL}"] = 0.0
+  $currentVals["#{CAMERAMOVE}#{CAMERAX}"] = 0.0
+  $currentVals["#{CAMERAMOVE}#{CAMERAY}"] = 0.0
+  $currentVals["#{CAMERAMOVE}#{CAMERAZ}"] = 0.0
+  $currentVals["#{CAMERAMOVE}#{CAMERASPEED}"] = 0.0
+  $currentVals["#{CAMERAMOVE}#{CAMERAPITCH}"] = 0.0
+  $currentVals["#{CAMERAMOVE}#{CAMERAYAW}"] = 0.0
+  $currentVals["#{CAMERAMOVE}#{CAMERAROLL}"] = 0.0
 
 end
 
@@ -452,9 +461,9 @@ def createBlockMessages(val)
     when COMMENT
       # Ignore comment lines
     when PLAYERMOVE
-	    messages = createMove(params, "/#{PLAYERMOVE}")
+	    messages = createMove(params, "#{PLAYERMOVE}")
     when CAMERAMOVE
-	    messages = createMove(params, "/#{CAMERAMOVE}")
+	    messages = createMove(params, "#{CAMERAMOVE}")
     when WAIT
       messages = createSleep(params)
     else
