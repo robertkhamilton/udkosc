@@ -21,6 +21,7 @@ PLAYERJUMP = "jump"
 PLAYERPITCH = "playerpitch"
 PLAYERYAW = "playeryaw"
 PLAYERROLL = "playerroll"
+PLAYERSTOP = "stop"
 CAMERAX = "x"
 CAMERAY = "y"
 CAMERAZ = "z"
@@ -165,7 +166,7 @@ def createMove(params, val, *timetag)
 
   localRoot = OSCROOT + "/" + val
 
-  puts "localRoot: #{localRoot}"
+  #puts "localRoot: #{localRoot}"
 
   messageArray = Array.new
   noProcessArray = [METHOD, SLEW, USERID, WAIT]
@@ -193,16 +194,9 @@ def createMove(params, val, *timetag)
 		      #   - for each slew'd val do the same
 		      $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f() / slewCount.to_f())
 
+          # calc time for future use as timetag
           timeNow=Time.now()
-=begin
-		  # BUNDLE EXAMPLE
-          msg2 = OSC::Message.new("#{localRoot}/#{k}", "#{$currentVals[k]}")
-          msg3 = OSC::Message.new("#{localRoot}/#{k}", "#{$currentVals[k]}")
-          test = Array.new
-          test << msg2
-          test << msg3
-		  msg = OSC::Bundle.new(NIL, *test)
-=end
+
           msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"])
           oscMsg = Hash.new
           oscMsg[OSCMESSAGE] = msg
@@ -221,15 +215,12 @@ def createMove(params, val, *timetag)
 
     params.each_pair do |k,v|
       if !noProcessArray.include?(k)
-#        msg = OSC::Message.new("#{localRoot}/#{k}", "#{params[k]}")
-#        msg = OSC::Message.new("#{localRoot}/#{k}", params[k].to_f())
-        #$currentVals[k] = $currentVals[k] + (v.to_f())
-
-        $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
-
-        puts "#{val}#{k}"
-
-        msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"])
+        if k==PLAYERSTOP
+          msg = OSC::Message.new_with_time("#{localRoot}/#{PLAYERSPEED}", 1000.00, NIL, 0)
+        else
+          $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
+          msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"])
+        end
         oscMsg = Hash.new
         oscMsg[OSCMESSAGE] = msg
         messageArray << oscMsg
@@ -260,15 +251,27 @@ def buildHash(val)
       params[USERID] = val[count -1]
 
       if count == 3
-        # jump currently uses 3 total params; default val to 1
-        params[val[1]] = 1
+        # jump/stop currently uses 3 total params; default val to 1 for jump, switch to PLAYERSPEED = 0 for stop
 
-	    elsif count > 3
+        if val[1]==PLAYERJUMP
+          params[val[1]] = 1
+        elsif val[1]==PLAYERSTOP
+          puts "param val1: #{val[1]}"
+          puts "param val1.5: #{params[val[1]]}"
+          #val[1] = PLAYERSPEED
+          puts "param val2: #{val[1]}"
+          params[val[1]] = 0.0
+          puts "param val2.5: #{params[val[1]]}"
+        end
+       end
+
+      if count > 3
 	      (1..count-3).step(2) {|i| params[val[i]] = val[i+1] }
-      end
+#      end  # CHANGED THIS TO ELSIF TO ADD PLAYERSTOP
 
-	    if count.odd?
-	      params[SLEW] = val[count-2]
+	      if count.odd?
+	        params[SLEW] = val[count-2]
+        end
 	    end
 
 
@@ -315,8 +318,11 @@ def createMessages(val)
     $inblock = false
   else
     # build hash
+    puts "val: #{val}"
     params = buildHash(val)
   end
+
+  puts "params: #{params}"
 
   case method
     when COMMENT

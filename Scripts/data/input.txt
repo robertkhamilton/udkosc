@@ -1,1 +1,7 @@
-cameramove camerapitch 360 1000
+playermove stop 1
+[
+playermove speed 400 100 1
+playermove x 300.0 100 1
+]
+playermove stop 1
+playermove speed 400 100 1
