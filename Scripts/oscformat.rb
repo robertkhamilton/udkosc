@@ -61,13 +61,69 @@ $validCommands = [PLAYERMOVE, CAMERAMOVE, WAIT, STARTBLOCK, ENDBLOCK, CONSOLE]
 # Parameters to track slew value
 $currentVals = Hash.new
 
-# Create queue (Array) to hold created OSC Messages
-sendQueue = Array.new
 
-# GET INPUT FILE FROM COMMANDLINE
-inputfile = File.new("./data/input.txt", "rb")
-linearray = inputfile.readlines
-inputfile.close
+# look in arr for PLAYERSTOP calls
+def preprocess(arr)
+
+  processedArray = Array.new
+  localMoveArrayCmds = [PLAYERX, PLAYERY, PLAYERZ]
+  localCurrentSpeed = 0.0
+  localPlayerStopped = false
+  localInBlock = false
+
+  # step through each line
+  arr.each_with_index { |line, index|
+
+    inputArray = processLine(line.strip)
+
+    # if playermove stop call
+    if !localInBlock
+
+      if inputArray[0] == PLAYERMOVE
+
+        if inputArray[1] == PLAYERSTOP
+
+          # set global
+          localPlayerStopped = true
+
+        elsif inputArray[1] == PLAYERSPEED
+
+          currentSpeed = inputArray[2]
+
+        elsif [PLAYERX, PLAYERY, PLAYERZ].include?(inputArray[1])
+
+          if localPlayerStopped
+
+            # insert row of speed = currentVal
+            processedArray << "#{PLAYERMOVE} #{PLAYERSPEED} #{localCurrentSpeed} #{inputArray[inputArray.count-1]}"
+
+          end
+
+        end
+
+        # processedArray << line
+
+      elsif inputArray[0] == STARTBLOCK
+
+        # if block has a playermove command [x,y,z] then add speed cmd
+        localInBlock = true
+
+      end
+
+    elsif inputArray[0] == ENDBLOCK
+
+      localInBlock = false
+
+    end
+
+    processedArray << line
+
+  }
+
+  return processedArray
+
+end
+
 
 # OSC BUNDLE CLASS
 class BundleMessage
@@ -127,7 +183,6 @@ end
 
 
 def createSleep(params)
-    puts "createSleep: #{params}"
     messageArray = Array.new
     msg = params[DUR]
     sleepMsg = Hash.new
@@ -165,8 +220,6 @@ end
 def createMove(params, val, *timetag)
 
   localRoot = OSCROOT + "/" + val
-
-  #puts "localRoot: #{localRoot}"
 
   messageArray = Array.new
   noProcessArray = [METHOD, SLEW, USERID, WAIT]
@@ -216,8 +269,17 @@ def createMove(params, val, *timetag)
     params.each_pair do |k,v|
       if !noProcessArray.include?(k)
         if k==PLAYERSTOP
-          msg = OSC::Message.new_with_time("#{localRoot}/#{PLAYERSPEED}", 1000.00, NIL, 0)
+          $currentVals["#{val}#{k}"] = 1.0
+          msg = OSC::Message.new_with_time("#{localRoot}/#{PLAYERSPEED}", 1000.00, NIL, 0.0)
         else
+
+          # If setting playerspeed > 0, set currentVal of PLAYERSTOP to 0, indicating that we're moving
+          if k==PLAYERSPEED
+            if v.to_f() > 0.0
+              $currentVals["#{val}#{PLAYERSTOP}"] = 0.0
+            end
+          end
+
           $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
           msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"])
         end
@@ -256,12 +318,7 @@ def buildHash(val)
         if val[1]==PLAYERJUMP
           params[val[1]] = 1
         elsif val[1]==PLAYERSTOP
-          puts "param val1: #{val[1]}"
-          puts "param val1.5: #{params[val[1]]}"
-          #val[1] = PLAYERSPEED
-          puts "param val2: #{val[1]}"
           params[val[1]] = 0.0
-          puts "param val2.5: #{params[val[1]]}"
         end
        end
 
@@ -318,11 +375,8 @@ def createMessages(val)
     $inblock = false
   else
     # build hash
-    puts "val: #{val}"
     params = buildHash(val)
   end
-
-  puts "params: #{params}"
 
   case method
     when COMMENT
@@ -357,65 +411,21 @@ def sendMessage(queue)
 
 	  msg.each do |aMsg|
 
-#        puts "aMsg: #{aMsg.is_a? Array}"
 #        aMsg.each { |k,v| puts "#{k} => #{v}" }
 
   	    aMsg.each_pair do |k,v|
   	      if k == OSCMESSAGE
             @client.send(v)
           elsif k == OSCBUNDLE
-            puts "oscbundle"
-#             puts "K == OSCBUNDLE"
-#             puts "K: #{k}"
-#             puts "V: #{v}"
-#             puts "V Class: #{v.class.to_s}"
-             # ONLY SEEING 1 Of 2(4?) BUNDLES HERE... HASH APPEARING AS V ALSO???
              if !v.is_a? Array
-=begin
-          msg2 = OSC::Message.new("/test", "100")
-          msg3 = OSC::Message.new("/test2", "200")
-          test = Array.new
-          test << msg2
-          test << msg3
-		  msg = OSC::Bundle.new(NIL, *test)
-   	      @client.send(msg)
-=end
-   			   @client.send(v)
-   			 end
+   			       @client.send(v)
+   			     end
           elsif k == SLEEP
-            puts "sleep: #{v}"
   	        sleep v.to_f()/1000.0
   	      end
-		end
+		    end
       end
     end
-
-
-
-=begin
-	if not msg.nil?
-
-	  msg.each do |aMsg|
-
-#aMsg.each { |k,v| puts "#{k} => #{v}" }
-
-  	    if aMsg.is_a? Array
-
-puts "IS ARRAY"
-  	      aMsg.each do |val|
-
-  	        val.each_pair do |k,v|
-  	          if k == OSC
-                @client.send(v)
-  	          elsif k == SLEEP
-  	            sleep v.to_f()/1000.0
-  	          end
-		    end
-  	      end
-	    end
-	  end
-	end
-=end
   end
 end
 
@@ -449,6 +459,7 @@ def initCurrentValues
   $currentVals["#{CAMERAMOVE}#{CAMERAPITCH}"] = 0.0
   $currentVals["#{CAMERAMOVE}#{CAMERAYAW}"] = 0.0
   $currentVals["#{CAMERAMOVE}#{CAMERAROLL}"] = 0.0
+  $currentVals["#{PLAYERMOVE}#{PLAYERSTOP}"] = 0.0
 
 end
 
@@ -484,9 +495,6 @@ def createBlockMessages(val)
     if msg.has_key?(SLEEP)
 
       $currentBlockTime = $currentBlockTime.to_f() + msg[SLEEP].to_f()
-
-#      puts "msg[SLEEP]: #{msg[SLEEP]}"
-#      puts "CurrentBlockTime: #{$currentBlockTime}"
 
     else
 
@@ -551,7 +559,6 @@ def createSortedBundle(messages)
 
         # ADD SLEEP MSG HASH TO BUNDLE ARRAY ON LAST VAL
 		    sleepMsg = Hash.new
-        #puts "stime: #{stime}, lastStarttime: #{lastStarttime}"
 		    sleepMsg[SLEEP] = stime - lastStarttime
 		    bundleArray << sleepMsg
 
@@ -573,6 +580,21 @@ def createSortedBundle(messages)
 end
 
 
+
+# *****************************************************
+
+
+# Create queue (Array) to hold created OSC Messages
+sendQueue = Array.new
+
+# GET INPUT FILE FROM COMMANDLINE
+inputfile = File.new("./data/input.txt", "rb")
+linearray = inputfile.readlines
+inputfile.close
+
+# Pre-process linearray for PLAYERSTOP calls
+linearray = preprocess(linearray)
+
 # INIT CURRENT VALUE HASH
 initCurrentValues
 
@@ -584,8 +606,6 @@ File.open('./data/output.txt', 'w') do |outfile|
 
   # PARSE INPUT FILE INTO ARRAY
   linearray.each_with_index do |f, index|
-
-    #puts "f[0]: #{f[0]}"
 
 	  # parse line input into array
 	  paramArray = processLine(f)

@@ -1,7 +1,13 @@
+playermove speed 500.0 1
+playermove x 400.0 100 1
+playermove stop 1
+wait 500
+playermove y 400.0 100 1
 playermove stop 1
 [
-playermove speed 400 100 1
-playermove x 300.0 100 1
+playermove speed 2000 100 1
+playermove x 400.0 100 1
+playermove y 400.0 100 1
 ]
 playermove stop 1
-playermove speed 400 100 1
+playermove x 500 1
