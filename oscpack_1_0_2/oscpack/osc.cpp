@@ -44,6 +44,7 @@ static OSCFingerController OSCFingerControllerStruct;
 
 OSCScriptPlayermove OSCScriptPlayermoveStruct;
 OSCScriptCameramove OSCScriptCameramoveStruct;
+OSCConsoleCommand OSCConsoleCommandStruct;
 
 float f1X, f1Y, f1Z;
 
@@ -175,6 +176,11 @@ protected:
                 float a1;
                 args >> a1 >> osc::EndMessage;
 				OSCScriptPlayermoveStruct.jump = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/stop" ) == 0 ){
+                //osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                //float a1;
+                //args >> a1 >> osc::EndMessage;
+				OSCScriptPlayermoveStruct.stop = 1.0;
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/fly" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
                 float a1;
@@ -215,6 +221,11 @@ protected:
                 float a1;
                 args >> a1 >> osc::EndMessage;
 				OSCScriptCameramoveStruct.roll = a1;
+            }else if( strcmp( m.AddressPattern(), "/udkosc/script/console" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+                OSCConsoleCommandStruct.command = a1;
             } else {
 					osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
 					float a1 = (arg++)->AsFloat();
@@ -253,12 +264,33 @@ __declspec(dllexport)OSCGameParams getOSCGameParams()
 
 _declspec(dllexport)OSCScriptPlayermove getOSCScriptPlayermove()
 {
-	return OSCScriptPlayermoveStruct;
+	OSCScriptPlayermove localStruct;
+	localStruct = OSCScriptPlayermoveStruct;
+	if(OSCScriptPlayermoveStruct.jump > 0.0)
+	{
+		OSCScriptPlayermoveStruct.jump = 0.0;
+	}
+
+	if(OSCScriptPlayermoveStruct.stop == 1.0)
+	{
+		OSCScriptPlayermoveStruct.stop = 0.0;
+		OSCScriptPlayermoveStruct.x = 0.0;
+		OSCScriptPlayermoveStruct.y = 0.0;
+		OSCScriptPlayermoveStruct.z = 0.0;
+	}
+	return localStruct;
+	//return OSCScriptPlayermoveStruct;
+
 }
 
 _declspec(dllexport)OSCScriptCameramove getOSCScriptCameramove()
 {
 	return OSCScriptCameramoveStruct;
+}
+
+_declspec(dllexport)float getOSCConsoleCommand()
+{
+	return OSCConsoleCommandStruct.command;
 }
 
 __declspec(dllexport)double returnDouble(double a)

@@ -191,9 +191,15 @@ struct OSCScriptPlayermove
 	float z;
 	float speed;
 	float jump;
+	float stop;
 	float id;
 	float fly;
 	float airspeed;
+};
+
+struct OSCConsoleCommand
+{
+	float command;
 };
 
 struct OSCScriptCameramove
@@ -268,8 +274,11 @@ __declspec(dllexport) OSCFingerController* getOSCFingerController();
 __declspec(dllexport)FVector* getOSCFinger1();
 
 // OSC Script calls
-_declspec(dllexport) OSCScriptPlayermove getOSCScriptPlayermove();
-_declspec(dllexport) OSCScriptCameramove getOSCScriptCameramove();
+__declspec(dllexport) OSCScriptPlayermove getOSCScriptPlayermove();
+__declspec(dllexport) OSCScriptCameramove getOSCScriptCameramove();
+
+// OSC Console Command call
+__declspec(dllexport) float getOSCConsoleCommand();
 
 // Initialize the OSC Receiver
 __declspec(dllexport) void initOSCReceiver();
