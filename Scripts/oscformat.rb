@@ -2,8 +2,8 @@ require 'rubygems'
 require 'osc-ruby'
 
 # DECLARE CONSTANTS
-HOST = "localhost"
-#HOST = "10.0.1.100"
+#HOST = "localhost"
+HOST = "10.0.1.100"
 PORT = "7001"
 SPACE = " "
 OSCROOT = "/udkosc/script"
@@ -268,9 +268,12 @@ def createMove(params, val, *timetag)
 
     params.each_pair do |k,v|
       if !noProcessArray.include?(k)
+
         if k==PLAYERSTOP
           $currentVals["#{val}#{k}"] = 1.0
-          msg = OSC::Message.new_with_time("#{localRoot}/#{PLAYERSPEED}", 1000.00, NIL, 0.0)
+          #msg = OSC::Message.new_with_time("#{localRoot}/#{PLAYERSPEED}", 1000.00, NIL, 0.0)
+          msg = OSC::Message.new_with_time("#{localRoot}/#{PLAYERSTOP}", 1000.00, NIL, 1)
+
         else
 
           # If setting playerspeed > 0, set currentVal of PLAYERSTOP to 0, indicating that we're moving
@@ -280,7 +283,13 @@ def createMove(params, val, *timetag)
             end
           end
 
-          $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
+          # Don't Aggregate jump height
+          if k==PLAYERJUMP
+            $currentVals["#{val}#{k}"] = v.to_f()
+          else
+            $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
+          end
+
           msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"])
         end
         oscMsg = Hash.new
@@ -460,6 +469,8 @@ def initCurrentValues
   $currentVals["#{CAMERAMOVE}#{CAMERAYAW}"] = 0.0
   $currentVals["#{CAMERAMOVE}#{CAMERAROLL}"] = 0.0
   $currentVals["#{PLAYERMOVE}#{PLAYERSTOP}"] = 0.0
+  $currentVals["#{PLAYERMOVE}#{PLAYERJUMP}"] = 0.0
+
 
 end
 
