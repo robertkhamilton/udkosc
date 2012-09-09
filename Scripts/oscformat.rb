@@ -3,8 +3,10 @@ require 'osc-ruby'
 
 # DECLARE CONSTANTS
 #HOST = "localhost"
-HOST = "10.0.1.100"
-PORT = "7001"
+#HOST = "10.0.1.100"
+DEFAULTHOST = "localhost"
+DEFAULTPORT = "7001"
+CONNECTION = [DEFAULTHOST, DEFAULTPORT]
 SPACE = " "
 OSCROOT = "/udkosc/script"
 PLAYERMOVE = "playermove"
@@ -61,8 +63,30 @@ $validCommands = [PLAYERMOVE, CAMERAMOVE, WAIT, STARTBLOCK, ENDBLOCK, CONSOLE]
 # Parameters to track slew value
 $currentVals = Hash.new
 
+class BundleMessage
+  attr_accessor :starttime, :msg
 
-# look in arr for PLAYERSTOP calls
+  include Comparable
+
+  def initialize(starttime, msg)
+    @starttime = starttime
+    @msg = msg
+  end
+
+  def getTime
+    return @starttime
+  end
+
+  def getMsg
+    return @msg
+  end
+
+  def <=>(other)
+    @starttime <=> other.starttime
+  end
+
+end
+
 def preprocess(arr)
 
   processedArray = Array.new
@@ -124,32 +148,6 @@ def preprocess(arr)
 
 end
 
-
-# OSC BUNDLE CLASS
-class BundleMessage
-  attr_accessor :starttime, :msg
-
-  include Comparable
-
-  def initialize(starttime, msg)
-    @starttime = starttime
-    @msg = msg
-  end
-
-  def getTime
-    return @starttime
-  end
-
-  def getMsg
-    return @msg
-  end
-
-  def <=>(other)
-    @starttime <=> other.starttime
-  end
-
-end
-
 def preProcessInput(lineArray)
 
   # Create hash to hold block structures
@@ -180,7 +178,6 @@ def preProcessInput(lineArray)
   return blockHash
 
 end
-
 
 def createSleep(params)
     messageArray = Array.new
@@ -406,13 +403,10 @@ def createMessages(val)
 
 end
 
-
-
-
-
 def sendMessage(queue)
 
-  @client = OSC::Client.new( HOST, PORT )
+  #@client = OSC::Client.new( HOST, PORT )
+  @client = OSC::Client.new( CONNECTION[0], CONNECTION[1] )
 
   queue.each do |msg|
 
@@ -437,11 +431,6 @@ def sendMessage(queue)
     end
   end
 end
-
-
-
-
-
 
 def processLine(val)
 
@@ -590,9 +579,19 @@ def createSortedBundle(messages)
 
 end
 
+ARGV.each do|a|
+ # puts "Argument: #{a}"
 
+  address = a;
+end
 
-# *****************************************************
+if ARGV[0] != nil
+  CONNECTION[0] = ARGV[0]
+end
+
+if ARGV[1] != nil
+  CONNECTION[1] = ARGV[1]
+end
 
 
 # Create queue (Array) to hold created OSC Messages
