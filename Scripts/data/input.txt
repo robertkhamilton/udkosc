@@ -1,6 +1,7 @@
-playermove teleport 600 600 900 1
+playermove teleport 0 0 3900 1
 # playermove teleportx 600 1
 # [
+# playermove speed 600 1
 # playermove x 100 100 1
 # playermove crouch 1 1
 # ]
@@ -11,7 +12,7 @@ playermove teleport 600 600 900 1
 # playermove speed 5 1
 #
 # wait 1000
-playermove jump 1000.0 1
+# playermove jump 1000.0 1
 # playermove x -800 300 1
 # wait 1000
 # playermove stop 1

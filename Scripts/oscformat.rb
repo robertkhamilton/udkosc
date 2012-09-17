@@ -3,8 +3,8 @@ require 'osc-ruby'
 
 # DECLARE CONSTANTS
 #HOST = "localhost"
-#DEFAULTHOST = "10.0.1.100"
-DEFAULTHOST = "localhost"
+DEFAULTHOST = "10.0.1.100"
+#DEFAULTHOST = "localhost"
 DEFAULTPORT = "7001"
 CONNECTION = [DEFAULTHOST, DEFAULTPORT]
 SPACE = " "
@@ -182,12 +182,12 @@ def preProcessInput(lineArray)
 end
 
 def createSleep(params)
-    messageArray = Array.new
-    msg = params[DUR]
-    sleepMsg = Hash.new
-    sleepMsg[SLEEP] = msg
-    messageArray << sleepMsg
-    return messageArray
+  messageArray = Array.new
+  msg = params[DUR]
+  sleepMsg = Hash.new
+  sleepMsg[SLEEP] = msg
+  messageArray << sleepMsg
+  return messageArray
 end
 
 def createConsoleCommand(params, val)
@@ -233,18 +233,18 @@ def createMove(params, val, *timetag)
 
       #Scale Camera vals by constant: ROTATIONCONSTANT
       if cameraParams.include?(k)
-       v = v.to_f() * ROTATIONCONSTANT
+        v = v.to_f() * ROTATIONCONSTANT
       end
 
       # For data hashes, create a new OSC message and sleep call and pass them back
       if !noProcessArray.include?(k)
 
         for i in 1..slewCount
-		      # Scale param value by slewCount and "current" param value
-		      #   - find which param it is, take its current value
-		      #   - for i=1 (first val in the slew block) start with currentVal for that param and add the stepp'd slew value
-		      #   - for each slew'd val do the same
-		      $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f() / slewCount.to_f())
+          # Scale param value by slewCount and "current" param value
+          #   - find which param it is, take its current value
+          #   - for i=1 (first val in the slew block) start with currentVal for that param and add the stepp'd slew value
+          #   - for each slew'd val do the same
+          $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f() / slewCount.to_f())
 
           # calc time for future use as timetag
           timeNow=Time.now()
@@ -252,15 +252,15 @@ def createMove(params, val, *timetag)
           msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"])
           oscMsg = Hash.new
           oscMsg[OSCMESSAGE] = msg
-		      messageArray << oscMsg
+          messageArray << oscMsg
 
-		      # space out slew'd messages with ms sleep calls (all but last?)
-		      if i <= slewCount
-		        sleepMsg = Hash.new
-		        sleepMsg[SLEEP] = SLEWRATE
-		        messageArray << sleepMsg
+          # space out slew'd messages with ms sleep calls (all but last?)
+          if i <= slewCount
+            sleepMsg = Hash.new
+            sleepMsg[SLEEP] = SLEWRATE
+            messageArray << sleepMsg
           end
-	      end
+        end
       end
     end
   else # if not a SLEW value...
@@ -288,8 +288,11 @@ def createMove(params, val, *timetag)
             $currentVals["#{val}#{k}"] = v.to_f()
           elsif k==PLAYERTELEPORT
             # $currentVals["#{val}#{k}"] = "#{v[0]} #{v[1]} #{v[2]}"
-            # msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, v[0].to_f(), v[1].to_f(), v[2].to_f())
-
+            msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, v[0].to_f(), v[1].to_f(), v[2].to_f())
+            oscMsg = Hash.new
+            oscMsg[OSCMESSAGE] = msg
+            messageArray << oscMsg
+=begin
             msgx = OSC::Message.new_with_time("#{localRoot}/#{k}x", 1000.00, NIL, v[0].to_f())
             msgy = OSC::Message.new_with_time("#{localRoot}/#{k}y", 1000.00, NIL, v[1].to_f())
             msgz = OSC::Message.new_with_time("#{localRoot}/#{k}z", 1000.00, NIL, v[2].to_f())
@@ -309,8 +312,8 @@ def createMove(params, val, *timetag)
 
             oscMsg = Hash.new
             oscMsg[OSCMESSAGE] = msg
-            #messageArray << oscMsg
-
+            messageArray << oscMsg
+=end
           else
             $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
           end
@@ -345,7 +348,7 @@ def buildHash(val)
 
   case method
     when COMMENT
-    # do nothing in case of comment
+      # do nothing in case of comment
     when CONSOLE
       params[CONSOLE] = val[1]
     when PLAYERMOVE
@@ -358,10 +361,10 @@ def buildHash(val)
           params[val[1]] = 1
         elsif val[1]==PLAYERSTOP
           params[val[1]] = 0.0
-        #elsif val[1]==PLAYERCROUCH
+          #elsif val[1]==PLAYERCROUCH
           #params[val[1]] = $currentVals["#{PLAYERMOVE}#{PLAYERCROUCH}"]%1
         end
-       end
+      end
 
       if count > 3
 
@@ -375,25 +378,25 @@ def buildHash(val)
           params[val[1]] = teleportCoordinates
 
         else
-	        (1..count-3).step(2) {|i| params[val[i]] = val[i+1] }
+          (1..count-3).step(2) {|i| params[val[i]] = val[i+1] }
 
-	        if count.odd?
-	          params[SLEW] = val[count-2]
+          if count.odd?
+            params[SLEW] = val[count-2]
           end
         end
-	    end
+      end
 
 
     when CAMERAMOVE
 
-	  (1..count-2).step(2) {|i| params[val[i]] = val[i+1] }
+      (1..count-2).step(2) {|i| params[val[i]] = val[i+1] }
 
-	  if count.even?
-	    params[SLEW] = val[count-1]
-	  end
+      if count.even?
+        params[SLEW] = val[count-1]
+      end
 
-	  when WAIT
-	    params[DUR] = val[1]
+    when WAIT
+      params[DUR] = val[1]
   end
 
   # Track current time in blocks with total time for block
@@ -436,9 +439,9 @@ def createMessages(val)
     when CONSOLE
       messages = createConsoleCommand(params, "/#{CONSOLE}")
     when PLAYERMOVE
-	    messages = createMove(params, "#{PLAYERMOVE}")
+      messages = createMove(params, "#{PLAYERMOVE}")
     when CAMERAMOVE
-	    messages = createMove(params, "#{CAMERAMOVE}")
+      messages = createMove(params, "#{CAMERAMOVE}")
     when WAIT
       messages = createSleep(params)
     else
@@ -456,23 +459,23 @@ def sendMessage(queue)
 
   queue.each do |msg|
 
-	if not msg.nil?
+    if not msg.nil?
 
-	  msg.each do |aMsg|
+      msg.each do |aMsg|
 
 #        aMsg.each { |k,v| puts "#{k} => #{v}" }
 
-  	    aMsg.each_pair do |k,v|
-  	      if k == OSCMESSAGE
+        aMsg.each_pair do |k,v|
+          if k == OSCMESSAGE
             @client.send(v)
           elsif k == OSCBUNDLE
-             if !v.is_a? Array
-   			       @client.send(v)
-   			     end
+            if !v.is_a? Array
+              @client.send(v)
+            end
           elsif k == SLEEP
-  	        sleep v.to_f()/1000.0
-  	      end
-		    end
+            sleep v.to_f()/1000.0
+          end
+        end
       end
     end
   end
@@ -525,9 +528,9 @@ def createBlockMessages(val)
     when COMMENT
       # Ignore comment lines
     when PLAYERMOVE
-	    messages = createMove(params, "#{PLAYERMOVE}")
+      messages = createMove(params, "#{PLAYERMOVE}")
     when CAMERAMOVE
-	    messages = createMove(params, "#{CAMERAMOVE}")
+      messages = createMove(params, "#{CAMERAMOVE}")
     when WAIT
       messages = createSleep(params)
     else
@@ -601,13 +604,13 @@ def createSortedBundle(messages)
         currentBundle << mesg.getMsg[OSCMESSAGE]  #mesg.getMsg
       end
 
-	    # ON FIRST MSG PROCESSED LOOK AT LAST START TIME AND ADD SLEEP MSG BEFORE CONTINUING
+      # ON FIRST MSG PROCESSED LOOK AT LAST START TIME AND ADD SLEEP MSG BEFORE CONTINUING
       if stime != lastStarttime
 
         # ADD SLEEP MSG HASH TO BUNDLE ARRAY ON LAST VAL
-		    sleepMsg = Hash.new
-		    sleepMsg[SLEEP] = stime - lastStarttime
-		    bundleArray << sleepMsg
+        sleepMsg = Hash.new
+        sleepMsg[SLEEP] = stime - lastStarttime
+        bundleArray << sleepMsg
 
         # UPDATE LAST START TIME
         lastStarttime = stime
@@ -627,7 +630,7 @@ def createSortedBundle(messages)
 end
 
 ARGV.each do|a|
- # puts "Argument: #{a}"
+  # puts "Argument: #{a}"
 
   address = a;
 end
@@ -664,69 +667,69 @@ File.open('./data/output.txt', 'w') do |outfile|
   # PARSE INPUT FILE INTO ARRAY
   linearray.each_with_index do |f, index|
 
-	  # parse line input into array
-	  paramArray = processLine(f)
+    # parse line input into array
+    paramArray = processLine(f)
 
     if paramArray[0] != COMMENT
 
       # are we in the block's starting row
-	    if blocks.has_key?(index)
+      if blocks.has_key?(index)
 
-		    $inblock = true
+        $inblock = true
 
-		    # CREATE HOLDING ARRAY FOR BLOCK MESSAGES
+        # CREATE HOLDING ARRAY FOR BLOCK MESSAGES
         blockArray = Array.new
 
-		    # CYCLE THROUGH LINEARRAY UNTIL DONE WITH BLOCK
-		    # DO WE USE INDEX OR INDEX + 1 HERE
-		    for i in (index+1)..(blocks[index]-1)
+        # CYCLE THROUGH LINEARRAY UNTIL DONE WITH BLOCK
+        # DO WE USE INDEX OR INDEX + 1 HERE
+        for i in (index+1)..(blocks[index]-1)
 
-		      # CREATE ARRAY FOR EACH BLOCK MESSAGE
-		      blockParamArray = processLine(linearray[i])
+          # CREATE ARRAY FOR EACH BLOCK MESSAGE
+          blockParamArray = processLine(linearray[i])
 
           # CREATE ARRAY of BLOCK MESSAGE Object ARRAYS WITH TIME AND MSG PARAMETERS FOR SORTING AND ADD TO ARRAY
           if blockParamArray[0] != COMMENT
-		        blockArray << createBlockMessages(blockParamArray)
+            blockArray << createBlockMessages(blockParamArray)
           end
 
-		    end
+        end
 
-		    # blockArray is an Array of Arrays. Merge each subarray into one uber array
-		    blockCount = blockArray.count
+        # blockArray is an Array of Arrays. Merge each subarray into one uber array
+        blockCount = blockArray.count
 
-		    uberBlockArray = Array.new
+        uberBlockArray = Array.new
 
-		    # MERGE EACH BLOCK ARRAY INTO UBER ARRAY
-		    blockArray.each do |bl|
-		      bl.each do |b|
-		        uberBlockArray << b
-		      end
-		    end
+        # MERGE EACH BLOCK ARRAY INTO UBER ARRAY
+        blockArray.each do |bl|
+          bl.each do |b|
+            uberBlockArray << b
+          end
+        end
 
-		    # RETURN SORTED ARRAY OF OBJECTS
-		    sortedBlockArray = sortBlockArray(uberBlockArray)
+        # RETURN SORTED ARRAY OF OBJECTS
+        sortedBlockArray = sortBlockArray(uberBlockArray)
 
-		    # FOR EACH GROUP OF SAME STARTTIME OBJECTS, CREATE NEW OSC BUNDLE
-		    newBundle = createSortedBundle(sortedBlockArray)
+        # FOR EACH GROUP OF SAME STARTTIME OBJECTS, CREATE NEW OSC BUNDLE
+        newBundle = createSortedBundle(sortedBlockArray)
 
         sendQueue << newBundle
 
       else
 
-	      if $inblock == false && paramArray[0] != STARTBLOCK
+        if $inblock == false && paramArray[0] != STARTBLOCK
 
-  	      # build OSC message from parameter array
+          # build OSC message from parameter array
           messages = createMessages(paramArray)
 
- 	        # add OSC message to send queue
-	        sendQueue << messages
+          # add OSC message to send queue
+          sendQueue << messages
 
-	      elsif paramArray[0] == ENDBLOCK
+        elsif paramArray[0] == ENDBLOCK
 
-	        $inblock = false
+          $inblock = false
 
-	      end
-	    end
+        end
+      end
     end
   end
 
