@@ -1,3 +1,9 @@
+playermove teleport 600 600 900 1
+# playermove teleportx 600 1
+# [
+# playermove x 100 100 1
+# playermove crouch 1 1
+# ]
 # cameramove z 150 20
 # cameramove pitch -90 20
 # cameramove x -3500 20
@@ -5,12 +11,12 @@
 # playermove speed 5 1
 #
 # wait 1000
-# playermove jump 0.0 1
-playermove x -800 300 1
+# playermove jump 1000.0 1
+# playermove x -800 300 1
 # wait 1000
 # playermove stop 1
 #
-playermove jump 1000.0 1
+# playermove jump 1000.0 1
 # wait 3000
 # playermove jump 1000.0 1
 #
@@ -18,3 +24,4 @@ playermove jump 1000.0 1
 # cameramove z 100 20
 # cameramove yaw 180 20
 # cameramove x -3000 20
+# playermove jump 1000.0 1

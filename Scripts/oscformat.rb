@@ -3,8 +3,8 @@ require 'osc-ruby'
 
 # DECLARE CONSTANTS
 #HOST = "localhost"
-#HOST = "10.0.1.100"
-DEFAULTHOST = "localhost"
+DEFAULTHOST = "10.0.1.100"
+#DEFAULTHOST = "localhost"
 DEFAULTPORT = "7001"
 CONNECTION = [DEFAULTHOST, DEFAULTPORT]
 SPACE = " "
@@ -20,10 +20,12 @@ PLAYERY = "y"
 PLAYERZ = "z"
 PLAYERSPEED = "speed"
 PLAYERJUMP = "jump"
+PLAYERCROUCH = "crouch"
 PLAYERPITCH = "playerpitch"
 PLAYERYAW = "playeryaw"
 PLAYERROLL = "playerroll"
 PLAYERSTOP = "stop"
+PLAYERTELEPORT = "teleport"
 CAMERAX = "x"
 CAMERAY = "y"
 CAMERAZ = "z"
@@ -266,11 +268,12 @@ def createMove(params, val, *timetag)
     params.each_pair do |k,v|
       if !noProcessArray.include?(k)
 
-        if k==PLAYERSTOP
+        if k==PLAYERSTOP #|| k== PLAYERCROUCH
+          puts k
           $currentVals["#{val}#{k}"] = 1.0
-          #msg = OSC::Message.new_with_time("#{localRoot}/#{PLAYERSPEED}", 1000.00, NIL, 0.0)
-          msg = OSC::Message.new_with_time("#{localRoot}/#{PLAYERSTOP}", 1000.00, NIL, 1)
-
+          # msg = OSC::Message.new_with_time("#{localRoot}/#{PLAYERSPEED}", 1000.00, NIL, 0.0)
+          # msg = OSC::Message.new_with_time("#{localRoot}/#{PLAYERSTOP}", 1000.00, NIL, 1)
+          msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, 1)
         else
 
           # If setting playerspeed > 0, set currentVal of PLAYERSTOP to 0, indicating that we're moving
@@ -283,15 +286,45 @@ def createMove(params, val, *timetag)
           # Don't Aggregate jump height
           if k==PLAYERJUMP
             $currentVals["#{val}#{k}"] = v.to_f()
+          elsif k==PLAYERTELEPORT
+            # $currentVals["#{val}#{k}"] = "#{v[0]} #{v[1]} #{v[2]}"
+            # msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, v[0].to_f(), v[1].to_f(), v[2].to_f())
+
+            msgx = OSC::Message.new_with_time("#{localRoot}/#{k}x", 1000.00, NIL, v[0].to_f())
+            msgy = OSC::Message.new_with_time("#{localRoot}/#{k}y", 1000.00, NIL, v[1].to_f())
+            msgz = OSC::Message.new_with_time("#{localRoot}/#{k}z", 1000.00, NIL, v[2].to_f())
+            msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, 1.0)
+
+            oscMsgx = Hash.new
+            oscMsgx[OSCMESSAGE] = msgx
+            messageArray << oscMsgx
+
+            oscMsgy = Hash.new
+            oscMsgy[OSCMESSAGE] = msgy
+            messageArray << oscMsgy
+
+            oscMsgz = Hash.new
+            oscMsgz[OSCMESSAGE] = msgz
+            messageArray << oscMsgz
+
+            oscMsg = Hash.new
+            oscMsg[OSCMESSAGE] = msg
+            messageArray << oscMsg
+
           else
             $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
           end
 
-          msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"])
+          if k!=PLAYERTELEPORT
+            msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"])
+          end
         end
-        oscMsg = Hash.new
-        oscMsg[OSCMESSAGE] = msg
-        messageArray << oscMsg
+
+        if k!=PLAYERTELEPORT
+          oscMsg = Hash.new
+          oscMsg[OSCMESSAGE] = msg
+          messageArray << oscMsg
+        end
       end
     end
   end
@@ -325,15 +358,28 @@ def buildHash(val)
           params[val[1]] = 1
         elsif val[1]==PLAYERSTOP
           params[val[1]] = 0.0
+        #elsif val[1]==PLAYERCROUCH
+          #params[val[1]] = $currentVals["#{PLAYERMOVE}#{PLAYERCROUCH}"]%1
         end
        end
 
       if count > 3
-	      (1..count-3).step(2) {|i| params[val[i]] = val[i+1] }
-#      end  # CHANGED THIS TO ELSIF TO ADD PLAYERSTOP
 
-	      if count.odd?
-	        params[SLEW] = val[count-2]
+        if val[1]==PLAYERTELEPORT
+
+          # playermove teleport 500.0 500.0 500.0 1
+          teleportCoordinates = Array.new
+          teleportCoordinates[0] = val[2]
+          teleportCoordinates[1] = val[3]
+          teleportCoordinates[2] = val[4]
+          params[val[1]] = teleportCoordinates
+
+        else
+	        (1..count-3).step(2) {|i| params[val[i]] = val[i+1] }
+
+	        if count.odd?
+	          params[SLEW] = val[count-2]
+          end
         end
 	    end
 
@@ -459,7 +505,8 @@ def initCurrentValues
   $currentVals["#{CAMERAMOVE}#{CAMERAROLL}"] = 0.0
   $currentVals["#{PLAYERMOVE}#{PLAYERSTOP}"] = 0.0
   $currentVals["#{PLAYERMOVE}#{PLAYERJUMP}"] = 0.0
-
+  $currentVals["#{PLAYERMOVE}#{PLAYERCROUCH}"] = 0.0
+  $currentVals["#{PLAYERMOVE}#{PLAYERTELEPORT}"] = 0.0
 
 end
 
