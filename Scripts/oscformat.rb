@@ -3,8 +3,8 @@ require 'osc-ruby'
 
 # DECLARE CONSTANTS
 #HOST = "localhost"
-DEFAULTHOST = "10.0.1.100"
-#DEFAULTHOST = "localhost"
+#DEFAULTHOST = "10.0.1.100"
+DEFAULTHOST = "localhost"
 DEFAULTPORT = "7001"
 CONNECTION = [DEFAULTHOST, DEFAULTPORT]
 SPACE = " "
@@ -309,7 +309,7 @@ def createMove(params, val, *timetag)
 
             oscMsg = Hash.new
             oscMsg[OSCMESSAGE] = msg
-            messageArray << oscMsg
+            #messageArray << oscMsg
 
           else
             $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())

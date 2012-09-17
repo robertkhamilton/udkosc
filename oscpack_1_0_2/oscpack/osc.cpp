@@ -45,6 +45,7 @@ static OSCFingerController OSCFingerControllerStruct;
 OSCScriptPlayermove OSCScriptPlayermoveStruct;
 OSCScriptCameramove OSCScriptCameramoveStruct;
 OSCConsoleCommand OSCConsoleCommandStruct;
+OSCScriptPlayerTeleport OSCScriptPlayerTeleportStruct;
 
 float f1X, f1Y, f1Z;
 
@@ -191,6 +192,34 @@ protected:
                 float a1;
                 args >> a1 >> osc::EndMessage;
 				OSCScriptPlayermoveStruct.airspeed = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/teleportx" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+				args >> a1 >> osc::EndMessage;
+				OSCScriptPlayerTeleportStruct.teleportx = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/teleporty" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+				args >> a1 >> osc::EndMessage;
+				OSCScriptPlayerTeleportStruct.teleporty = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/teleportz" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+				args >> a1 >> osc::EndMessage;
+				OSCScriptPlayerTeleportStruct.teleportz = a1;
+//			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/teleport" ) == 0 ){
+//                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+//                float a1;
+//				args >> a1 >> osc::EndMessage;
+//				OSCScriptPlayerTeleportStruct.teleport = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/teleport" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1,a2,a3;
+                args >> a1 >> a2 >> a3  >>  osc::EndMessage;
+				OSCScriptPlayerTeleportStruct.teleportx = a1;
+				OSCScriptPlayerTeleportStruct.teleporty = a2;
+				OSCScriptPlayerTeleportStruct.teleportz = a3;
+				OSCScriptPlayerTeleportStruct.teleport = 1.0;
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/cameramove/x" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
                 float a1;
@@ -262,6 +291,19 @@ __declspec(dllexport)OSCGameParams getOSCGameParams()
   return OSCGameParamsStruct;
 }
 
+_declspec(dllexport)OSCScriptPlayerTeleport getOSCScriptPlayerTeleport()
+{
+	OSCScriptPlayerTeleport localStruct;
+	localStruct = OSCScriptPlayerTeleportStruct;
+
+	if(localStruct.teleport > 0.0)
+	{
+		OSCScriptPlayerTeleportStruct.teleport = 0.0;
+	}
+
+  return localStruct;
+}
+
 _declspec(dllexport)OSCScriptPlayermove getOSCScriptPlayermove()
 {
 	OSCScriptPlayermove localStruct;
@@ -270,6 +312,11 @@ _declspec(dllexport)OSCScriptPlayermove getOSCScriptPlayermove()
 	{
 		OSCScriptPlayermoveStruct.jump = 0.0;
 	}
+
+	//if(OSCScriptPlayermoveStruct.teleport > 0.0)
+	//{
+	//	OSCScriptPlayermoveStruct.teleport = 0.0;
+	//}
 
 	if(OSCScriptPlayermoveStruct.stop == 1.0)
 	{

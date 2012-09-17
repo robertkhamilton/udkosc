@@ -107,6 +107,14 @@ struct PointClickStructTEST
 	var string HitInfo_hitcomponent;
 };
 
+struct OSCScriptPlayerTeleportStruct
+{
+	var float teleport;
+	var float teleportx;
+	var float teleporty;
+	var float teleportz;
+};
+
 struct OSCScriptPlayermoveStruct
 {
 	var float x;
@@ -140,6 +148,7 @@ struct OSCConsoleCommandStruct
 var OSCScriptPlayermoveStruct localOSCScriptPlayermoveStruct;
 var OSCScriptCameramoveStruct localOSCScriptCameramoveStruct;
 var OSCConsoleCommandStruct localOSCConsoleCommandStruct;
+var OSCScriptPlayerTeleportStruct localOSCScriptPlayerTeleportStruct;
 
 dllimport final function sendOSCmessageTest();
 dllimport final function sendOSCmessageTest2();
@@ -154,6 +163,7 @@ dllimport final function OSCFingerController getOSCFingerController(); //borrowi
 dllimport final function OSCScriptPlayermoveStruct getOSCScriptPlayermove();
 dllimport final function OSCScriptCameramoveStruct getOSCScriptCameramove();
 dllimport final function float getOSCConsoleCommand();
+dllimport final function OSCScriptPlayerTeleportStruct getOSCScriptPlayerTeleport();
 
 defaultproperties 
 {
@@ -530,6 +540,25 @@ exec function setAllProjectileAccelRate(int val)
 
 }
 	
+simulated exec function teleportPawn(float x, float y, float z)
+{
+	if( (Role==ROLE_Authority) || (RemoteRole<ROLE_SimulatedProxy) )
+		teleportPawn_(x, y, z);
+}
+
+simulated reliable client function teleportPawn_(float x, float y, float z)
+{
+
+	local vector targetVector;
+	
+	bForceNetUpdate = TRUE; // Force replication
+	
+	targetVector.X = x;
+	targetVector.Y = y;
+	targetVector.Z = z;
+	
+	Pawn.SetLocation(targetVector);
+}
 
 simulated exec function moveAllProjectiles(float X, float Y, float Z) 
 {
@@ -615,6 +644,7 @@ state OSCPlayerMoving
 		local bool				bSaveJump;
 		local bool				bOSCJump;
 		local float				OSCJump;
+		//local float 			OSCTeleport;
 		//ROB HACKING - adding test vector pulling from OSC
 		local vector			OSCVector, OSCX, OSCY, OSCZ;
 		local float 			OSCGroundSpeed;
@@ -627,8 +657,9 @@ state OSCPlayerMoving
 		OSCGroundSpeed = localOSCScriptPlayermoveStruct.speed;
 		OSCJump = localOSCScriptPlayermoveStruct.jump;
 		OSCStop = localOSCScriptPlayermoveStruct.stop;
+		//OSCTeleport = localOSCScriptPlayermoveStruct.teleport;
 		
-		`log("OSCStop: "$OSCStop);
+		//`log("OSCStop: "$OSCStop);
 		
 		//OSCVector.X = localOSCFingerControllerStruct.f1X;		
 		//OSCVector.Y = localOSCFingerControllerStruct.f1Y;
@@ -668,19 +699,17 @@ state OSCPlayerMoving
 			bPressedJump = true;
 		}
 		
-		//OSCX.X = localOSCFingerControllerStruct.f2X;
-		//OSCX.Y = localOSCFingerControllerStruct.f2Y;
-		//OSCX.Z = localOSCFingerControllerStruct.f2Z;
-		
-//		OSCY.X = localOSCFingerControllerStruct.f3X;
-//		OSCY.Y = localOSCFingerControllerStruct.f3Y;
-//		OSCY.Z = localOSCFingerControllerStruct.f3Z;
+	
+		`log("localOSCScriptPlayerTeleportStruct.teleport:  "$localOSCScriptPlayerTeleportStruct.teleport);
+		`log("localOSCScriptPlayerTeleportStruct.teleportx:  "$localOSCScriptPlayerTeleportStruct.teleportx);
+		`log("localOSCScriptPlayerTeleportStruct.teleporty:  "$localOSCScriptPlayerTeleportStruct.teleporty);
+		`log("localOSCScriptPlayerTeleportStruct.teleportz:  "$localOSCScriptPlayerTeleportStruct.teleportz);
+	
+	if(localOSCScriptPlayerTeleportStruct.teleport > 0.0)
+	{
+		callTeleport();
+	}		
 
-		//OSCZ.X = localOSCFingerControllerStruct.f4X;
-		//OSCZ.Y = localOSCFingerControllerStruct.f4Y;
-		//OSCZ.Z = localOSCFingerControllerStruct.f4Z;
-
-		
 		if( Pawn == None )
 		{
 			GotoState('Dead');
@@ -726,10 +755,16 @@ state OSCPlayerMoving
 			//Pawn.FaceRotation(RInterpTo(OldRotation, OSCRotation, DeltaTIme, 90000, true), DeltaTime);
 			
 			//`log("bOSCJump: "$bOSCJump);
-			`log("OSCJump: "$OSCJump);
+			//`log("OSCJump: "$OSCJump);
 			
 			// CROUCH
 			// Pawn.ShouldCrouch(bDuck != 0);
+			
+				//`log("localOSCScriptPlayermoveStruct.teleport:  "$localOSCScriptPlayermoveStruct.teleport);
+	//`log("localOSCScriptPlayermoveStruct.teleportx:  "$localOSCScriptPlayermoveStruct.teleportx);
+	//`log("localOSCScriptPlayermoveStruct.teleporty:  "$localOSCScriptPlayermoveStruct.teleporty);
+	//`log("localOSCScriptPlayermoveStruct.teleportz:  "$localOSCScriptPlayermoveStruct.teleportz);
+
 			
 			//Add OSC Jump and JumpZ
 			if(bOSCJump)
@@ -855,6 +890,29 @@ exec function ChangePawns(string ClassName)
 	//use false if you spawned a character and true for a vehicle
 	Possess(P, false);
 }
+
+/*
+out of CheatManager.uc:
+
+
+exec function Summon( string ClassName )
+{
+local class<actor> NewClass;
+local vector SpawnLoc;
+
+`log( "Fabricate " $ ClassName );
+NewClass = class<actor>( DynamicLoadObject( ClassName, class'Class' ) );
+if( NewClass!=None )
+{
+if ( Pawn != None )
+SpawnLoc = Pawn.Location;
+else
+SpawnLoc = Location;
+Spawn( NewClass,,,SpawnLoc + 72 * Vector(Rotation) + vect(0,0,1) * 15 );
+}
+}
+*/
+
 /*
 exec function ChangePawn()
 {
@@ -1039,9 +1097,9 @@ simulated function setOSCScriptCameramoveData(OSCScriptCameramoveStruct fstruct)
 {
 	localOSCScriptCameramoveStruct = fstruct;
 	//`log("fstruct: "$fstruct);
-	`log("localOSCScriptCameramoveStruct.x:  "$localOSCScriptCameramoveStruct.x);
-	`log("localOSCScriptCameramoveStruct.y:  "$localOSCScriptCameramoveStruct.y);
-	`log("localOSCScriptCameramoveStruct.z:  "$localOSCScriptCameramoveStruct.z);
+	//`log("localOSCScriptCameramoveStruct.x:  "$localOSCScriptCameramoveStruct.x);
+	//`log("localOSCScriptCameramoveStruct.y:  "$localOSCScriptCameramoveStruct.y);
+	//`log("localOSCScriptCameramoveStruct.z:  "$localOSCScriptCameramoveStruct.z);
 
 }
 
@@ -1049,11 +1107,18 @@ simulated function setOSCScriptPlayermoveData(OSCScriptPlayermoveStruct fstruct)
 {
 	localOSCScriptPlayermoveStruct = fstruct;
 
-	`log("localOSCScriptPlayermoveStruct.x:  "$localOSCScriptPlayermoveStruct.x);
-	`log("localOSCScriptPlayermoveStruct.y:  "$localOSCScriptPlayermoveStruct.y);
-	`log("localOSCScriptPlayermoveStruct.z:  "$localOSCScriptPlayermoveStruct.z);
+//	`log("localOSCScriptPlayermoveStruct.x:  "$localOSCScriptPlayermoveStruct.x);
+//	`log("localOSCScriptPlayermoveStruct.y:  "$localOSCScriptPlayermoveStruct.y);
+//	`log("localOSCScriptPlayermoveStruct.z:  "$localOSCScriptPlayermoveStruct.z);
+	//`log("localOSCScriptPlayermoveStruct.teleport:  "$localOSCScriptPlayermoveStruct.teleport);
 
-//localOSCScriptPlayermoveStruct.x = getOSCScriptPlayermove();
+	//localOSCScriptPlayermoveStruct.x = getOSCScriptPlayermove();
+}
+
+simulated function setOSCScriptPlayerTeleportData(OSCScriptPlayerTeleportStruct fstruct)
+{
+	localOSCScriptPlayerTeleportStruct = fstruct;
+
 }
 
 simulated function callConsoleCommand(float val)//OSCConsoleCommandStruct fstruct)
@@ -1073,6 +1138,17 @@ simulated function callConsoleCommand(float val)//OSCConsoleCommandStruct fstruc
 	}
 }
 
+simulated function callTeleport()
+{
+	`log("IN TELEPORT **************************************************************");
+
+	
+	if(localOSCScriptPlayerTeleportStruct.teleport == 1.0)
+	{
+		`log("TELEPORT == 1.0");
+		teleportPawn_(localOSCScriptPlayerTeleportStruct.teleportx, localOSCScriptPlayerTeleportStruct.teleporty, localOSCScriptPlayerTeleportStruct.teleportz);
+	}
+}
 
 
 // TODO: hook this to generic OSC call, string title + params can be passed in via OSC
@@ -1088,22 +1164,33 @@ event PlayerTick( float DeltaTime )
 	// Add OSC Input call to the player Tick, called each tick from PlayerController
 	localOSCMessageStruct.test = getOSCTestfloat();
 	//localOSCMovementStruct.vectorX = getOSCTestfloat();
+
+	
 	
 	// Generic OSCConsoleCommand call
+//	if(localOSCScriptPlayermoveStruct.teleport == 1.0)
+//	{
+//		`log("TELEPORT == 1.0");
+//		//teleportPawn_(localOSCScriptPlayermoveStruct.teleportx, localOSCScriptPlayermoveStruct.teleporty, localOSCScriptPlayermoveStruct.teleportz);
+//	}
 	
 	if(oscmoving)
 	{
-	//getOSCConsoleCommand();
-	callConsoleCommand(getOSCConsoleCommand());
-	//`log("CONSOLE COMMAND: "$getOSCConsoleCommand());
 	
-	localOSCFingerControllerStruct = getOSCFingerController();
+		//getOSCConsoleCommand();
+		callConsoleCommand(getOSCConsoleCommand());
+		//`log("CONSOLE COMMAND: "$getOSCConsoleCommand());
+	
+		localOSCFingerControllerStruct = getOSCFingerController();
 		setOSCFingerTouches(localOSCFingerControllerStruct);
 		// OSC Script data for OSC control over pawns and camera
 		//`log("Before setSCScriptPlayermoveData");
 		setOSCScriptPlayermoveData(getOSCScriptPlayermove());
 		setOSCScriptCameramoveData(getOSCScriptCameramove());
+		setOSCScriptPlayerTeleportData(getOSCScriptPlayerTeleport());
+		
 		//`log("After setSCScriptPlayermoveData");		
+		//callTeleport();
 	}
 	
 	testInputData(); // rkh testing input data

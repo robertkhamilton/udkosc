@@ -197,6 +197,14 @@ struct OSCScriptPlayermove
 	float airspeed;
 };
 
+struct OSCScriptPlayerTeleport
+{
+	float teleport;
+	float teleportx;
+	float teleporty;
+	float teleportz;
+};
+
 struct OSCConsoleCommand
 {
 	float command;
@@ -276,6 +284,7 @@ __declspec(dllexport)FVector* getOSCFinger1();
 // OSC Script calls
 __declspec(dllexport) OSCScriptPlayermove getOSCScriptPlayermove();
 __declspec(dllexport) OSCScriptCameramove getOSCScriptCameramove();
+__declspec(dllexport) OSCScriptPlayerTeleport getOSCScriptPlayerTeleport();
 
 // OSC Console Command call
 __declspec(dllexport) float getOSCConsoleCommand();
