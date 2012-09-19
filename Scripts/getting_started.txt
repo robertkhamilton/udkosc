@@ -1,149 +1,152 @@
 
 Controlling OSC Actor and Camera with OSCControl
 
-UDKOSC has been updated to allow independent remote control of a primary Actor and Camera view. By sending Open Sound Control (OSC) messages into UDKOSC, users can independently control an Actor as well as that user's attached Camera. At this time only a single actor and camera can be controlled.
+	UDKOSC has been updated to allow independent remote control of a primary Actor and Camera view. By sending Open Sound Control (OSC) messages into UDKOSC, users can independently control an Actor as well as that user's attached Camera. At this time only a single actor and camera can be controlled.
 
-To facilitate scripting of both Actor and Camera motions such as those used in Machinima scenes, a small Ruby application has been added to the UDKOSC projects in the udkosc/Scripts directory. Users can create scripts controlling both Actor and Camera movements in the input.txt file, which feed a series of motions and actions through the ruby script, formatting them as valid OSC messages, and sending them to the desired IP and PORT of a running UDKOSC server.
+	To facilitate scripting of both Actor and Camera motions such as those used in Machinima scenes, a small Ruby application has been added to the UDKOSC projects in the udkosc/Scripts directory. Users can create scripts controlling both Actor and Camera movements in the input.txt file, which feed a series of motions and actions through the ruby script, formatting them as valid OSC messages, and sending them to the desired IP and PORT of a running UDKOSC server.
 
-OSCControl currently creates a time-ordered array of valid OSC messages and bundles and subsequently streams entire control scripts serially, meaning any timed commands written in the script will be sent in an ordered fashion. So at each execution of OSCControl, the generated batch of OSC messages and bundles are streamed out to the desired target host and port in real-time.At this time, OSCControl is not generating valid timetags on its own, though each message and bundle is formatted to contain timetags in the future.
+	OSCControl currently creates a time-ordered array of valid OSC messages and bundles and subsequently streams entire control scripts serially, meaning any timed commands written in the script will be sent in an ordered fashion. So at each execution of OSCControl, the generated batch of OSC messages and bundles are streamed out to the desired target host and port in real-time.At this time, OSCControl is not generating valid timetags on its own, though each message and bundle is formatted to contain timetags in the future.
 
-To record and playback scripts without the (minimal) overhead of running OSCControl, two helper scripts, "oscrecorder.rb" and "oscplayer.rb" are included, which respectively encode OSC messages/bundles using YAML. 
+	To record and playback scripts without the (minimal) overhead of running OSCControl, two helper scripts, "oscrecorder.rb" and "oscplayer.rb" are included, which respectively encode OSC messages/bundles using YAML. 
 
 SETUP
 
-OSCControl uses both the "rubygems" and "osc-ruby" Ruby gems. To install, at a command-line type "gem install rubygems" and "gem install "osc-ruby". To use the included oscrecorder.rb and oscplayer.rb scripts, the YAML gem must be installed, using "gem install yaml".
+	OSCControl uses both the "rubygems" and "osc-ruby" Ruby gems. To install, at a command-line type "gem install rubygems" and "gem install "osc-ruby". To use the included oscrecorder.rb and oscplayer.rb scripts, the YAML gem must be installed, using "gem install yaml".
 
 
 RUNNING OSCControl 
 
-OSCControl can be run either through a Ruby IDE such as RubyMine, or from a standard Terminal/Command-Line. 
+	OSCControl can be run either through a Ruby IDE such as RubyMine, or from a standard Terminal/Command-Line. 
 
-OSC Target IP/HOSTNAME and PORT can be set when launching from a command line using this syntax:
+	OSC Target IP/HOSTNAME and PORT can be set when launching from a command line using this syntax:
 
-   ruby osccontrol.rb <HOSTNAME> <PORT>
+	ruby osccontrol.rb <HOSTNAME> <PORT>
 
-So to target port 6666 on IP address 192.168.0.10, one would use:
+	So to target port 6666 on IP address 192.168.0.10, one would use:
 
-   ruby osccontrol.rb 192.168.0.10 6666
+   	ruby osccontrol.rb 192.168.0.10 6666
 
-Currently, by default OSCControl will target port "7001" with HOSTNAME "localhost".
+	Currently, by default OSCControl will target port "7001" with HOSTNAME "localhost".
 
 
 COMMAND SYNTAX
 
-Scripting commands are formateed in a human-readable format. There are two primary classes of scripting commands, those that control Actors and those that control Cameras.
+	Scripting commands are formateed in a human-readable format. There are two primary classes of scripting commands, those that control Actors and those that control Cameras.
 
-Actor or "Player" commands start with "playermove", and are followed by a series of parameters, their associated target values, an optional "slew" time, and a userid number.
+	Actor or "Player" commands start with "playermove", and are followed by a series of parameters, their associated target values, an optional "slew" time, and a userid number.
 
-For example, a simple command to set a player's speed to 4000 (approximately 10x the default UDK Actor speed), we would use:
+	For example, a simple command to set a player's speed to 4000 (approximately 10x the default UDK Actor speed), we would use:
 
-   playermove speed 4000.0 1
+   	playermove speed 4000.0 1
    
-Where "4000.0" is the value of the player's speed parameter. As there is no "slew" time associated with this message, the speed change will happen instantly, resulting in an OSC message that looks like:
+	Where "4000.0" is the value of the player's speed parameter. As there is no "slew" time associated with this message, the speed change will happen instantly, resulting in an OSC message that looks like:
 
-     /udkosc/script/playermove/speed 4000.0
+    /udkosc/script/playermove/speed 4000.0
   
-Note that while the userid is set to "1", as OSCControl currently only supports single users, this value is for the time being essentially ignored.
+	Note that while the userid is set to "1", as OSCControl currently only supports single users, this value is for the time being essentially ignored.
 
-We can make this call more interesting by changing an actors speed from its current value (stored in OSCControl) to the target value ("4000.0" in this example) over a period of time, represented in milli-seconds. Here we call this a "slew" value.
+	We can make this call more interesting by changing an actors speed from its current value (stored in OSCControl) to the target value ("4000.0" in this example) over a period of time, represented in milli-seconds. Here we call this a "slew" value.
 
-   playermove speed 4000.0 200.0 1
+	playermove speed 4000.0 200.0 1
    
-      /udkosc/script/playermove/speed 200.000000 
-      /udkosc/script/playermove/speed 400.000000 
-      /udkosc/script/playermove/speed 600.000000 
-      /udkosc/script/playermove/speed 800.000000 
-      /udkosc/script/playermove/speed 1000.000000 
-      /udkosc/script/playermove/speed 1200.000000 
-      /udkosc/script/playermove/speed 1400.000000 
-      /udkosc/script/playermove/speed 1600.000000 
-      /udkosc/script/playermove/speed 1800.000000 
-      /udkosc/script/playermove/speed 2000.000000 
-      /udkosc/script/playermove/speed 2200.000000 
-      /udkosc/script/playermove/speed 2400.000000 
-      /udkosc/script/playermove/speed 2600.000000 
-      /udkosc/script/playermove/speed 2800.000000 
-      /udkosc/script/playermove/speed 3000.000000 
-      /udkosc/script/playermove/speed 3200.000000 
-      /udkosc/script/playermove/speed 3400.000000 
-      /udkosc/script/playermove/speed 3600.000000 
-      /udkosc/script/playermove/speed 3800.000000 
-      /udkosc/script/playermove/speed 4000.000000 
+	/udkosc/script/playermove/speed 200.000000 
+	/udkosc/script/playermove/speed 400.000000 
+	/udkosc/script/playermove/speed 600.000000 
+	/udkosc/script/playermove/speed 800.000000 
+	/udkosc/script/playermove/speed 1000.000000 
+	/udkosc/script/playermove/speed 1200.000000 
+	/udkosc/script/playermove/speed 1400.000000 
+	/udkosc/script/playermove/speed 1600.000000 
+	/udkosc/script/playermove/speed 1800.000000 
+	/udkosc/script/playermove/speed 2000.000000 
+	/udkosc/script/playermove/speed 2200.000000 
+	/udkosc/script/playermove/speed 2400.000000 
+	/udkosc/script/playermove/speed 2600.000000 
+	/udkosc/script/playermove/speed 2800.000000 
+	/udkosc/script/playermove/speed 3000.000000 
+	/udkosc/script/playermove/speed 3200.000000 
+	/udkosc/script/playermove/speed 3400.000000 
+	/udkosc/script/playermove/speed 3600.000000 
+	/udkosc/script/playermove/speed 3800.000000 
+	/udkosc/script/playermove/speed 4000.000000 
 
-So over the slew period of 200.0 ms, we ramp the player's speed parameter from its current value (here a value of "0") to the target value of "4000.0".
+	So over the slew period of 200.0 ms, we ramp the player's speed parameter from its current value (here a value of "0") to the target value of "4000.0".
 
 
 
 ACTOR CONTROLS
 
-Actors can be controlled using the following commands. Note that some commands can be used with slew timings while others, which typically control single discrete events like "jump" or "crouch" cannot be used with slew timings. A description of each control follows:
+	Actors can be controlled using the following commands. Note that some commands can be used with slew timings while others, which typically control single discrete events like "jump" or "crouch" cannot be used with slew timings. A description of each control follows:
 
-   playermove x <degree-value> <ms-slew> <userid>
-   playermove y <degree-value> <ms-slew> <userid>
-   playermove z <degree-value> <ms-slew> <userid>   
-   playermove speed <value> <ms-slew> <userid>
-   playermove jump <height-value> <userid>
-   playermove teleport <x-value> <y-value> <z-value> <userid>
-   playermove stop <userid>
+   	playermove x <degree-value> <ms-slew> <userid>
+   	playermove y <degree-value> <ms-slew> <userid>
+   	playermove z <degree-value> <ms-slew> <userid>   
+   	playermove speed <value> <ms-slew> <userid>
+   	playermove jump <height-value> <userid>
+   	playermove teleport <x-value> <y-value> <z-value> <userid>
+   	playermove stop <userid>
     
    
-   Player X, Y, Z Directional Controls
+   	Player X, Y, Z Directional Controls
    
-   To move an actor in a specific direction, the "playermove" commands with X, Y, and Z coordinates are used to set the actors direction vector with a degree value relative to the world's absolute coordinate grid. If the user's speed is set to be non-0, setting the X and Y coordinates will start the user moving in the desired direction. As the Z coordinate represents the vertical plane, Z coordinate motion will only cause effect if the user is currently in a flying state.
+   	To move an actor in a specific direction, the "playermove" commands with X, Y, and Z coordinates are used to set the actors direction vector with a degree value relative to the world's absolute coordinate grid. If the user's speed is set to be non-0, setting the X and Y coordinates will start the user moving in the desired direction. As the Z coordinate represents the vertical plane, Z coordinate motion will only cause effect if the user is currently in a flying state.
 
-   Player Stop Control
+   	Player Stop Control
    
-   To stop an actor's motion, we use the "playermove stop <userid>" command. This will stop the actor moving. No value needs to be sent with a stop command and after a stop command is sent, the next playermove x, y, z, or jump command will toggle the stop state off, allowing the user to move freely.
+   	To stop an actor's motion, we use the "playermove stop <userid>" command. This will stop the actor moving. No value needs to be sent with a stop command and after a stop command is sent, the next playermove x, y, z, or jump command will toggle the stop state off, allowing the user to move freely.
    
-   Player Speed Control
+   	Player Speed Control
    
-   Actor speed can be set using "playermove speed <value> <ms-slew> <userid>". The UDK default speed is ~300-400 in UnrealScript. A speed of "0" will not allow Actors to move in any direction. Speed values can be slewed, to create accelerations or decelerations.
+   	Actor speed can be set using "playermove speed <value> <ms-slew> <userid>". The UDK default speed is ~300-400 in UnrealScript. A speed of "0" will not allow Actors to move in any direction. Speed values can be slewed, to create accelerations or decelerations.
    
-   Player Jump Control
+   	Player Jump Control
    
-   An Actor can be made to jump by sending a "playermove jump <height-value> <userid>" message. The height to which the user will jump is sent as the value for the jump message. 
+   	An Actor can be made to jump by sending a "playermove jump <height-value> <userid>" message. The height to which the user will jump is sent as the value for the jump message. 
    
-   Player Teleport Control
+   	Player Teleport Control
 
-   Actors can be moved to any coordinate location in the current environment instantly using the teleport command. This is useful in starting actor motions and actions from a specific location. 	
+   	Actors can be moved to any coordinate location in the current environment instantly using the teleport command. This is useful in starting actor motions and actions from a specific location. 	
    
    
-   * Coming soon
-   playermove fly <userid>
-   playermove crouch <on/off> <userid>
-   playermove airspeed <value> <ms-slew> <userid>
+   	* Coming soon
+   	playermove fly <userid>
+   	playermove crouch <on/off> <userid>
+   	playermove airspeed <value> <ms-slew> <userid>
    
    
 CAMERA CONTROLS
 
-The Camera associated with an actor can be controlled independently using the following commands. Note that camera controls are formatted in much the same way as player controls except that there is currently no "cameraid" in use:
+	The Camera associated with an actor can be controlled independently using the following commands. Note that camera controls are formatted in much the same way as player controls except that there is currently no "cameraid" in use:
 
-   cameramove x <degree-value> <ms-slew> 
-   cameramove y <degree-value> <ms-slew> 
-   cameramove z <degree-value> <ms-slew> 
-   cameramove pitch <degree-value> <ms-slew> 
-   cameramove yaw <degree-value> <ms-slew> 
-   cameramove roll <degree-value> <ms-slew> 
+   	cameramove x <degree-value> <ms-slew> 
+   	cameramove y <degree-value> <ms-slew> 
+   	cameramove z <degree-value> <ms-slew> 
+   	cameramove pitch <degree-value> <ms-slew> 
+   	cameramove yaw <degree-value> <ms-slew> 
+   	cameramove roll <degree-value> <ms-slew> 
    
-   Camera X, Y, Z Coordinate controls
+   	Camera X, Y, Z Coordinate controls
    
-   It should be noted that Camera coordinate controls operate differently than Player coordinate controls. Where Player controls set the "direction" in which the player will move, Camera controls set the "location" to which the camera will move. So a "cameramove x 1000.0" control message will instantly move the camera to world-coordinate x=1000.0. The similar playermove call would turn the player to 1000 degrees and start them moving at the current speed.
+   	Camera coordinate controls operate differently than Player coordinate controls. Where Player controls set the "direction" in which the player will move, Camera controls set the "location" to which the camera will move. So a "cameramove x 1000.0" control message will instantly move the camera to world-coordinate x=1000.0. The similar playermove call would turn the player to 1000 degrees and start them moving at the current speed.
    
 STATE CONTROLS
-
-   
-	wait <ms-value>
-
+    
+    As OSCControl sends OSC messages as a stream of real-time output, we can use the "wait" command with a milli-second value to pad time before the next osc message is sent. So a message "wait 5000.0" would cause the output of messages to wait for 5 seconds before continuing on to the output of the next command.
 
 BLOCK controls
 
-In addition to single-thread messages (messages or slews of messages that occur in series), OSCControl allows for the creation of "blocks" of messages, which will occur and slew concurrently. These messages will be sent as OSC bundles, which package a set of messages as a single bundle, arriving at the client at the same time.
+    In addition to single-thread messages (messages or slews of messages that occur in series), OSCControl allows for the creation of "blocks" of messages, which will occur and slew concurrently. These messages will be sent as OSC bundles, which package a set of messages as a single bundle, arriving at the client at the same time.
 
-Block control messages are formatted using square braces, marking the opening and closing of a given block:
+    Block control messages are formatted using square braces, marking the opening and closing of a given block:
 
-   [
-   playermove speed 1000.0 5000.0 1
-   playermove x 300.0 5000.0 1
-   cameramove z 400.0 
-   cameramove x 1000.0 400.0
-   ]
+    [
+    playermove speed 1000.0 5000.0 1
+    playermove x 300.0 5000.0 1
+    cameramove z 400.0 
+    cameramove x 1000.0 400.0
+    ]
+
+	In this example, the playermove speed and x messages as well as the cameramove x message will all slew to their target values over the time specified in their slew parameter. The "cameramove z 400.0" message has no slew value so it will be output at the beginnning of the block. The entire block will run for 5000.0 ms, as that is the largest time value set in the block. Following the completion of the block, the next message in the script will fire. 
+	
+	So as this block executes, the cameramove will instantly move to a height (Z value) of 400.0, the playermove speed value and the playermove X value will slew from their current values to their respective targe values and 300.00 of 1000.0 over 5 seconds, and at the same time, the camera x parameter will slew to a target value of 1000.0 over 400.0 ms.
+	
