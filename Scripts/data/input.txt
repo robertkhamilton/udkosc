@@ -1,28 +1,54 @@
-playermove teleport 0 0 3900 1
-# playermove teleportx 600 1
-# [
-# playermove speed 600 1
-# playermove x 100 100 1
-# playermove crouch 1 1
-# ]
-# cameramove z 150 20
-# cameramove pitch -90 20
-# cameramove x -3500 20
-# cameramove pitch 70 20
-# playermove speed 5 1
-#
-# wait 1000
-# playermove jump 1000.0 1
-# playermove x -800 300 1
-# wait 1000
-# playermove stop 1
-#
-# playermove jump 1000.0 1
-# wait 3000
-# playermove jump 1000.0 1
-#
-# MOVES TO FACE ACTOR
-# cameramove z 100 20
-# cameramove yaw 180 20
-# cameramove x -3000 20
-# playermove jump 1000.0 1
+playermove stop 1
+playermove x 0 1
+playermove y 0 1
+playermove z 0 1
+playermove stop 1
+playermove teleport 0.0 0.0 400 20 1
+cameramove x 0 20
+cameramove y 0 20
+cameramove z 3000 20
+cameramove pitch -90 20
+cameramove yaw 0 20
+cameramove roll 0 20
+playermove speed 500 20 1
+playermove pitch 0 20 1
+playermove yaw 0 20 1
+playermove roll 0 20 1
+wait 2000
+cameramove z -2700 2000
+[
+cameramove x -590 1000
+cameramove pitch 75 1000
+]
+[
+playermove y 90 1000 1
+cameramove y 1200 3000
+]
+playermove x 180 1000 1
+playermove y -270 2000 1
+playermove x -180 2000 1
+playermove y -360 2000 1
+[
+playermove x -90 1000 1
+playermove y 0 1000 1
+]
+playermove stop 1
+wait 1000
+playermove x 0 20 1
+cameramove y -1000 2000
+playermove stop 1
+[
+cameramove yaw -90 2000
+cameramove x 1000 2000
+]
+playermove x -90 20 1
+cameramove x 200 2000
+playermove stop 1
+cameramove x -300 2000
+[
+cameramove y -200 2000
+cameramove yaw -70 2000
+]
+cameramove y -100 2000
+playermove x 45 500 1
+playermove stop 1

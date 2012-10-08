@@ -4,7 +4,7 @@ require 'osc-ruby'
 # DECLARE CONSTANTS
 #HOST = "localhost"
 #DEFAULTHOST = "10.0.1.100"
-DEFAULTHOST = "localhost"
+DEFAULTHOST = "192.168.177.239"
 DEFAULTPORT = "7001"
 CONNECTION = [DEFAULTHOST, DEFAULTPORT]
 SPACE = " "
@@ -21,9 +21,9 @@ PLAYERZ = "z"
 PLAYERSPEED = "speed"
 PLAYERJUMP = "jump"
 PLAYERCROUCH = "crouch"
-PLAYERPITCH = "playerpitch"
-PLAYERYAW = "playeryaw"
-PLAYERROLL = "playerroll"
+PLAYERPITCH = "pitch"
+PLAYERYAW = "yaw"
+PLAYERROLL = "roll"
 PLAYERSTOP = "stop"
 PLAYERTELEPORT = "teleport"
 CAMERAX = "x"
@@ -44,8 +44,8 @@ OSCBUNDLE = "oscbundle"
 ROTATIONCONSTANT = 182.044403
 COMMENT = "#"
 CONSOLE = "console"
-
 BEHINDVIEW = "behindview"
+BLANK = ""
 $commands = Hash.new
 $commands[BEHINDVIEW] = 1
 
@@ -174,6 +174,9 @@ def preProcessInput(lineArray)
     elsif !$validCommands.include?(inputArray[0])
       puts "INPUT COMMAND #{inputArray[0]} IS INVALID. VALID COMMANDS ARE:", $validCommands
       Process.exit
+    elsif inputArray[0] == BLANK
+      # do nothing for blank lines
+    elsif inputArray[0] == NIL
     end
   }
 
@@ -222,7 +225,7 @@ def createMove(params, val, *timetag)
 
   messageArray = Array.new
   noProcessArray = [METHOD, SLEW, USERID, WAIT]
-  cameraParams = [CAMERAPITCH, CAMERAYAW, CAMERAYAW]
+  rotationParams = [CAMERAPITCH, CAMERAYAW, CAMERAYAW, PLAYERPITCH, PLAYERYAW, PLAYERROLL]
 
   # If this call has a slew value, create slew set of messages
   if params.has_key?(SLEW)
@@ -232,7 +235,7 @@ def createMove(params, val, *timetag)
     params.each_pair do |k,v|
 
       #Scale Camera vals by constant: ROTATIONCONSTANT
-      if cameraParams.include?(k)
+      if rotationParams.include?(k)
         v = v.to_f() * ROTATIONCONSTANT
       end
 
@@ -263,16 +266,19 @@ def createMove(params, val, *timetag)
         end
       end
     end
+
   else # if not a SLEW value...
 
     params.each_pair do |k,v|
       if !noProcessArray.include?(k)
 
+        if rotationParams.include?(k)
+          v = v.to_f() * ROTATIONCONSTANT
+        end
+
         if k==PLAYERSTOP #|| k== PLAYERCROUCH
           puts k
           $currentVals["#{val}#{k}"] = 1.0
-          # msg = OSC::Message.new_with_time("#{localRoot}/#{PLAYERSPEED}", 1000.00, NIL, 0.0)
-          # msg = OSC::Message.new_with_time("#{localRoot}/#{PLAYERSTOP}", 1000.00, NIL, 1)
           msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, 1)
         else
 
@@ -316,6 +322,8 @@ def createMove(params, val, *timetag)
             messageArray << oscMsg
 =end
           else
+            puts "CURRENTVALS: #{val}: #{k}"
+
             $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
           end
 
@@ -643,12 +651,20 @@ if ARGV[1] != nil
   CONNECTION[1] = ARGV[1]
 end
 
+if ARGV[2] !=nil
+  CONNECTION[2] = ARGV[2]
+end
 
 # Create queue (Array) to hold created OSC Messages
 sendQueue = Array.new
 
 # GET INPUT FILE FROM COMMANDLINE
-inputfile = File.new("./data/input.txt", "rb")
+if CONNECTION[2] !=nil
+  inputfile = File.new(CONNECTION[2], "rb")
+else
+  inputfile = File.new("./data/input.txt", "rb")
+end
+
 linearray = inputfile.readlines
 inputfile.close
 
