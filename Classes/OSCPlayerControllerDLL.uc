@@ -19,7 +19,8 @@ var vector object3;
 var vector object4;
 var vector object5;
 var Rotator RLeft, RRight;
-
+// testing
+//var Rotator OSCRotation;
 
 /*
 struct OSCMovementStruct
@@ -126,6 +127,9 @@ struct OSCScriptPlayermoveStruct
 	var float id;
 	var float fly;
 	var float airspeed;
+	var float pitch;
+	var float yaw;
+	var float roll;
 };
 
 struct OSCScriptCameramoveStruct
@@ -539,7 +543,7 @@ exec function setAllProjectileAccelRate(int val)
 	}
 
 }
-	
+
 simulated exec function teleportPawn(float x, float y, float z)
 {
 	if( (Role==ROLE_Authority) || (RemoteRole<ROLE_SimulatedProxy) )
@@ -623,7 +627,25 @@ state OSCPlayerMoving
 		`log('IN OSCPLAYERMOVING');
 	
 	}
+
+/*
+	exec function oscRotate(float xval, float yval, float zval)
+	{
+		local vector locVect;
+		locVect.X = xval;
+		locVect.Y = yval;
+		locVect.Z = zval;
 	
+		OSCRotation.Pitch=xval;
+		OSCRotation.Roll=yval;
+		OSCRotation.Yaw=zval;
+	
+	
+		Pawn.UpdatePawnRotation(Rotator(locVect));
+		`log("OSCROTATETEST *******************: "$xval);
+	
+	}
+*/	
 	function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, Rotator DeltaRot)
 	{
 	
@@ -640,7 +662,7 @@ state OSCPlayerMoving
 		local vector			X,Y,Z, NewAccel;
 		local eDoubleClickDir	DoubleClickMove;
 		local rotator			OldRotation;
-		local rotator			OSCRotation;
+		local rotator			OSCCameraRotation;
 		local bool				bSaveJump;
 		local bool				bOSCJump;
 		local float				OSCJump;
@@ -657,41 +679,18 @@ state OSCPlayerMoving
 		OSCGroundSpeed = localOSCScriptPlayermoveStruct.speed;
 		OSCJump = localOSCScriptPlayermoveStruct.jump;
 		OSCStop = localOSCScriptPlayermoveStruct.stop;
-		//OSCTeleport = localOSCScriptPlayermoveStruct.teleport;
-		
-		//`log("OSCStop: "$OSCStop);
-		
-		//OSCVector.X = localOSCFingerControllerStruct.f1X;		
-		//OSCVector.Y = localOSCFingerControllerStruct.f1Y;
-		//OSCVector.Z = localOSCFingerControllerStruct.f1Z;		
-		//OSCGroundSpeed = localOSCFingerControllerStruct.f1on;
-		//OSCRotation = (Pitch=localOSCFingerControllerStruct.f2X, Roll=localOSCFingerControllerStruct.f2Y, Yaw=localOSCFIngerControllerStruct.f2Z);
-		
-//		OSCRotation.Pitch=localOSCFingerControllerStruct.f2X;
-//		OSCRotation.Roll=localOSCFingerControllerStruct.f2Y;
-//		OSCRotation.Yaw=localOSCFingerControllerStruct.f2Z;
 
-		OSCRotation.Pitch=localOSCScriptCameramoveStruct.pitch;
-		OSCRotation.Roll=localOSCScriptCameramoveStruct.roll;
-		OSCRotation.Yaw=localOSCScriptCameramoveStruct.yaw;
+		OSCCameraRotation.Pitch=localOSCScriptCameramoveStruct.pitch;
+		OSCCameraRotation.Roll=localOSCScriptCameramoveStruct.roll;
+		OSCCameraRotation.Yaw=localOSCScriptCameramoveStruct.yaw;
 		
-		//`log("OSCRotation.Pitch = "$OSCRotation.Pitch);
-		//`log("OSCRotation.Roll = "$OSCRotation.Roll);
-		//`log("OSCRotation.Yaw = "$OSCRotation.Yaw);
-		
-//		OSCCamera.X = localOSCFingerControllerStruct.f3X;
-//		OSCCamera.Y = localOSCFingerControllerStruct.f3Y;
-//		OSCCamera.Z = localOSCFingerControllerStruct.f3Z;
+		`log("Camera Coordinates: "$OSCCameraRotation.Pitch$", "$OSCCameraRotation.Yaw$", "$OSCCameraRotation.Roll);
 		
 		OSCCamera.X = localOSCScriptCameramoveStruct.x;
 		OSCCamera.Y = localOSCScriptCameramoveStruct.y;
 		OSCCamera.Z = localOSCScriptCameramoveStruct.z;
 
 		OSCPawn(Pawn).setOSCCamera(OSCCamera);
-		
-		//OSCJump = localOSCFingerControllerStruct.f2on;
-		
-		//bOSCJump = false;
 		
 		if (OSCJump > 0.0) 
 		{
@@ -700,10 +699,10 @@ state OSCPlayerMoving
 		}
 		
 	
-		`log("localOSCScriptPlayerTeleportStruct.teleport:  "$localOSCScriptPlayerTeleportStruct.teleport);
-		`log("localOSCScriptPlayerTeleportStruct.teleportx:  "$localOSCScriptPlayerTeleportStruct.teleportx);
-		`log("localOSCScriptPlayerTeleportStruct.teleporty:  "$localOSCScriptPlayerTeleportStruct.teleporty);
-		`log("localOSCScriptPlayerTeleportStruct.teleportz:  "$localOSCScriptPlayerTeleportStruct.teleportz);
+		//`log("localOSCScriptPlayerTeleportStruct.teleport:  "$localOSCScriptPlayerTeleportStruct.teleport);
+		//`log("localOSCScriptPlayerTeleportStruct.teleportx:  "$localOSCScriptPlayerTeleportStruct.teleportx);
+		//`log("localOSCScriptPlayerTeleportStruct.teleporty:  "$localOSCScriptPlayerTeleportStruct.teleporty);
+		//`log("localOSCScriptPlayerTeleportStruct.teleportz:  "$localOSCScriptPlayerTeleportStruct.teleportz);
 	
 	if(localOSCScriptPlayerTeleportStruct.teleport > 0.0)
 	{
@@ -721,10 +720,15 @@ state OSCPlayerMoving
 			// Update acceleration.
 			NewAccel = PlayerInput.aForward*X + PlayerInput.aStrafe*Y;
 			NewAccel.Z = 0;
+
+			// TESTING
+//			NewAccel = OSCVector;
+NewAccel = OSCVector.X*X + OSCVector.Y*Y;
 			NewAccel = Pawn.AccelRate * Normal(NewAccel);
 
 			//ROB HACKING
-			NewAccel = OSCVector;
+//			NewAccel = OSCVector;
+
 			if(OSCStop == 1)
 			{
 				NewAccel.X = 0;
@@ -744,15 +748,15 @@ state OSCPlayerMoving
 
 			// Update rotation.
 			OldRotation = Rotation;
-			SetRotation(OSCRotation);
+			SetRotation(OSCCameraRotation);
 			//UpdateRotation( DeltaTime );
-			//Rotation = OSCRotation;
+			//Rotation = OSCCameraRotation;
 			
 			bDoubleJump = false;
-
-			// Add OSC Rotation
-			Pawn.FaceRotation(OSCRotation, DeltaTime);
-			//Pawn.FaceRotation(RInterpTo(OldRotation, OSCRotation, DeltaTIme, 90000, true), DeltaTime);
+	
+			// Add OSC Rotation	
+			//Pawn.FaceRotation(OSCCameraRotation, DeltaTime);
+			//Pawn.FaceRotation(RInterpTo(OldRotation, OSCCameraRotation, DeltaTIme, 90000, true), DeltaTime);
 			
 			//`log("bOSCJump: "$bOSCJump);
 			//`log("OSCJump: "$OSCJump);
@@ -790,11 +794,11 @@ state OSCPlayerMoving
 
 			if( Role < ROLE_Authority ) // then save this move and replicate it
 			{
-				ReplicateMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - OSCRotation);
+				ReplicateMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - OSCCameraRotation);
 			}
 			else
 			{
-				ProcessMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - OSCRotation);
+				ProcessMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - OSCCameraRotation);
 			}
 			bPressedJump = bSaveJump;
 			//bPressedJump = bOSCJump;

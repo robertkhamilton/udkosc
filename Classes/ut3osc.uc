@@ -57,4 +57,7 @@ defaultproperties
  //DefaultInventory[2] = class'UT3OSC.OSCWeap_RocketLauncher_Content'
  DefaultInventory[2] = class'UT3OSC.OSCWeap_LinkGun'
  //fingerTouchArray=(object1, object2, object3, object4, object5);
+ 
+ BotClass=class'UT3OSC.OSCBot'
+ 
  }

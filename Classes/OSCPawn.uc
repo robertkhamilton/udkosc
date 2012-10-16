@@ -44,6 +44,9 @@ var float seekingTurnRate;
 var vector	OSCCamera;
 var bool OSCFreeCamera;
 
+// testing
+var Rotator OSCRotation;
+
 defaultproperties
 {
 	//groundspeed=10000.0
@@ -164,9 +167,15 @@ struct OSCGameParams
 	var float gameSpeed;
 };
 
-
+struct OSCScriptPlayerRotationStruct
+{
+	var float pitch;
+	var float yaw;
+	var float roll;
+};
 
 //Global vars for this class
+var OSCScriptPlayerRotationStruct localOSCScriptPlayerRotationStruct;
 var OSCMessageStruct localOSCMessageStruct;
 var OSCGameParams localOSCGameParamsStruct;
 var OSCFingerController localOSCFingerControllerStruct;
@@ -176,7 +185,6 @@ var float lastGameSpeed;
 var OSCParams OSCParameters;
 var string OSCHostname;
 var int OSCPort;
-
 
 dllimport final function sendOSCpointClick(PointClickStruct a);	
 dllimport final function sendOSCPlayerState(PlayerStateStruct a);
@@ -188,7 +196,7 @@ dllimport final function float getOSCTestfloat();
 dllimport final function OSCFingerController getOSCFingerController();
 dllimport final function vector getOSCFinger1();
 dllimport final function initOSCReceiver();
-
+dllimport final function OSCScriptPlayerRotationStruct getOSCScriptPlayerRotation();
 
 //dllimport final function sendOSCPlayerStateTEST(PlayerStateStructTEST a);
 
@@ -789,6 +797,34 @@ state OSCPlayerMoving
 		`log("PAWN: IN OSCPLAYERMOVING");
 	
 	}
+	/*
+	exec function movetop()
+	{
+	local vector locat;
+	locat.X = 500.0;
+	locat.Y = 0;
+	locat.Z = 0;
+	
+	MoveTo(locat);
+	
+	}
+	*/
+	exec function oscRotate(float xval, float yval, float zval)
+	{
+		local vector locVect;
+		locVect.X = xval;
+		locVect.Y = yval;
+		locVect.Z = zval;
+	
+		OSCRotation.Pitch=xval;
+		OSCRotation.Roll=yval;
+		OSCRotation.Yaw=zval;
+	
+	
+		UpdatePawnRotation(Rotator(locVect));
+		`log("OSCROTATETEST *******************: "$xval);
+	
+	}
 	
 	simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot, out float out_FOV )
 	{
@@ -814,6 +850,35 @@ state OSCPlayerMoving
 		return true;
 
 	}	
+	
+	simulated function setOSCScriptPlayerRotationData(OSCScriptPlayerRotationStruct fstruct)
+	{
+		localOSCScriptPlayerRotationStruct = fstruct;
+	}
+
+	simulated function setOSCRotation()
+	{
+		local vector localPawnRotation;
+		
+		`log("localPawnRotation.X: "$localOSCScriptPlayerRotationStruct.Pitch );
+		`log("localPawnRotation.Y: "$localOSCScriptPlayerRotationStruct.Yaw );
+		`log("localPawnRotation.Z: "$localOSCScriptPlayerRotationStruct.Roll );
+				
+		localPawnRotation.X = localOSCScriptPlayerRotationStruct.Pitch;
+		localPawnRotation.Y = localOSCScriptPlayerRotationStruct.Yaw;
+		localPawnRotation.Z = localOSCScriptPlayerRotationStruct.Roll;
+		
+		UpdatePawnRotation(Rotator(localPawnRotation));
+		
+	}
+	
+	simulated function Tick(float DeltaTime)
+	{
+		setOSCScriptPlayerRotationData(getOSCScriptPlayerRotation());
+		
+		setOSCRotation();
+	}
+	
 }
 
 
@@ -848,9 +913,7 @@ simulated function Tick(float DeltaTime)
 	
 	lastGameGravity = localOSCGameParamsStruct.gameGravity;
 	lastGameSpeed = localOSCGameParamsStruct.gameSpeed;
-	
 
-	
 	
 	
 	
