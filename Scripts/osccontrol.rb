@@ -2,9 +2,7 @@ require 'rubygems'
 require 'osc-ruby'
 
 # DECLARE CONSTANTS
-#HOST = "localhost"
-#DEFAULTHOST = "10.0.1.100"
-DEFAULTHOST = "192.168.177.239"
+DEFAULTHOST = "localhost"
 DEFAULTPORT = "7001"
 CONNECTION = [DEFAULTHOST, DEFAULTPORT]
 SPACE = " "
@@ -46,6 +44,7 @@ COMMENT = "#"
 CONSOLE = "console"
 BEHINDVIEW = "behindview"
 BLANK = ""
+DEFAULTSPEED = 300.0
 $commands = Hash.new
 $commands[BEHINDVIEW] = 1
 
@@ -105,6 +104,8 @@ def preprocess(arr)
     # if playermove stop call
     if !localInBlock
 
+      break if inputArray[0] == nil
+
       if inputArray[0] == PLAYERMOVE
 
         if inputArray[1] == PLAYERSTOP
@@ -114,7 +115,8 @@ def preprocess(arr)
 
         elsif inputArray[1] == PLAYERSPEED
 
-          currentSpeed = inputArray[2]
+          # RKH - changed from "currentSpeed = "; keep in mind if issues
+          localcurrentSpeed = inputArray[2]
 
         elsif [PLAYERX, PLAYERY, PLAYERZ].include?(inputArray[1])
 
@@ -638,11 +640,15 @@ def createSortedBundle(messages)
 
 end
 
-ARGV.each do|a|
+
+ARGV.each_with_index do |a, index|
   # puts "Argument: #{a}"
-  address = a;
+  if a != nil
+    CONNECTION[index] = a
+  end
 end
 
+=begin
 if ARGV[0] != nil
   CONNECTION[0] = ARGV[0]
 end
@@ -654,6 +660,8 @@ end
 if ARGV[2] !=nil
   CONNECTION[2] = ARGV[2]
 end
+
+=end
 
 # Create queue (Array) to hold created OSC Messages
 sendQueue = Array.new
