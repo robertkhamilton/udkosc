@@ -10,7 +10,8 @@ class OSCPawn extends UTPawn
  notplaceable
  DLLBind(oscpack_1_0_2);
 
- 
+var int uid;
+
 var bool sendingOSC;	// toggle to send OSC for this pawn
 var bool receivingOSC; 	// receiving OSC flag to prevent multiple calls to oscpack to instantiate listener threads
 var bool sendDeltaOSC; // whether OSC messages are sent continuously or only on vector deltas
@@ -52,6 +53,9 @@ defaultproperties
 	//groundspeed=10000.0
 	seekingTurnRate=20.00000
 	
+	bHidden=false;
+	
+	
 	// for iPad
 	// x range = 0 to 320
 	// y range = 0 to 420
@@ -74,7 +78,12 @@ defaultproperties
 	OSCFingerWorldMin.Z = 0.00001
 */
 }
-
+/*
+event PostBeginPlay()
+{
+	super.PostBeginPlay();
+}
+*/
 
 struct MyPlayerStruct
 {
@@ -765,7 +774,7 @@ simulated event Landed(vector HitNormal, Actor FloorActor)
 
 function testInputData()
 {
-	`log("AAAAAAAAAAAAAAAAAA");
+	//`log("AAAAAAAAAAAAAAAAAA");
 	if(localOSCMessageStruct.test > 0.000)
 	{
 	`log("..."$localOSCMessageStruct.test$"...");
@@ -860,9 +869,9 @@ state OSCPlayerMoving
 	{
 		local vector localPawnRotation;
 		
-		`log("localPawnRotation.X: "$localOSCScriptPlayerRotationStruct.Pitch );
-		`log("localPawnRotation.Y: "$localOSCScriptPlayerRotationStruct.Yaw );
-		`log("localPawnRotation.Z: "$localOSCScriptPlayerRotationStruct.Roll );
+		//`log("localPawnRotation.X: "$localOSCScriptPlayerRotationStruct.Pitch );
+		//`log("localPawnRotation.Y: "$localOSCScriptPlayerRotationStruct.Yaw );
+		//`log("localPawnRotation.Z: "$localOSCScriptPlayerRotationStruct.Roll );
 				
 		localPawnRotation.X = localOSCScriptPlayerRotationStruct.Pitch;
 		localPawnRotation.Y = localOSCScriptPlayerRotationStruct.Yaw;
@@ -885,6 +894,9 @@ state OSCPlayerMoving
 
 simulated function Tick(float DeltaTime)
 {
+
+	//SetMeshVisibility(true);
+	
 	//local OSCMessageStruct localOSCMessageStruct;
 	
 	
@@ -962,4 +974,29 @@ simulated function WeaponFired(Weapon InWeapon, bool bViaReplication, optional v
 {
 	Super.WeaponFIred(InWeapon, bViaReplication, HitLocation);
 	//showHitLocation(HitLocation);
+}
+
+
+event Possess(Pawn inPawn, bool bVehicleTransition)
+{
+	//super.Possess(inPawn, bVehicleTransition);
+	SetMovementPhysics();
+	`log("******************DONE POSSESSING OSCPawn");
+
+}
+
+simulated function int getUID()
+{
+	return uid;
+}
+
+simulated function setUID(int val)
+{
+	if (uid >= 0)
+		`log("UID IS:"$uid);
+	else
+	{
+		`log("UID IS NONE");
+		uid = val;
+	}
 }

@@ -19,6 +19,17 @@ var vector object3;
 var vector object4;
 var vector object5;
 var Rotator RLeft, RRight;
+
+var array<int> OSCBotUIDs;
+var array<int> OSCPawnBotUIDs;
+
+var int OSCBotCount;
+var int OSCPawnBotCount;
+
+var Pawn newPawn;
+var array<Pawn> OSCBot_Pawns;
+var array<Pawn> OSCPawns;
+
 // testing
 //var Rotator OSCRotation;
 
@@ -171,6 +182,8 @@ dllimport final function OSCScriptPlayerTeleportStruct getOSCScriptPlayerTelepor
 
 defaultproperties 
 {
+	OSCBotCount=0;
+	OSCPawnBotCount=0;
 }
 
 // borrowing this for multiparameter testing
@@ -211,13 +224,249 @@ simulated event PreBeginPlay()
 //	OSCFingerOffsets = vect(-160.00000, -210.00000, 0.00001);	
 }
 
-function testInputData()
+simulated function testInputData()
 {
-	`log("BBBBBBBBBBB");
+	//`log("BBBBBBBBBBB");
 	if(localOSCMessageStruct.test > 0.000)
 	{
 	`log("..."$localOSCMessageStruct.test$"...");
 	}
+}
+
+/*
+simulated exec function testPawnRandomMove()
+{
+	local OSCPawnBot C;
+	local int uid;
+	
+	`log("IN testPawnRandomMove in OSCPlayerControllerDLL.uc");
+	
+	foreach WorldInfo.AllActors(class 'OSCPawnBot', C)
+	{
+		uid = C.getUID();
+		
+		//if (uid==valID)
+			//C.testTeleport(valID, valX, valY, valZ);
+	}
+}
+*/
+
+simulated exec function spawnPawnBot()
+{
+	local string PClassName;
+	local string CClassName;
+	local OSCPawnBot P;
+	local Controller C;
+	
+	local Vector PawnLocation;
+	local Rotator PawnRotation;
+	local class <actor> PNewClass;
+	local class <actor> CNewClass;
+	
+	PClassName = "UT3OSC.OSCPawnBot";
+	CClassName = "UT3OSC.OSCPawnController";	
+	
+	//PawnLocation = Pawn.Location;
+	PawnLocation.X = 0;		
+	PawnLocation.Y = 0;
+	PawnLocation.Z = 2000;
+	
+	PawnRotation = Pawn.Rotation; 
+	PNewClass = class<actor>(DynamicLoadObject(PClassName, class'Class'));
+	CNewClass = class<actor>(DynamicLoadObject(CClassName, class'Class'));
+
+	//spawn a new pawn and attach this controller
+	P = OSCPawnBot(Spawn(PNewClass, , ,PawnLocation,PawnRotation));	
+	
+	OSCPawnBotCount++;
+	P.setUID(OSCPawnBotCount);	
+	P.SetOwner(C);
+	P.SetHidden(false);
+
+	C = Controller(Spawn(CNewClass));
+
+	if(P!=None)
+	{
+		C.Possess(P, false);
+		OSCPawns.addItem(P);
+		`log("Added OSCPawnBot with uid: "$P.getUID());
+	}
+	else
+	{
+		`log("P WAS NONE***********");
+	}	
+}
+
+simulated exec function testSpawnPawn()
+{
+	local string PClassName;
+	local string CClassName;
+	local Pawn P;
+	local Controller C;
+	
+	local Vector PawnLocation;
+	local Rotator PawnRotation;
+	local class <actor> PNewClass;
+	local class <actor> CNewClass;
+	
+	PClassName = "UT3OSC.OSCPawn";//OSCBot_Pawn";
+	//CClassName = "UT3OSC.OSCAIController";
+	CClassName = "UT3OSC.OSCPlayerControllerDLL";
+	
+	PawnLocation = Pawn.Location;
+	PawnLocation.X = 0;		
+	PawnLocation.Y = 0;
+	PawnLocation.Z = 2000;
+	
+	PawnRotation = Pawn.Rotation; 
+	PNewClass = class<actor>(DynamicLoadObject(PClassName, class'Class'));
+	CNewClass = class<actor>(DynamicLoadObject(CClassName, class'Class'));
+	
+	// Detach the current pawn from this controller and destroy it.
+	//UnPossess();
+	//P.Destroy(); 
+
+	//spawn a new pawn and attach this controller
+	P = Pawn(Spawn(PNewClass, , ,PawnLocation,PawnRotation));	
+	P.SetOwner(C);
+	P.SetHidden(false);
+
+	C = Controller(Spawn(CNewClass));
+
+	//use false if you spawned a character and true for a vehicle
+	//C.Possess(P, false);
+
+	if(P!=None)
+	{
+		//P.SpawnDefaultController();
+		C.Possess(P, false);
+		OSCPawns.addItem(P);
+	}
+	else
+	{
+		`log("P WAS NONE***********");
+	}	
+}
+
+simulated exec function OSCCheckBots()
+{
+	local OSCBot C;
+	local int uid;
+	//OSCBotUIDs
+	
+	foreach WorldInfo.AllActors(class 'OSCBot', C)
+	{
+		uid = C.getUID();
+		
+		if(uid == -1)
+		{
+			OSCBotCount++;
+			C.setUID(OSCBotCount);
+			`log("------------------------- BOT DIDN'T HAVE UID");
+		}
+		else
+		{
+			`log("------------------------- BOT HAD UID");
+		}
+		
+		`log("BotCount = "$C.getUID());
+		
+	}
+}
+
+simulated exec function OSCCheckPawnBots()
+{
+	local OSCPawnBot C;
+	local int uid;
+	//OSCBotUIDs
+	
+	foreach WorldInfo.AllActors(class 'OSCPawnBot', C)
+	{
+		uid = C.getUID();
+		
+		if(uid == -1)
+		{
+			OSCPawnBotCount++;
+			C.setUID(OSCPawnBotCount);
+			`log("------------------------- PAWN DIDN'T HAVE UID");
+			`log(OSCPawnBotCount);
+		}
+		else
+		{
+			`log("------------------------- PAWN HAD UID: "$c.getUID());
+		}
+		
+		`log("PawnBotCount = "$C.getUID());
+		
+	}
+}
+
+
+simulated exec function OSCTeleportPawnBot(int valID, int valX, int valY, int valZ)
+{
+	local OSCPawnBot C;
+	local int uid;
+	
+	`log("IN OSCTeleportPawnBot in OSCPlayerControllerDLL.uc");
+	
+	foreach WorldInfo.AllActors(class 'OSCPawnBot', C)
+	{
+		uid = C.getUID();
+		
+		if (uid==valID)
+			C.teleport(valX, valY, valZ);
+	}
+}
+
+/*
+simulated exec function OSCControlBot(int valID, int valX, int valY, int valZ)
+{
+	local OSCPawn C;
+	local int uid;
+	
+	`log("IN OSCControlBot in OSCPlayerControllerDLL.uc");
+	
+	foreach WorldInfo.AllActors(class 'OSCPawn', C)
+	{
+		uid = C.getUID();
+		
+		if (uid==valID)
+			C.testControl(valID, valX, valY, valZ);
+	}
+}
+*/
+
+simulated exec function OSCMoveBots(int valID, int valX, int valY, int valZ)
+{
+	//local OSCAIController C;
+	local OSCBot C;
+	local int uid;
+	
+	`log("IN OSCMoveBots in OSCPlayerControllerDLL.uc");
+	
+//		foreach WorldInfo.AllControllers(class 'OSCAIController', C)
+		foreach WorldInfo.AllActors(class 'OSCBot', C)
+		{
+			uid = C.getUID();
+			
+			`log("____________________ UID = "$uid);
+			
+			if (uid==valID)
+				C.testmoveto(valID, valX, valY, valZ);
+/*			
+			if (uid >= 0)
+			{
+				`log("NOOOOOO UID ******************************");				
+				uid = None;
+			}
+			else
+			{
+				`log("HAS A UID ******************************");
+			}
+*/
+
+		}
+
 }
 
 simulated exec function OSCMove()
@@ -684,7 +933,7 @@ state OSCPlayerMoving
 		OSCCameraRotation.Roll=localOSCScriptCameramoveStruct.roll;
 		OSCCameraRotation.Yaw=localOSCScriptCameramoveStruct.yaw;
 		
-		`log("Camera Coordinates: "$OSCCameraRotation.Pitch$", "$OSCCameraRotation.Yaw$", "$OSCCameraRotation.Roll);
+		//`log("Camera Coordinates: "$OSCCameraRotation.Pitch$", "$OSCCameraRotation.Yaw$", "$OSCCameraRotation.Roll);
 		
 		OSCCamera.X = localOSCScriptCameramoveStruct.x;
 		OSCCamera.Y = localOSCScriptCameramoveStruct.y;
@@ -699,15 +948,16 @@ state OSCPlayerMoving
 		}
 		
 	
-		//`log("localOSCScriptPlayerTeleportStruct.teleport:  "$localOSCScriptPlayerTeleportStruct.teleport);
-		//`log("localOSCScriptPlayerTeleportStruct.teleportx:  "$localOSCScriptPlayerTeleportStruct.teleportx);
-		//`log("localOSCScriptPlayerTeleportStruct.teleporty:  "$localOSCScriptPlayerTeleportStruct.teleporty);
-		//`log("localOSCScriptPlayerTeleportStruct.teleportz:  "$localOSCScriptPlayerTeleportStruct.teleportz);
+		`log("localOSCScriptPlayerTeleportStruct.teleport:  "$localOSCScriptPlayerTeleportStruct.teleport);
+		`log("localOSCScriptPlayerTeleportStruct.teleportx:  "$localOSCScriptPlayerTeleportStruct.teleportx);
+		`log("localOSCScriptPlayerTeleportStruct.teleporty:  "$localOSCScriptPlayerTeleportStruct.teleporty);
+		`log("localOSCScriptPlayerTeleportStruct.teleportz:  "$localOSCScriptPlayerTeleportStruct.teleportz);
 	
-	if(localOSCScriptPlayerTeleportStruct.teleport > 0.0)
-	{
-		callTeleport();
-	}		
+		if(localOSCScriptPlayerTeleportStruct.teleport > 0.0)
+		{
+			`log("localOSCScriptPlayerTeleportStruct.teleport:  "$localOSCScriptPlayerTeleportStruct.teleport);
+			callTeleport();
+		}		
 
 		if( Pawn == None )
 		{
@@ -1131,7 +1381,7 @@ simulated function callConsoleCommand(float val)//OSCConsoleCommandStruct fstruc
 	currentVal = val;//.appTrunc();//appTrunc(val);
 	
 	//localOSCConsoleCommandStruct = fstruct;
-	`log("ConsoleCommand: "$currentVal);
+	//`log("ConsoleCommand: "$currentVal);
 	//`log("ConsoleCommand: "$localOSCConsoleCommandStruct.command);
 	//`log("ConsoleCommand Value : "$localOSCConsoleCommandStruct.value);
 	//ConsoleCommand($localOSCConsoleCommandStruct.command);
@@ -1197,7 +1447,7 @@ event PlayerTick( float DeltaTime )
 		//callTeleport();
 	}
 	
-	testInputData(); // rkh testing input data
+	//testInputData(); // rkh testing input data
 	
 	Super.PlayerTick(DeltaTime);
 	
