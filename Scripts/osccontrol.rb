@@ -227,7 +227,7 @@ def createMove(params, val, *timetag)
 
 
   if params.has_key?(USERID)
-    localUID=params[USERID].to_i()
+    localUID=params[USERID].to_f()
     # puts "***** USERID = #{localUID}"
     $currentVals[PLAYERMOVE+USERID] = localUID
   else
