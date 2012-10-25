@@ -197,10 +197,6 @@ end
 
 def createConsoleCommand(params, val)
 
-  # GETTING DUPLICATE OSC MESSAGE OUTPUT HERE:
-  #    /udkosc/script/console "test"
-  #    /udkosc/script/console "console"
-
   localRoot = OSCROOT + val
   messageArray = Array.new
   params.each_pair do |k,v|
@@ -224,10 +220,19 @@ end
 def createMove(params, val, *timetag)
 
   localRoot = OSCROOT + "/" + val
-
+  localUID = nil
   messageArray = Array.new
-  noProcessArray = [METHOD, SLEW, USERID, WAIT]
+  noProcessArray = [METHOD, SLEW, WAIT, USERID]
   rotationParams = [CAMERAPITCH, CAMERAYAW, CAMERAYAW, PLAYERPITCH, PLAYERYAW, PLAYERROLL]
+
+
+  if params.has_key?(USERID)
+    localUID=params[USERID].to_i()
+    # puts "***** USERID = #{localUID}"
+    $currentVals[PLAYERMOVE+USERID] = localUID
+  else
+    localUID=$currentVals[USERID]
+  end
 
   # If this call has a slew value, create slew set of messages
   if params.has_key?(SLEW)
@@ -254,7 +259,7 @@ def createMove(params, val, *timetag)
           # calc time for future use as timetag
           timeNow=Time.now()
 
-          msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"])
+          msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"],localUID)
           oscMsg = Hash.new
           oscMsg[OSCMESSAGE] = msg
           messageArray << oscMsg
@@ -279,9 +284,9 @@ def createMove(params, val, *timetag)
         end
 
         if k==PLAYERSTOP #|| k== PLAYERCROUCH
-          puts k
+          # puts k
           $currentVals["#{val}#{k}"] = 1.0
-          msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, 1)
+          msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, 1,$currentVals[PLAYERMOVE+USERID])
         else
 
           # If setting playerspeed > 0, set currentVal of PLAYERSTOP to 0, indicating that we're moving
@@ -292,45 +297,23 @@ def createMove(params, val, *timetag)
             end
           end
 
-          # Don't Aggregate jump height
-          if k==PLAYERJUMP
+          # Don't Aggregate jump height, teleport, userid
+          if k==PLAYERJUMP || k==USERID
             $currentVals["#{val}#{k}"] = v.to_f()
           elsif k==PLAYERTELEPORT
             # $currentVals["#{val}#{k}"] = "#{v[0]} #{v[1]} #{v[2]}"
-            msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, v[0].to_f(), v[1].to_f(), v[2].to_f())
+            msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, v[0].to_f(), v[1].to_f(), v[2].to_f(), localUID)
             oscMsg = Hash.new
             oscMsg[OSCMESSAGE] = msg
             messageArray << oscMsg
-=begin
-            msgx = OSC::Message.new_with_time("#{localRoot}/#{k}x", 1000.00, NIL, v[0].to_f())
-            msgy = OSC::Message.new_with_time("#{localRoot}/#{k}y", 1000.00, NIL, v[1].to_f())
-            msgz = OSC::Message.new_with_time("#{localRoot}/#{k}z", 1000.00, NIL, v[2].to_f())
-            msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, 1.0)
-
-            oscMsgx = Hash.new
-            oscMsgx[OSCMESSAGE] = msgx
-            messageArray << oscMsgx
-
-            oscMsgy = Hash.new
-            oscMsgy[OSCMESSAGE] = msgy
-            messageArray << oscMsgy
-
-            oscMsgz = Hash.new
-            oscMsgz[OSCMESSAGE] = msgz
-            messageArray << oscMsgz
-
-            oscMsg = Hash.new
-            oscMsg[OSCMESSAGE] = msg
-            messageArray << oscMsg
-=end
           else
-            puts "CURRENTVALS: #{val}: #{k}"
+            #puts "CURRENTVALS: #{val}: #{k}"
 
             $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
           end
 
           if k!=PLAYERTELEPORT
-            msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"])
+            msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"], localUID)
           end
         end
 
@@ -521,6 +504,7 @@ def initCurrentValues
   $currentVals["#{PLAYERMOVE}#{PLAYERJUMP}"] = 0.0
   $currentVals["#{PLAYERMOVE}#{PLAYERCROUCH}"] = 0.0
   $currentVals["#{PLAYERMOVE}#{PLAYERTELEPORT}"] = 0.0
+  $currentVals["#{PLAYERMOVE}#{USERID}"] = -1
 
 end
 
@@ -648,20 +632,6 @@ ARGV.each_with_index do |a, index|
   end
 end
 
-=begin
-if ARGV[0] != nil
-  CONNECTION[0] = ARGV[0]
-end
-
-if ARGV[1] != nil
-  CONNECTION[1] = ARGV[1]
-end
-
-if ARGV[2] !=nil
-  CONNECTION[2] = ARGV[2]
-end
-
-=end
 
 # Create queue (Array) to hold created OSC Messages
 sendQueue = Array.new
