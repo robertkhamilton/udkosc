@@ -231,7 +231,9 @@ def createMove(params, val, *timetag)
     # puts "***** USERID = #{localUID}"
     $currentVals[PLAYERMOVE+USERID] = localUID
   else
-    localUID=$currentVals[USERID]
+    if val==PLAYERMOVE
+      localUID=$currentVals[PLAYERMOVE+USERID]
+    end
   end
 
   # If this call has a slew value, create slew set of messages
@@ -293,7 +295,6 @@ def createMove(params, val, *timetag)
           if k==PLAYERSPEED
             if v.to_f() > 0.0
               $currentVals["#{val}#{PLAYERSTOP}"] = 0.0
-
             end
           end
 
@@ -308,8 +309,12 @@ def createMove(params, val, *timetag)
             messageArray << oscMsg
           else
             #puts "CURRENTVALS: #{val}: #{k}"
-
-            $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
+            # $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
+            if val==CAMERAMOVE
+              $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
+            else
+              $currentVals["#{val}#{k}"] = v.to_f()
+            end
           end
 
           if k!=PLAYERTELEPORT
