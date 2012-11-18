@@ -1,16 +1,11 @@
 
 #include "osc.h"
-
-//extern "C" {
-//#include "../game/g_local.h"
-//}
 #include "includes/stdafx.h"
 #include <stdio.h>
 #include <assert.h>
 
 #include <string>
 #include <sstream>
-//#include "../ui/menudef.h"			// rkh
 #include <iostream> //rkh
 #include "osc/OscOutboundPacketStream.h"
 #include "ip/UdpSocket.h"
@@ -27,27 +22,57 @@
 #include <process.h>
 #include <math.h>
 
+#include <map> 
+#include <windows.h>
+
 #define C_DATA_SIZE	30000000
 
-//#define ADDRESS "127.0.0.1"
-//#define ADDRESS "192.168.1.77"
 #define PORT 7000
 #define APORT 7001
 #define CURRENTHOST "10.0.1.3"
 #define CURRENTPORT 7000
 #define OUTPUT_BUFFER_SIZE 2048
 
-//osc_input_vars gOSCvars;
 OSCMessageStruct testStruct;
 OSCGameParams OSCGameParamsStruct;
+
 static OSCFingerController OSCFingerControllerStruct;
 
+// Individual structs for pawn commands
+/*
+OSCScriptPawnMoveX OSCScriptPawnMoveXStruct;
+OSCScriptPawnMoveY OSCScriptPawnMoveYStruct;
+OSCScriptPawnMoveZ OSCScriptPawnMoveZStruct;
+OSCScriptPawnMoveJump OSCScriptPawnMoveJumpStruct;
+OSCScriptPawnMoveSpeed OSCScriptPawnMoveSpeedStruct;
+OSCScriptPawnMoveStop OSCScriptPawnMoveStopStruct;
+*/
 OSCScriptPlayermove OSCScriptPlayermoveStruct;
 OSCScriptCameramove OSCScriptCameramoveStruct;
 OSCConsoleCommand OSCConsoleCommandStruct;
 OSCScriptPlayerTeleport OSCScriptPlayerTeleportStruct;
 
+static OSCPawnBotStateValues OSCPawnBotStateValuesStruct;
+static OSCPawnBotDiscreteValues OSCPawnBotDiscreteValuesStruct;
+static OSCPawnBotTeleportValues OSCPawnBotTeleportValuesStruct;
+
+OSCPawnBotState OSCPawnBotStateStruct;
+
+HANDLE ghMutex;
+
+// OSC Hash for PawnBots
+std::map<int, OSCPawnBotStateValues> stateParams;
+std::map<int, OSCPawnBotDiscreteValues> discreteParams;
+std::map<int, OSCPawnBotTeleportValues> teleportParams;
+std::map<int, float> pawnbotSpeeds;
+
+float testval = 400.1;
+
 float f1X, f1Y, f1Z;
+
+float lastPlayerJump [1000];
+
+float DegToUnrRot = 182.044403;
 
 namespace osc{
 
@@ -152,46 +177,165 @@ protected:
                 
                 std::cout << "received '/test2' message with arguments: "
                     << a1 << " " << a2 << " " << a3 << " " << a4 << "\n";
+/*			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/x" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				OSCScriptPawnMoveXStruct.id = a2;
+				OSCScriptPawnMoveXStruct.x = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/y" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				OSCScriptPawnMoveYStruct.id = a2;
+				OSCScriptPawnMoveYStruct.y = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/z" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				OSCScriptPawnMoveZStruct.id = a2;
+				OSCScriptPawnMoveZStruct.z = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/jump" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				OSCScriptPawnMoveJumpStruct.id = a2;
+				OSCScriptPawnMoveJumpStruct.jump = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/speed" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				OSCScriptPawnMoveSpeedStruct.id = a2;
+				OSCScriptPawnMoveSpeedStruct.speed = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/stop" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				OSCScriptPawnMoveStopStruct.id = a2;
+				OSCScriptPawnMoveStopStruct.stop = a1;
+				*/
+/*
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/x" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
-                float a1;
-                args >> a1 >> osc::EndMessage;
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				OSCScriptPlayermoveStruct.id = a2;
 				OSCScriptPlayermoveStruct.x = a1;
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/y" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
-                float a1;
-                args >> a1 >> osc::EndMessage;
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				OSCScriptPlayermoveStruct.id = a2;
 				OSCScriptPlayermoveStruct.y = a1;
 				}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/z" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
-                float a1;
-                args >> a1 >> osc::EndMessage;
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				OSCScriptPlayermoveStruct.id = a2;
 				OSCScriptPlayermoveStruct.z = a1;
+*/
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/x" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				//OSCPawnBotStateValues tempStruct;
+				//tempStruct.id = (int)a2;
+				//tempStruct.x = a1;
+				
+//				ghMutex = CreateMutex(NULL,FALSE, NULL);
+				stateParams[(int)a2].x = a1;
+				stateParams[(int)a2].id = (int)a2;//(int)a2] = tempStruct;
+				//discreteParams[(int)a2].stop = 0.0;
+				//CloseHandle(ghMutex);
+				//stateParams[a2].x=a1;
+				//stateParams[a2].id=a2;
+/*				OSCPawnBotStateValues tempStruct;
+				tempStruct = stateParams[a2];
+				stateParams.erase(a2);
+				tempStruct.x = a1;  //a1;
+				tempStruct.id = (int)a2;
+				stateParams[a2]=tempStruct;
+*/
+//				stateParams[(int)a2] = tempStruct;
+				//stateParams[(int)a2].x = testval; //a1;
+				//stateParams[(int)a2].id = (int)a2;
+//				OSCPawnBotStateValuesStruct.id = a2;
+//				OSCPawnBotStateValuesStruct.x = a1;
+				//OSCScriptPlayermoveStruct.id = stateParams[(int)a2].id;//a2;
+				//OSCScriptPlayermoveStruct.x = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/y" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+//				OSCPawnBotStateValues tempStruct;
+//				tempStruct.id = (int)a2;
+//				tempStruct.y = a1;
+//				stateParams[(int)a2] = tempStruct;
+				stateParams[(int)a2].id = (int)a2;
+				stateParams[(int)a2].y = a1;
+				//discreteParams[(int)a2].stop = 0.0;
+				//stateParams[a2].y = a1;
+				//stateParams[a2].id = a2;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/z" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				stateParams[(int)a2].id = (int)a2;
+				stateParams[(int)a2].z = a1;
+				//discreteParams[(int)a2].stop = 0.0;
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/speed" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
-                float a1;
-                args >> a1 >> osc::EndMessage;
-				OSCScriptPlayermoveStruct.speed = a1;
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				stateParams[(int)a2].id = (int)a2;
+				stateParams[(int)a2].speed = a1;
+				//pawnbotSpeeds[(int)a2] = a1;
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/jump" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				discreteParams[(int)a2].id = (int)a2;
+				discreteParams[(int)a2].jump = a1;
+				OSCScriptPlayermoveStruct.jump = a1;
+				OSCScriptPlayermoveStruct.id = a2;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/stop" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
                 float a1;
                 args >> a1 >> osc::EndMessage;
-				OSCScriptPlayermoveStruct.jump = a1;
-			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/stop" ) == 0 ){
-                //osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
-                //float a1;
-                //args >> a1 >> osc::EndMessage;
+				discreteParams[(int)a1].id = (int)a1;
+				discreteParams[(int)a1].stop = 1.0;
+				OSCScriptPlayermoveStruct.id = a1;
 				OSCScriptPlayermoveStruct.stop = 1.0;
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/fly" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
-                float a1;
-                args >> a1 >> osc::EndMessage;
-				OSCScriptPlayermoveStruct.fly = a1;
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				stateParams[(int)a2].fly = a1;
+				stateParams[(int)a2].id = a2;
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/airspeed" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
-                float a1;
-                args >> a1 >> osc::EndMessage;
-				OSCScriptPlayermoveStruct.airspeed = a1;
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				stateParams[(int)a2].id = (int)a2;
+				stateParams[(int)a2].airspeed = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/pitch" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				stateParams[(int)a2].id = (int)a2;
+				stateParams[(int)a2].pitch = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/yaw" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				stateParams[(int)a2].id = (int)a2;
+				stateParams[(int)a2].yaw = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/roll" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				stateParams[(int)a2].id = (int)a2;
+				stateParams[(int)a2].roll = a1;
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/teleportx" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
                 float a1;
@@ -214,12 +358,18 @@ protected:
 //				OSCScriptPlayerTeleportStruct.teleport = a1;
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/teleport" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
-                float a1,a2,a3;
-                args >> a1 >> a2 >> a3  >>  osc::EndMessage;
+                float a1,a2,a3,a4;
+                args >> a1 >> a2 >> a3  >> a4 >>  osc::EndMessage;
 				OSCScriptPlayerTeleportStruct.teleportx = a1;
 				OSCScriptPlayerTeleportStruct.teleporty = a2;
 				OSCScriptPlayerTeleportStruct.teleportz = a3;
+				OSCScriptPlayerTeleportStruct.id = a4;
 				OSCScriptPlayerTeleportStruct.teleport = 1.0;
+				teleportParams[(int)a4].id = (int)a4;
+				teleportParams[(int)a4].teleportx = a1;
+				teleportParams[(int)a4].teleporty = a2;
+				teleportParams[(int)a4].teleportz = a3;
+				teleportParams[(int)a4].teleport = 1.0;
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/cameramove/x" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
                 float a1;
@@ -265,7 +415,7 @@ protected:
             // missing arguments get thrown as exceptions.
             std::cout << "error while parsing message: "
                 << m.AddressPattern() << ": " << e.what() << "\n";
-        }
+		}
     }
 };
 
@@ -304,15 +454,176 @@ _declspec(dllexport)OSCScriptPlayerTeleport getOSCScriptPlayerTeleport()
   return localStruct;
 }
 
+// WORKING HERE  __declspec(dllexport) void CallDLL1(wchar_t* s)
+/*
+_declspec(dllexport)OSCPawnBotStateValues getOSCPawnBotStateValues(int id)
+{
+	OSCPawnBotStateValues test;
+	test.id = 2;
+	test.x = 1.0;
+	test.y = 1.0;
+	test.z = 1.0;
+	test.speed = 1.0;
+	test.pitch = 1.0;
+	test.yaw = 1.0;
+	test.tilt = 1.0;
+	test.airspeed = 1.0;
+	return test;
+	*/
+	/*
+	OSCPawnBotStateValues a, tempStruct, tempStruct2;
+
+	int testing = id;
+	testing = 2;
+	a = stateParams[testing];
+	*/
+//	ghMutex = CreateMutex(NULL, FALSE, NULL);
+
+	//a = stateParams[2];
+	/*
+	tempStruct2.x = 666;
+	
+	tempStruct2.x = a.x;
+	tempStruct2.y = 999;
+	tempStruct2.z = testval;
+	tempStruct2.id = 1;
+	tempStruct2.yaw = 1;
+	tempStruct2.pitch = 2;
+	tempStruct2.tilt = 3;
+	tempStruct2.speed = 555;
+	tempStruct2.airspeed = 111;
+	stateParams[(int)id] = tempStruct2;
+	*/
+	//tempStruct = stateParams[id];
+	//tempStruct.y = 666;
+	//tempStruct.z = 999;	
+/*	a.y = 555.5;
+	a.z = 999.0;
+	a.airspeed = 1.0;
+	a.speed = 2.0;
+	a.pitch = 3.0;
+	a.yaw = 4.0;
+	a.tilt = 5.0;
+	
+	return a;
+*/
+//	CloseHandle(ghMutex);
+
+	//return tempStruct;
+	/*
+	stateParams[id].x = 2222;
+	stateParams[id].y = 3333;
+	a = stateParams[id];
+	return a;
+	*/
+	//return stateParams[id];
+/*
+}
+*/
+
+_declspec(dllexport)OSCPawnBotTeleportValues* getOSCPawnBotTeleportValues(int* id)
+{
+	/*
+	static OSCPawnBotTeleportValues test;
+	test = teleportParams[(int)id];
+	return &test;
+	*/
+
+	static OSCPawnBotTeleportValues localStruct;
+	localStruct = teleportParams[(int)id];
+
+	if(localStruct.teleport > 0.0)
+	{
+		teleportParams[(int)id].teleport = 0.0;
+	}
+
+	return &localStruct;
+}
+
+_declspec(dllexport)OSCPawnBotDiscreteValues* getOSCPawnBotDiscreteValues(int* id)
+{
+/*
+	static OSCPawnBotDiscreteValues test;
+	test = discreteParams[(int)id];
+	return &test;
+*/
+	static OSCPawnBotDiscreteValues localStruct;
+	localStruct = discreteParams[(int)id];
+
+	if(localStruct.jump > 0.0)
+	{
+		discreteParams[(int)id].jump = 0.0;
+	}
+
+	if(localStruct.stop > 0.0)
+	{
+		discreteParams[(int)id].stop = 0.0;		
+		stateParams[(int)id].x = 0.0;
+		stateParams[(int)id].y = 0.0;
+		stateParams[(int)id].z = 0.0;
+	}
+	//else
+	//{
+	//	stateParams[(int)id].speed = pawnbotSpeeds[(int)id];
+	//}
+
+//	std::cout << "============================================ \n";
+//    std::cout <<"discreteParams.stop" << localStruct.stop << std::endl;
+
+	return &localStruct;
+}
+
+_declspec(dllexport)OSCPawnBotStateValues* getOSCPawnBotStateValues(int* id)
+{
+	static OSCPawnBotStateValues localStruct;
+	localStruct = stateParams[(int)id];
+
+	if(localStruct.pitch > 0.0)
+	{
+		stateParams[(int)id].pitch = 0.0;
+	}
+
+	if(localStruct.yaw > 0.0)
+	{
+		stateParams[(int)id].yaw = 0.0;
+	}
+
+	if(localStruct.roll > 0.0)
+	{
+		stateParams[(int)id].roll = 0.0;
+	}
+
+	return &localStruct;
+}
+
+
+
+
 _declspec(dllexport)OSCScriptPlayermove getOSCScriptPlayermove()
 {
 	OSCScriptPlayermove localStruct;
+	OSCScriptPlayermove tempStruct;
 	localStruct = OSCScriptPlayermoveStruct;
-	if(OSCScriptPlayermoveStruct.jump > 0.0)
+
+	/*
+	// If the last value for this ID was the same, clear it out
+	if(localStruct.jump == lastPlayerJump[int(localStruct.id)]) && lastPlayerId
 	{
 		OSCScriptPlayermoveStruct.jump = 0.0;
+		localStruct.jump = 0.0;
+		localStruct.id = nil;
 	}
 
+	lastPlayerJump[int(localStruct.id)] = localStruct.jump;
+	*/	
+
+	if(localStruct.jump > 0.0)
+	{
+		OSCScriptPlayermoveStruct.jump = -1;
+		OSCScriptPlayermoveStruct.id = -1;
+	}
+
+	
 	//if(OSCScriptPlayermoveStruct.teleport > 0.0)
 	//{
 	//	OSCScriptPlayermoveStruct.teleport = 0.0;
@@ -334,7 +645,37 @@ _declspec(dllexport)OSCScriptCameramove getOSCScriptCameramove()
 {
 	return OSCScriptCameramoveStruct;
 }
+/*
+_declspec(dllexport)OSCScriptPawnMoveX getOSCScriptPawnMoveX()
+{
+	return OSCScriptPawnMoveXStruct;
+}
 
+_declspec(dllexport)OSCScriptPawnMoveY getOSCScriptPawnMoveY()
+{
+	return OSCScriptPawnMoveYStruct;
+}
+
+_declspec(dllexport)OSCScriptPawnMoveZ getOSCScriptPawnMoveZ()
+{
+	return OSCScriptPawnMoveZStruct;
+}
+
+_declspec(dllexport)OSCScriptPawnMoveJump getOSCScriptPawnMoveJump()
+{
+	return OSCScriptPawnMoveJumpStruct;
+}
+
+_declspec(dllexport)OSCScriptPawnMoveSpeed getOSCScriptPawnMoveSpeed()
+{
+	return OSCScriptPawnMoveSpeedStruct;
+}
+
+_declspec(dllexport)OSCScriptPawnMoveStop getOSCScriptPawnMoveStop()
+{
+	return OSCScriptPawnMoveStopStruct;
+}
+*/
 _declspec(dllexport)float getOSCConsoleCommand()
 {
 	return OSCConsoleCommandStruct.command;
@@ -991,3 +1332,47 @@ unsigned int __stdcall receiveOSCmessage(void *arg )
 	//gOSCvars.testvar = 12;
 	//return gOSCvars;
 //}
+
+// WILDCARD COMPARE FUNCTION
+/*
+if (wildcmp("bl?h.*", "blah.jpg")) {
+  //we have a match!
+} else {
+  //no match =(
+}
+*/
+
+/*
+int wildcmp(const char *wild, const char *string) {
+  const char *cp = NULL, *mp = NULL;
+
+  while ((*string) && (*wild != '*')) {
+    if ((*wild != *string) && (*wild != '?')) {
+      return 0;
+    }
+    wild++;
+    string++;
+  }
+
+  while (*string) {
+    if (*wild == '*') {
+      if (!*++wild) {
+        return 1;
+      }
+      mp = wild;
+      cp = string+1;
+    } else if ((*wild == *string) || (*wild == '?')) {
+      wild++;
+      string++;
+    } else {
+      wild = mp;
+      string = cp++;
+    }
+  }
+
+  while (*wild == '*') {
+    wild++;
+  }
+  return !*wild;
+}
+*/

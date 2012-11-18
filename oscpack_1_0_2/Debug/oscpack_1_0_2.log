@@ -1,14 +1,55 @@
-﻿Build started 6/10/2010 2:56:48 PM.
-     1>Project "D:\data\oscpack_1_0_2\oscpack_1_0_2.vcxproj" on node 2 (build target(s)).
+﻿Build started 11/11/2012 1:08:37 AM.
+     1>Project "C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\oscpack_1_0_2.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
-         Touching "Debug\oscpack_1_0_2.unsuccessfulbuild".
+         Creating "Debug\oscpack_1_0_2.unsuccessfulbuild" because "AlwaysCreate" was specified.
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _USRDLL /D OSCPACK_1_0_2_EXPORTS /D _WINDLL /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt oscpack\osc.cpp
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _USRDLL /D OSCPACK_1_0_2_EXPORTS /D _WINDLL /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt oscpack\includes\stdafx.cpp oscpack\ip\IpEndpointName.cpp oscpack\ip\win32\NetworkingUtils.cpp oscpack\ip\win32\UdpSocket.cpp oscpack\osc.cpp oscpack\osc\OscOutboundPacketStream.cpp oscpack\osc\OscPrintReceivedElements.cpp oscpack\osc\OscReceivedElements.cpp oscpack\osc\OscTypes.cpp
+         OscTypes.cpp
+         OscReceivedElements.cpp
+         OscPrintReceivedElements.cpp
+     1>oscpack\osc\OscPrintReceivedElements.cpp(117): warning C4996: 'ctime': This function or variable may be unsafe. Consider using ctime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\time.inl(86) : see declaration of 'ctime'
+     1>oscpack\osc\OscPrintReceivedElements.cpp(120): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\string.h(105) : see declaration of 'strcpy'
+         OscOutboundPacketStream.cpp
+     1>oscpack\osc\OscOutboundPacketStream.cpp(339): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\string.h(105) : see declaration of 'strcpy'
+     1>oscpack\osc\OscOutboundPacketStream.cpp(581): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\string.h(105) : see declaration of 'strcpy'
+     1>oscpack\osc\OscOutboundPacketStream.cpp(601): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\string.h(105) : see declaration of 'strcpy'
          osc.cpp
+     1>oscpack\osc.cpp(64): warning C4305: 'initializing' : truncation from 'double' to 'float'
+     1>oscpack\osc.cpp(256): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
+     1>oscpack\osc.cpp(298): warning C4244: 'argument' : conversion from 'float' to 'const int', possible loss of data
+     1>oscpack\osc.cpp(299): warning C4244: 'argument' : conversion from 'float' to 'const int', possible loss of data
+     1>oscpack\osc.cpp(299): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>oscpack\osc.cpp(416): warning C4101: 'tempStruct2' : unreferenced local variable
+     1>oscpack\osc.cpp(416): warning C4101: 'tempStruct' : unreferenced local variable
+     1>oscpack\osc.cpp(460): warning C4101: 'tempStruct' : unreferenced local variable
+     1>oscpack\osc.cpp(909): warning C4172: returning address of local variable or temporary
+         UdpSocket.cpp
+         NetworkingUtils.cpp
+         IpEndpointName.cpp
+     1>oscpack\ip\IpEndpointName.cpp(46): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
+     1>oscpack\ip\IpEndpointName.cpp(52): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
+     1>oscpack\ip\IpEndpointName.cpp(61): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
+     1>oscpack\ip\IpEndpointName.cpp(67): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
+     1>oscpack\ip\IpEndpointName.cpp(71): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
+     1>oscpack\ip\IpEndpointName.cpp(78): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
+         stdafx.cpp
+         Generating Code...
        ManifestResourceCompile:
-         All outputs are up-to-date.
+         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\rc.exe /nologo /fo"Debug\oscpack_1_0_2.dll.embed.manifest.res" Debug\oscpack_1_0_2_manifest.rc 
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\data\oscpack_1_0_2\Debug\oscpack_1_0_2.dll" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Ws2_32.lib WINMM.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Debug\oscpack_1_0_2.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"D:\data\oscpack_1_0_2\Debug\oscpack_1_0_2.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\data\oscpack_1_0_2\Debug\oscpack_1_0_2.lib" /MACHINE:X86 /DLL Debug\oscpack_1_0_2.dll.embed.manifest.res
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Debug\oscpack_1_0_2.dll" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Ws2_32.lib WINMM.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Debug\oscpack_1_0_2.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Debug\oscpack_1_0_2.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Debug\oscpack_1_0_2.lib" /MACHINE:X86 /DLL Debug\oscpack_1_0_2.dll.embed.manifest.res
+         Debug\stdafx.obj
          Debug\IpEndpointName.obj
          Debug\NetworkingUtils.obj
          Debug\UdpSocket.obj
@@ -17,18 +58,28 @@
          Debug\OscPrintReceivedElements.obj
          Debug\OscReceivedElements.obj
          Debug\OscTypes.obj
-            Creating library D:\data\oscpack_1_0_2\Debug\oscpack_1_0_2.lib and object D:\data\oscpack_1_0_2\Debug\oscpack_1_0_2.exp
+            Creating library C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Debug\oscpack_1_0_2.lib and object C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Debug\oscpack_1_0_2.exp
        Manifest:
-         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /out:"Debug\oscpack_1_0_2.dll.embed.manifest" /manifest Debug\oscpack_1_0_2.dll.intermediate.manifest
-         All outputs are up-to-date.
+         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /out:"Debug\oscpack_1_0_2.dll.embed.manifest" /manifest Debug\oscpack_1_0_2.dll.intermediate.manifest
+         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\rc.exe /nologo /fo"Debug\oscpack_1_0_2.dll.embed.manifest.res" Debug\oscpack_1_0_2_manifest.rc 
        LinkEmbedManifest:
-         All outputs are up-to-date.
-         oscpack_1_0_2.vcxproj -> D:\data\oscpack_1_0_2\Debug\oscpack_1_0_2.dll
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Debug\oscpack_1_0_2.dll" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Ws2_32.lib WINMM.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Debug\oscpack_1_0_2.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Debug\oscpack_1_0_2.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Debug\oscpack_1_0_2.lib" /MACHINE:X86 /DLL Debug\oscpack_1_0_2.dll.embed.manifest.res
+         Debug\stdafx.obj
+         Debug\IpEndpointName.obj
+         Debug\NetworkingUtils.obj
+         Debug\UdpSocket.obj
+         Debug\osc.obj
+         Debug\OscOutboundPacketStream.obj
+         Debug\OscPrintReceivedElements.obj
+         Debug\OscReceivedElements.obj
+         Debug\OscTypes.obj
+            Creating library C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Debug\oscpack_1_0_2.lib and object C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Debug\oscpack_1_0_2.exp
+         oscpack_1_0_2.vcxproj -> C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Debug\oscpack_1_0_2.dll
        FinalizeBuildStatus:
          Deleting file "Debug\oscpack_1_0_2.unsuccessfulbuild".
          Touching "Debug\oscpack_1_0_2.lastbuildstate".
-     1>Done Building Project "D:\data\oscpack_1_0_2\oscpack_1_0_2.vcxproj" (build target(s)).
+     1>Done Building Project "C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\oscpack_1_0_2.vcxproj" (build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:01.44
+Time Elapsed 00:00:05.59

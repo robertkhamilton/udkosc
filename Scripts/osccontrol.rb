@@ -33,7 +33,7 @@ CAMERAYAW = "yaw"
 CAMERAROLL = "roll"
 SLEW = "slew"
 DUR = "dur"
-SLEWRATE = 10.0 # ms
+SLEWRATE = 20.0 # ms
 METHOD = "method"
 USERID = "userid"
 SLEEP = "sleep"
@@ -123,8 +123,9 @@ def preprocess(arr)
           if localPlayerStopped
 
             # insert row of speed = currentVal
-            processedArray << "#{PLAYERMOVE} #{PLAYERSPEED} #{localCurrentSpeed} #{inputArray[inputArray.count-1]}"
+            #processedArray << "#{PLAYERMOVE} #{PLAYERSPEED} #{localCurrentSpeed} #{inputArray[inputArray.count-1]}"
 
+            localPlayerStopped = false
           end
 
         end
@@ -228,7 +229,6 @@ def createMove(params, val, *timetag)
 
   if params.has_key?(USERID)
     localUID=params[USERID].to_f()
-    # puts "***** USERID = #{localUID}"
     $currentVals[PLAYERMOVE+USERID] = localUID
   else
     if val==PLAYERMOVE
@@ -246,6 +246,7 @@ def createMove(params, val, *timetag)
       #Scale Camera vals by constant: ROTATIONCONSTANT
       if rotationParams.include?(k)
         v = v.to_f() * ROTATIONCONSTANT
+        #puts "rotated v #{v}"
       end
 
       # For data hashes, create a new OSC message and sleep call and pass them back
@@ -256,7 +257,14 @@ def createMove(params, val, *timetag)
           #   - find which param it is, take its current value
           #   - for i=1 (first val in the slew block) start with currentVal for that param and add the stepp'd slew value
           #   - for each slew'd val do the same
-          $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f() / slewCount.to_f())
+          if k == PLAYERYAW || k == PLAYERPITCH || k == PLAYERROLL
+            $currentVals["#{val}#{k}"] = (v.to_f() / slewCount.to_f())
+            puts $currentVals["#{val}#{k}"]
+            puts v.to_f()
+          else
+            $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f() / slewCount.to_f())
+          end
+          #puts "rotated v2 #{v / slewCount.to_f()}"
 
           # calc time for future use as timetag
           timeNow=Time.now()
@@ -288,7 +296,7 @@ def createMove(params, val, *timetag)
         if k==PLAYERSTOP #|| k== PLAYERCROUCH
           # puts k
           $currentVals["#{val}#{k}"] = 1.0
-          msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, 1,$currentVals[PLAYERMOVE+USERID])
+          msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL,$currentVals[PLAYERMOVE+USERID])
         else
 
           # If setting playerspeed > 0, set currentVal of PLAYERSTOP to 0, indicating that we're moving

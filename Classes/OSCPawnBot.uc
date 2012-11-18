@@ -56,6 +56,7 @@ dllimport final function sendOSCPlayerState(PlayerStateStruct a);
 DefaultProperties
 {
 	uid=-1;
+	bRollToDesired=true
 }
 
 simulated reliable client function teleport(float x, float y, float z)
@@ -92,8 +93,7 @@ simulated function setUID(int val)
 	}
 }
 
-state OSCPlayerMoving
+auto state OSCMove
 {
-
 
 }

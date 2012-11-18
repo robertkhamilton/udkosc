@@ -9,6 +9,8 @@
 class OSCPlayerControllerDLL extends OSCPlayerController
  DLLBind(oscpack_1_0_2);
  
+var bool testPawnStruct;
+
 var bool flying;
 var bool oscmoving;
 var int currentFingerTouches[5]; //borrowing this for multiparameter testing
@@ -29,23 +31,6 @@ var int OSCPawnBotCount;
 var Pawn newPawn;
 var array<Pawn> OSCBot_Pawns;
 var array<Pawn> OSCPawns;
-
-// testing
-//var Rotator OSCRotation;
-
-/*
-struct OSCMovementStruct
-{
-	var float vectorX;
-	var float vectorY;
-	var float vectorZ;	
-}
-*/
-
-struct OSCMessageStruct
-{
-	var float test;
-};
 
 // borrowing this for multiparameter testing
 struct OSCFingerController
@@ -74,10 +59,7 @@ struct OSCFingerController
 
 //Global vars for this class
 var OSCMessageStruct localOSCMessageStruct;
-//var OSCMovementStruct localOSCMovementStruct;
 var OSCFingerController localOSCFingerControllerStruct; // borrowing this for multiparameter testing
-
-
 
 struct MyPlayerStruct
 {
@@ -104,29 +86,22 @@ struct PointClickStruct
 	var string HitInfo_hitcomponent;
 };
 
-struct PointClickStructTEST
-{
-	var string Hostname;
-	var int Port;
-	var string TraceHit;
-	var string TraceHit_class;
-	var string TraceHit_class_outerName;
-	var float LocX;
-	var float LocY;
-	var float LocZ;
-	var string HitInfo_material;
-	var string HitInfo_physmaterial;
-	var string HitInfo_hitcomponent;
-};
 
 struct OSCScriptPlayerTeleportStruct
 {
+	var float id;
 	var float teleport;
 	var float teleportx;
 	var float teleporty;
 	var float teleportz;
 };
-
+/*
+struct OSCScriptPlayerJumpStruct
+{
+	var float id;
+	var float jump;
+};
+*/
 struct OSCScriptPlayermoveStruct
 {
 	var float x;
@@ -158,27 +133,108 @@ struct OSCConsoleCommandStruct
 {
 	var float command;
 };
+/*
+struct OSCScriptPlayerStopStruct
+{
+	var float stop;
+	var float id;
+};
 
+struct OSCScriptPlayerSpeedStruct
+{
+	var float speed;
+	var float id;
+};
+
+*/
+
+struct OSCPawnBotStateValuesStruct
+{
+	var int id;
+	var float x;
+	var float y;
+	var float z;
+	var float speed;
+	var float pitch;
+	var float yaw;
+	var float roll;
+	var float fly;
+	var float airspeed;
+};
+
+struct OSCPawnBotTeleportStruct
+{
+	var float id;
+	var float teleport;
+	var float teleportx;
+	var float teleporty;
+	var float teleportz;
+};
+
+struct OSCPawnBotDiscreteValuesStruct
+{
+	var float id;
+	var float jump;
+	var float stop;
+};
+
+/*
+struct OSCSinglePawnBotStateValues
+{
+	var int id;
+	var float x;
+	var float y;
+	var float z;
+	var float speed;
+	var float pitch;
+	var float yaw;
+	var float tilt;
+	var float airspeed;
+};
+
+struct OSCPawnBotState
+{
+	var int id;
+	var float x;
+	var float y;
+	var float z;
+	var float speed;
+	var float pitch;
+	var float yaw;
+	var float tilt;
+	var float airspeed;
+};
+*/
 // OSC Script structs
 var OSCScriptPlayermoveStruct localOSCScriptPlayermoveStruct;
 var OSCScriptCameramoveStruct localOSCScriptCameramoveStruct;
 var OSCConsoleCommandStruct localOSCConsoleCommandStruct;
 var OSCScriptPlayerTeleportStruct localOSCScriptPlayerTeleportStruct;
+//var OSCScriptPlayerSpeedStruct localOSCScriptPlayerSpeedStruct;
+//var OSCScriptPlayerStopStruct localOSCScriptPlayerStopStruct;
+//var OSCPawnBotStateValuesStruct localOSCPawnBotStateValuesStruct;
+//var OSCPawnBotTeleportStruct localOSCPawnBotTeleportStruct;
 
-dllimport final function sendOSCmessageTest();
-dllimport final function sendOSCmessageTest2();
-dllimport final function sendOSCmessageTest3(out MyPlayerStruct a);
-dllimport final function sendOSCmessageTest4(MyPlayerStruct a);
+// Referenced in OSCPawnController
+var array<OSCScriptPlayermoveStruct> OSCScriptPawnBotStructs;
+var array<OSCScriptPlayerTeleportStruct> OSCScriptPlayerTeleportStructs;
+//var array<OSCScriptPlayerJumpStruct> OSCScriptPlayerJumpStructs;
+//var array<OSCScriptPlayerSpeedStruct> OSCScriptPlayerSpeedStructs;
+//var array<OSCScriptPlayerStopStruct> OSCScriptPlayerStopStructs;
+
 dllimport final function sendOSCpointClick(PointClickStruct a);	
-dllimport final function sendOSCpointClickTEST(PointClickStructTEST a);	
-dllimport final function OSCMessageStruct getOSCTest();
-//dllimport final function OSCMovementStruct getOSCTest();
-dllimport final function float getOSCTestfloat();
 dllimport final function OSCFingerController getOSCFingerController(); //borrowing this for multiparameter testing
 dllimport final function OSCScriptPlayermoveStruct getOSCScriptPlayermove();
 dllimport final function OSCScriptCameramoveStruct getOSCScriptCameramove();
 dllimport final function float getOSCConsoleCommand();
 dllimport final function OSCScriptPlayerTeleportStruct getOSCScriptPlayerTeleport();
+
+dllimport final function OSCPawnBotStateValuesStruct getOSCPawnBotStateValues(int id);
+dllimport final function OSCPawnBotTeleportStruct getOSCPawnBotTeleportValues(int id);
+dllimport final function OSCPawnBotDiscreteValuesStruct getOSCPawnBotDiscreteValues(int id);
+
+//dllimport final function OSCSinglePawnBotStateValues getOSCSinglePawnBotStateValues();
+//dllimport final function OSCPawnBotState getOSCPawnBotState();
 
 defaultproperties 
 {
@@ -190,10 +246,6 @@ defaultproperties
 simulated event PreBeginPlay()
 {
 	Super.PreBeginPlay();
-	
-//	OSCParameters = spawn(class'OSCParams');	
-//	OSCHostname = OSCParameters.getOSCHostname();
-//	OSCPort = OSCParameters.getOSCPort();	
 
 	object1.X=0;
 	object1.Y=0;
@@ -221,42 +273,31 @@ simulated event PreBeginPlay()
 //	OSCFingerSourceMin = vect(0.00001, 0.00001, 7.40000);
 //	OSCFingerWorldMax = vect(2000.00000, 2000.00000, 2300.00000);
 //	OSCFingerWorldMin = vect(-2000.00000, -2000.00000, 0.00001);
-//	OSCFingerOffsets = vect(-160.00000, -210.00000, 0.00001);	
+
+	//OSCPawns.addItem(Pawn);
+
 }
 
-simulated function testInputData()
+simulated exec function getPawnStruct(int pid)
 {
-	//`log("BBBBBBBBBBB");
-	if(localOSCMessageStruct.test > 0.000)
-	{
-	`log("..."$localOSCMessageStruct.test$"...");
-	}
-}
+	local OSCPawnBotStateValuesStruct tempstruct;	
+	local OSCScriptPlayermoveStruct temp2struct;
+	
+	//testPawnStruct = true;
 
-/*
-simulated exec function testPawnRandomMove()
-{
-	local OSCPawnBot C;
-	local int uid;
+	temp2struct = getOSCScriptPlayermove();
+	tempstruct =  getOSCPawnBotStateValues(pid);
+	`log("PawnBot id: "$tempstruct.id$" x = "$tempstruct.x$" y = "$tempstruct.y$" z = "$tempstruct.z);
 	
-	`log("IN testPawnRandomMove in OSCPlayerControllerDLL.uc");
-	
-	foreach WorldInfo.AllActors(class 'OSCPawnBot', C)
-	{
-		uid = C.getUID();
-		
-		//if (uid==valID)
-			//C.testTeleport(valID, valX, valY, valZ);
-	}
+	`log("OSCScriptPlayermoveStruct.x = "$temp2struct.x$", .id = "$temp2struct.id);
 }
-*/
 
 simulated exec function spawnPawnBot()
 {
 	local string PClassName;
 	local string CClassName;
 	local OSCPawnBot P;
-	local Controller C;
+	local OSCPawnController C;
 	
 	local Vector PawnLocation;
 	local Rotator PawnRotation;
@@ -266,7 +307,6 @@ simulated exec function spawnPawnBot()
 	PClassName = "UT3OSC.OSCPawnBot";
 	CClassName = "UT3OSC.OSCPawnController";	
 	
-	//PawnLocation = Pawn.Location;
 	PawnLocation.X = 0;		
 	PawnLocation.Y = 0;
 	PawnLocation.Z = 2000;
@@ -278,69 +318,20 @@ simulated exec function spawnPawnBot()
 	//spawn a new pawn and attach this controller
 	P = OSCPawnBot(Spawn(PNewClass, , ,PawnLocation,PawnRotation));	
 	
-	OSCPawnBotCount++;
 	P.setUID(OSCPawnBotCount);	
+	OSCPawnBotCount++;
 	P.SetOwner(C);
 	P.SetHidden(false);
 
-	C = Controller(Spawn(CNewClass));
+	C = OSCPawnController(Spawn(CNewClass));
 
 	if(P!=None)
 	{
 		C.Possess(P, false);
 		OSCPawns.addItem(P);
+		//OSCScriptPawnBotStructs.addItem(localOSCScriptPlayermoveStruct);		// create array instance of playermove structs for each new pawnbot
+		//OSCScriptPlayerTeleportStructs.addItem(localOSCScriptPlayerTeleportStruct);
 		`log("Added OSCPawnBot with uid: "$P.getUID());
-	}
-	else
-	{
-		`log("P WAS NONE***********");
-	}	
-}
-
-simulated exec function testSpawnPawn()
-{
-	local string PClassName;
-	local string CClassName;
-	local Pawn P;
-	local Controller C;
-	
-	local Vector PawnLocation;
-	local Rotator PawnRotation;
-	local class <actor> PNewClass;
-	local class <actor> CNewClass;
-	
-	PClassName = "UT3OSC.OSCPawn";//OSCBot_Pawn";
-	//CClassName = "UT3OSC.OSCAIController";
-	CClassName = "UT3OSC.OSCPlayerControllerDLL";
-	
-	PawnLocation = Pawn.Location;
-	PawnLocation.X = 0;		
-	PawnLocation.Y = 0;
-	PawnLocation.Z = 2000;
-	
-	PawnRotation = Pawn.Rotation; 
-	PNewClass = class<actor>(DynamicLoadObject(PClassName, class'Class'));
-	CNewClass = class<actor>(DynamicLoadObject(CClassName, class'Class'));
-	
-	// Detach the current pawn from this controller and destroy it.
-	//UnPossess();
-	//P.Destroy(); 
-
-	//spawn a new pawn and attach this controller
-	P = Pawn(Spawn(PNewClass, , ,PawnLocation,PawnRotation));	
-	P.SetOwner(C);
-	P.SetHidden(false);
-
-	C = Controller(Spawn(CNewClass));
-
-	//use false if you spawned a character and true for a vehicle
-	//C.Possess(P, false);
-
-	if(P!=None)
-	{
-		//P.SpawnDefaultController();
-		C.Possess(P, false);
-		OSCPawns.addItem(P);
 	}
 	else
 	{
@@ -352,7 +343,6 @@ simulated exec function OSCCheckBots()
 {
 	local OSCBot C;
 	local int uid;
-	//OSCBotUIDs
 	
 	foreach WorldInfo.AllActors(class 'OSCBot', C)
 	{
@@ -369,8 +359,7 @@ simulated exec function OSCCheckBots()
 			`log("------------------------- BOT HAD UID");
 		}
 		
-		`log("BotCount = "$C.getUID());
-		
+		`log("BotCount = "$C.getUID());		
 	}
 }
 
@@ -378,7 +367,6 @@ simulated exec function OSCCheckPawnBots()
 {
 	local OSCPawnBot C;
 	local int uid;
-	//OSCBotUIDs
 	
 	foreach WorldInfo.AllActors(class 'OSCPawnBot', C)
 	{
@@ -418,33 +406,13 @@ simulated exec function OSCTeleportPawnBot(int valID, int valX, int valY, int va
 	}
 }
 
-/*
-simulated exec function OSCControlBot(int valID, int valX, int valY, int valZ)
-{
-	local OSCPawn C;
-	local int uid;
-	
-	`log("IN OSCControlBot in OSCPlayerControllerDLL.uc");
-	
-	foreach WorldInfo.AllActors(class 'OSCPawn', C)
-	{
-		uid = C.getUID();
-		
-		if (uid==valID)
-			C.testControl(valID, valX, valY, valZ);
-	}
-}
-*/
-
 simulated exec function OSCMoveBots(int valID, int valX, int valY, int valZ)
 {
-	//local OSCAIController C;
 	local OSCBot C;
 	local int uid;
 	
 	`log("IN OSCMoveBots in OSCPlayerControllerDLL.uc");
 	
-//		foreach WorldInfo.AllControllers(class 'OSCAIController', C)
 		foreach WorldInfo.AllActors(class 'OSCBot', C)
 		{
 			uid = C.getUID();
@@ -453,24 +421,24 @@ simulated exec function OSCMoveBots(int valID, int valX, int valY, int valZ)
 			
 			if (uid==valID)
 				C.testmoveto(valID, valX, valY, valZ);
-/*			
-			if (uid >= 0)
-			{
-				`log("NOOOOOO UID ******************************");				
-				uid = None;
-			}
-			else
-			{
-				`log("HAS A UID ******************************");
-			}
-*/
-
 		}
+}
 
+simulated exec function OSCPawnMove()
+{	
+	local OSCPawnController C;
+	
+	`log("Calling OSCPawnMove in OSCPlayerControllerDLL.uc");
+	
+	foreach WorldInfo.AllActors(class 'OSCPawnController', C)
+	{	
+		C.GotoState('OSCPawnMove');
+	}
 }
 
 simulated exec function OSCMove()
 {
+	
 	if(oscmoving)
 	{
 		GotoState('PlayerWalking');
@@ -481,13 +449,12 @@ simulated exec function OSCMove()
 	{
 		GotoState('OSCPlayerMoving');
 		Pawn.GotoState('OSCPlayerMoving');
-		oscmoving=true;
+		oscmoving=true;	
 	}
 }
 
 simulated exec function FlyWalk()
 {
-
 	if(flying)
 	{
 		GotoState('PlayerWalking');
@@ -500,8 +467,6 @@ simulated exec function FlyWalk()
 	  bCheatFlying=true;
 	  flying=true;
 	}
-	
-	//Pawn.toggleFlying();
 }
 
 reliable server function toggleFlying()
@@ -520,10 +485,8 @@ reliable server function toggleFlying()
 	}
 }
 
-
 exec function NewFly()
 {	
-    //ServerFly();
 	toggleFlying();
 }
 
@@ -575,48 +538,6 @@ simulated exec function setSeekingShockBallTargetClassName(int val)
 	}
 }
 
-/*
-exec function setRadiusSeekingShockBallfloat(float val)
-{
-	local OSCProj_SeekingShockBall pSR;
-	
-  	ForEach AllActors(class'OSCProj_SeekingShockBall', pSR)
-	{
-		pSR.setSeekRadius(val);
-	}
-}
-
-exec function setRadiusSeekingRocket(float val)
-{
-	local OSCProj_SeekingRocket pSR;
-	
-  	ForEach AllActors(class'OSCProj_SeekingRocket', pSR)
-	{
-		pSR.setSeekRadius(val);
-	}
-}
-
-exec function setRangeSeekingRocket(float val)
-{	
-	local OSCProj_SeekingRocket pSR;
-	
-  	ForEach AllActors(class'OSCProj_SeekingRocket', pSR)
-	{
-		pSR.setSeekRange(val);
-	}
-}
-
-exec function setSpeedSeekingRocket(float val)
-{
-	local OSCProj_SeekingRocket pSR;
-	
-  	ForEach AllActors(class'OSCProj_SeekingRocket', pSR)
-	{
-		pSR.setSpeed(val);
-	}
-}
-*/
-
 simulated exec function setDrawScaleSeekingShockBall(float val)
 {
 	local OSCProj_SeekingShockBall pSB;
@@ -625,8 +546,8 @@ simulated exec function setDrawScaleSeekingShockBall(float val)
 	{
 		pSB.SetDrawScale(val);
 	}
-
 }
+
 simulated exec function increaseDrawScaleSeekingShockBall(float val)
 {
 	local OSCProj_SeekingShockBall pSB;
@@ -635,7 +556,6 @@ simulated exec function increaseDrawScaleSeekingShockBall(float val)
 	{
 		pSB.SetDrawScale(pSB.DrawScale+val);
 	}
-
 }
 
 simulated exec function decreaseDrawScaleSeekingShockBall(float val)
@@ -646,9 +566,7 @@ simulated exec function decreaseDrawScaleSeekingShockBall(float val)
 	{
 		pSB.SetDrawScale(pSB.DrawScale-val);
 	}
-
 }
-
 
 simulated exec function setFingerTouchSpeed(float val)
 {
@@ -729,7 +647,6 @@ simulated exec function destroyShockBall(string id, optional bool big)
 				pSB.Shutdown();
 		}
 	}
-
 }
 
 // Destroy all current ShockBall Projectiles in game; optional boolean will cause large explosion rather than default simple shutdown call (no explosion)
@@ -771,17 +688,6 @@ simulated exec function setAllProjectileSpeed(int speed)
 	}
 }
 
-exec function setOSCShockRifleFireInterval(float val)
-{
-    local UTWeapon wSR;
-
-  	ForEach AllActors(class'UTWeapon', wSR)
-	{
-		//wSR.setFireInterval(1, val);
-		//wSR.FireInterval=val;
-	}
-}
-
 exec function setAllProjectileAccelRate(int val)
 {
     local UTProjectile pUT;
@@ -790,7 +696,6 @@ exec function setAllProjectileAccelRate(int val)
 	{
 		pUT.AccelRate = val;
 	}
-
 }
 
 simulated exec function teleportPawn(float x, float y, float z)
@@ -817,21 +722,6 @@ simulated exec function moveAllProjectiles(float X, float Y, float Z)
 {
 	if( (Role==ROLE_Authority) || (RemoteRole<ROLE_SimulatedProxy) )
 		moveAllProjectiles_(X, Y, Z);
-/*
-    local UTProjectile pUT;
-	local vector targetVector;
-	
-	bForceNetUpdate = TRUE; // Force replication
-	
-	targetVector.X = X;
-	targetVector.Y = Y;
-	targetVector.Z = Z;
-	
-  	ForEach AllActors(class'UTProjectile', pUT)
-	{
-		pUT.SetLocation(targetVector);
-	}
-*/
 }
 
 simulated reliable client function moveAllProjectiles_(float X, float Y, float Z)
@@ -863,18 +753,14 @@ simulated exec function setDirectionAllProjectiles(float X, float Y, float Z)
   	ForEach AllActors(class'UTProjectile', pUT)
 	{
 		pUT.Velocity = (pUT.Speed)*targetVector;
-		//pUT.MoveToward(targetVector);
 	}
 }
 
 state OSCPlayerMoving
 {
-
 	exec function oscplayermoveTEST()
-	{
-	
+	{	
 		`log('IN OSCPLAYERMOVING');
-	
 	}
 
 /*
@@ -915,6 +801,7 @@ state OSCPlayerMoving
 		local bool				bSaveJump;
 		local bool				bOSCJump;
 		local float				OSCJump;
+		local int				OSCCurrentID;
 		//local float 			OSCTeleport;
 		//ROB HACKING - adding test vector pulling from OSC
 		local vector			OSCVector, OSCX, OSCY, OSCZ;
@@ -928,7 +815,8 @@ state OSCPlayerMoving
 		OSCGroundSpeed = localOSCScriptPlayermoveStruct.speed;
 		OSCJump = localOSCScriptPlayermoveStruct.jump;
 		OSCStop = localOSCScriptPlayermoveStruct.stop;
-
+		OSCCurrentID = localOSCScriptPlayermoveStruct.id;
+		
 		OSCCameraRotation.Pitch=localOSCScriptCameramoveStruct.pitch;
 		OSCCameraRotation.Roll=localOSCScriptCameramoveStruct.roll;
 		OSCCameraRotation.Yaw=localOSCScriptCameramoveStruct.yaw;
@@ -948,10 +836,10 @@ state OSCPlayerMoving
 		}
 		
 	
-		`log("localOSCScriptPlayerTeleportStruct.teleport:  "$localOSCScriptPlayerTeleportStruct.teleport);
-		`log("localOSCScriptPlayerTeleportStruct.teleportx:  "$localOSCScriptPlayerTeleportStruct.teleportx);
-		`log("localOSCScriptPlayerTeleportStruct.teleporty:  "$localOSCScriptPlayerTeleportStruct.teleporty);
-		`log("localOSCScriptPlayerTeleportStruct.teleportz:  "$localOSCScriptPlayerTeleportStruct.teleportz);
+		//`log("localOSCScriptPlayerTeleportStruct.teleport:  "$localOSCScriptPlayerTeleportStruct.teleport);
+		//`log("localOSCScriptPlayerTeleportStruct.teleportx:  "$localOSCScriptPlayerTeleportStruct.teleportx);
+		//`log("localOSCScriptPlayerTeleportStruct.teleporty:  "$localOSCScriptPlayerTeleportStruct.teleporty);
+		//`log("localOSCScriptPlayerTeleportStruct.teleportz:  "$localOSCScriptPlayerTeleportStruct.teleportz);
 	
 		if(localOSCScriptPlayerTeleportStruct.teleport > 0.0)
 		{
@@ -972,12 +860,12 @@ state OSCPlayerMoving
 			NewAccel.Z = 0;
 
 			// TESTING
-//			NewAccel = OSCVector;
-NewAccel = OSCVector.X*X + OSCVector.Y*Y;
+			//			NewAccel = OSCVector;
+			NewAccel = OSCVector.X*X + OSCVector.Y*Y;
 			NewAccel = Pawn.AccelRate * Normal(NewAccel);
 
 			//ROB HACKING
-//			NewAccel = OSCVector;
+			//			NewAccel = OSCVector;
 
 			if(OSCStop == 1)
 			{
@@ -1014,10 +902,10 @@ NewAccel = OSCVector.X*X + OSCVector.Y*Y;
 			// CROUCH
 			// Pawn.ShouldCrouch(bDuck != 0);
 			
-				//`log("localOSCScriptPlayermoveStruct.teleport:  "$localOSCScriptPlayermoveStruct.teleport);
-	//`log("localOSCScriptPlayermoveStruct.teleportx:  "$localOSCScriptPlayermoveStruct.teleportx);
-	//`log("localOSCScriptPlayermoveStruct.teleporty:  "$localOSCScriptPlayermoveStruct.teleporty);
-	//`log("localOSCScriptPlayermoveStruct.teleportz:  "$localOSCScriptPlayermoveStruct.teleportz);
+			//`log("localOSCScriptPlayermoveStruct.teleport:  "$localOSCScriptPlayermoveStruct.teleport);
+			//`log("localOSCScriptPlayermoveStruct.teleportx:  "$localOSCScriptPlayermoveStruct.teleportx);
+			//`log("localOSCScriptPlayermoveStruct.teleporty:  "$localOSCScriptPlayermoveStruct.teleporty);
+			//`log("localOSCScriptPlayermoveStruct.teleportz:  "$localOSCScriptPlayermoveStruct.teleportz);
 
 			
 			//Add OSC Jump and JumpZ
@@ -1070,51 +958,9 @@ NewAccel = OSCVector.X*X + OSCVector.Y*Y;
 		DeltaRot.Yaw = 0;
 		DeltaRot.Pitch = PlayerInput.aLookUp;
 		ProcessViewRotation ( DeltaTime, ViewRotation, DeltaRot);
-		SetRotation(ViewRotation);
-		
+		SetRotation(ViewRotation);	
 	}
-*/
-	
-	
-	
-}
-
-
-exec function Test1() {
-	//local int temp;
-//	local string temp;
-//	local double temp2;
-//	local double temp3;
-//	temp3 = 88;
-//	temp2 = returnDouble();
-//	temp = "3";//returnDouble(88);
-//	ClientMessage(temp);
-	sendOSCmessageTest();
-
-	say("Just sent simple OSC message");
-	ClientMessage("Location: "$Location.X);
-}
-
-exec function Test3_(string B) {
-
-	local MyPlayerStruct tempVals;
-	
-	say("This is a test for Structs AAAAAAAAAAAAAAAAAAAA");
-	tempVals.testval = B;
-	
-	//sendOSCmessageTest2();
-	sendOSCmessageTest3(tempVals);
-}
-
-exec function Test4(string B) {
-
-	local MyPlayerStruct tempVals;
-	
-	say("This is a test for Structs - "$B);
-	tempVals.testval = B;
-	
-	//sendOSCmessageTest2();
-	sendOSCmessageTest4(tempVals);
+*/	
 }
 
 /**
@@ -1144,28 +990,6 @@ exec function ChangePawns(string ClassName)
 	//use false if you spawned a character and true for a vehicle
 	Possess(P, false);
 }
-
-/*
-out of CheatManager.uc:
-
-
-exec function Summon( string ClassName )
-{
-local class<actor> NewClass;
-local vector SpawnLoc;
-
-`log( "Fabricate " $ ClassName );
-NewClass = class<actor>( DynamicLoadObject( ClassName, class'Class' ) );
-if( NewClass!=None )
-{
-if ( Pawn != None )
-SpawnLoc = Pawn.Location;
-else
-SpawnLoc = Location;
-Spawn( NewClass,,,SpawnLoc + 72 * Vector(Rotation) + vect(0,0,1) * 15 );
-}
-}
-*/
 
 /*
 exec function ChangePawn()
@@ -1198,18 +1022,16 @@ exec function RBGrav(float NewGravityScaling)
 	WorldInfo.RBPhysicsGravityScaling = NewGravityScaling;
 }
 */
+
 /*
- * Print information about the thing we are looking at
+ Print information about the thing we are looking at
  */
 function showTargetInfo()
-{
-	
+{	
 	Local vector loc, norm, end;
 	Local TraceHitInfo hitInfo;
 	Local Actor traceHit;
 	local MyPlayerStruct tempVals;
-	//local PointClickStruct pcStruct;
-	local PointClickStructTEST pcStruct;
 	
 	end = Location + normal(vector(Rotation))*32768; // trace to "infinity"
 	traceHit = trace(loc, norm, end, Location, true,, hitInfo);
@@ -1265,65 +1087,32 @@ auto state PlayerWaiting
 	 * The function called when the user presses the fire key (left mouse button by default)
 	 */
 	exec function StartFire( optional byte FireModeNum )
-	{
-	
-	//ClientMessage("In PlayerWaiting::StartFIre");
+	{	
 		super.StartFIre(FireModeNum);
-		//showTargetInfo();
-	}
-}
-
-simulated function setOSCFingerTouches__(float val)
-{
-	`log("CCCCCCCCCCCC");
-	if(val > 0.000)
-	{
-	`log("..."$val$"...");
 	}
 }
 
 simulated function setOSCFingerTouches(OSCFingerController fstruct)
 {
-
-	//`log("in setOSCFingerTouches");
-	//`log("fstruct = "$fstruct.f1X);
-
-//	currentFingerTouches[0]=fstruct.f1on;
-//	currentFingerTouches[1]=fstruct.f2on;
-//	currentFingerTouches[2]=fstruct.f3on;
-//	currentFingerTouches[3]=fstruct.f4on;
-//	currentFingerTouches[4]=fstruct.f5on;
+	currentFingerTouches[0]=fstruct.f1on;
+	currentFingerTouches[1]=fstruct.f2on;
+	currentFingerTouches[2]=fstruct.f3on;
+	currentFingerTouches[3]=fstruct.f4on;
+	currentFingerTouches[4]=fstruct.f5on;
 	
-//	if(fstruct.f1on>0.0)
-//	{
-	
-//	`log("in setOSCFingerTouches");
-//	`log("fstruct.f1X = "$fstruct.f1X);
-//	`log("fstruct.f1Y = "$fstruct.f1Y);
-//	`log("fstruct.f1Z = "$fstruct.f1Z);
-//	`log("fstruct.f1on = "$fstruct.f1on);
-//	`log("fstruct.f2X = "$fstruct.f2X);
-//	`log("fstruct.f2Y = "$fstruct.f2Y);
-//	`log("fstruct.f2Z = "$fstruct.f2Z);
-//	`log("fstruct.f2on = "$fstruct.f2on);
-/*	`log("fstruct.1fon: "$fstruct.f1on);
-*/	
-	
+	if(fstruct.f1on>0.0)
+	{	
 		fingerTouchArray[0].X=fstruct.f1X;	
 		fingerTouchArray[0].Y=fstruct.f1Y;
 		fingerTouchArray[0].Z=fstruct.f1Z;
-//	}
+	}
 
-//	if(fstruct.f2on>0.0)
-//	{
-/*
-	`log("fstruct.f2X = "$fstruct.f2X);
-	`log("fstruct.2fon: "$fstruct.f2on);
-*/
+	if(fstruct.f2on>0.0)
+	{
 		fingerTouchArray[1].X=fstruct.f2X;	
 		fingerTouchArray[1].Y=fstruct.f2Y;
 		fingerTouchArray[1].Z=fstruct.f2Z;
-//	}
+	}
 	
 	if(fstruct.f3on>0.0)
 	{
@@ -1347,6 +1136,243 @@ simulated function setOSCFingerTouches(OSCFingerController fstruct)
 	}
 }
 
+/*
+simulated function __setOSCScriptPawnBotData()
+{
+	local OSCScriptPawnMoveXStruct xstruct;
+	local OSCScriptPawnMoveYStruct ystruct;
+	local OSCScriptPawnMoveZStruct zstruct;
+	local OSCScriptPawnMoveJumpStruct jumpstruct;
+	local OSCScriptPawnMoveStopStruct stopstruct;
+	local OSCScriptPawnMoveSpeedStruct speedstruct;
+	
+	local OSCScriptPlayermoveStruct tempStruct;
+	local OSCPawnController C;
+	local int uid;
+	
+	xstruct = getOSCScriptPawnMoveX();
+	ystruct = getOSCScriptPawnMoveY();
+	zstruct = getOSCScriptPawnMoveZ();
+	jumpstruct = getOSCScriptPawnMoveJump();
+	speedstruct = getOSCScriptPawnMoveSpeed();
+	stopstruct = getOSCScriptPawnMoveStop();
+
+	
+	foreach WorldInfo.AllControllers(class 'OSCPawnController', C)
+	{
+		uid = C.pawnUID;
+		
+		if (uid == xstruct.id)
+		{
+			C.localPawnMoveStruct.x = xstruct.x;
+			C.OSCDirty = 1;
+		}
+		else
+		{
+			C.localPawnMoveStruct.x = 0;
+		}
+		
+		if (uid == ystruct.id)
+		{
+			C.localPawnMoveStruct.y = ystruct.y;
+			C.OSCDirty = 1;
+		}
+		else
+		{
+			C.localPawnMoveStruct.y = 0;
+		}
+		
+		if (uid == zstruct.id)
+		{
+			C.localPawnMoveStruct.z = zstruct.z;
+			C.OSCDirty = 1;
+		}
+		else
+		{
+			C.localPawnMoveStruct.z = 0;
+		}		
+		
+		if (uid == jumpstruct.id)
+		{
+			C.localPawnMoveStruct.jump = jumpstruct.jump;
+			C.OSCDirty = 1;
+		}
+		else
+		{
+			C.localPawnMoveStruct.jump = 0;
+		}
+
+		if (uid == speedstruct.id)
+		{
+			C.localPawnMoveStruct.speed = speedstruct.speed;
+			C.OSCDirty = 1;
+		}
+		else
+		{
+			C.localPawnMoveStruct.speed = 0;
+		}
+
+		if (uid == stopstruct.id)
+		{
+			C.localPawnMoveStruct.stop = stopstruct.stop;
+			C.OSCDirty = 1;
+		}
+		else
+		{
+			C.localPawnMoveStruct.stop = 0;
+		}
+		
+	}
+
+}
+
+*/
+
+/*
+simulated function setOSCScriptPawnBotData(OSCScriptPlayermoveStruct playerstruct, OSCScriptPlayerTeleportStruct teleportstruct)
+{
+	local OSCPawnController C;
+	local int uid;
+
+	local OSCScriptPlayermoveStruct pStruct;
+	local OSCScriptPlayerTeleportStruct tStruct; 	
+	
+	foreach WorldInfo.AllControllers(class 'OSCPawnController', C)
+	{
+
+		pStruct = playerstruct;
+		tStruct = teleportstruct;
+
+		uid = C.pawnUID;
+		
+		if (uid == pStruct.id)
+		{
+
+			`log("pStruct.id:  "$pStruct.id);
+			`log("pStruct.x:  "$pStruct.x);
+			`log("pStruct.speed:  "$pStruct.speed);		
+
+			C.OSCDirty = 1;
+			C.setOSCScriptPlayermoveStruct(pStruct);
+		}
+		
+		if (uid == tStruct.id)
+		{
+			C.setOSCScriptTeleportStruct(tStruct);
+		}
+		
+	}
+
+}
+*/
+
+simulated function setOSCScriptPawnBotTeleportData(OSCScriptPlayerTeleportStruct teleportstruct)
+{
+	local OSCPawnBot P;
+	local int uid;
+	local OSCScriptPlayerTeleportStruct tStruct; 	
+	
+	// Set Teleport struct directly
+	tStruct = teleportstruct;
+
+	P = OSCPawnBot(OSCPawns[tStruct.id]);
+	uid = P.uid;
+	OSCPawnController(P.Controller).OSCDirty = 1;
+	OSCPawnController(P.Controller).setOSCScriptTeleportStruct(tStruct);
+	
+}
+
+/*
+simulated function setOSCScriptPawnBotData()
+{
+
+
+
+
+
+
+
+
+	//OSCScriptPawnBotStructs[localOSCScriptPlayermoveStruct.id] = localOSCScriptPlayermoveStruct;
+
+	local OSCPawnBot P;
+	local int uid;
+
+	P = OSCPawnBot(OSCPawns[localOSCScriptPlayermoveStruct.id]);
+	uid = P.uid;
+	OSCPawnController(P.Controller).setOSCScriptPlayermoveStruct(OSCScriptPawnBotStructs[localOSCScriptPlayermoveStruct.id]);
+		
+	
+	
+	local OSCPawnController C;
+	local int uid;
+
+	foreach WorldInfo.AllControllers(class 'OSCPawnController', C)
+	{
+		uid = C.pawnUID;		
+//		C.OSCDirty = 1;
+		C.setOSCScriptPlayermoveStruct(OSCScriptPawnBotStructs[uid]);
+	}
+
+}
+
+	*/
+
+// Need to set these controllers' data directly from an array
+simulated function __x__setOSCScriptPawnBotData(OSCScriptPlayerTeleportStruct teleportstruct)
+{
+	local OSCPawnController C;
+	local OSCPawnBot P;
+	local int uid;
+	local OSCScriptPlayerTeleportStruct tStruct; 	
+	
+	// Set Teleport struct directly
+	tStruct = teleportstruct;
+
+	P = OSCPawnBot(OSCPawns[tStruct.id]);
+	uid = P.uid;
+	OSCPawnController(P.Controller).setOSCScriptPlayermoveStruct(OSCScriptPawnBotStructs[uid]);
+	OSCPawnController(P.Controller).OSCDirty = 1;
+	OSCPawnController(P.Controller).setOSCScriptTeleportStruct(tStruct);
+
+	foreach WorldInfo.AllControllers(class 'OSCPawnController', C)
+	{
+
+		//tStruct = teleportstruct;
+
+		uid = C.pawnUID;
+		
+		C.OSCDirty = 1;
+		//C.setOSCScriptPlayermoveStruct(OSCScriptPawnBotStructs[uid -1]);
+		C.setOSCScriptPlayermoveStruct(OSCScriptPawnBotStructs[uid]);
+/*		
+		if (uid == tStruct.id)
+		{
+			C.setOSCScriptTeleportStruct(tStruct);
+		}	
+*/
+	}
+
+}
+
+simulated function cleanLocalOSCPlayermoveStruct()
+{
+
+	localOSCScriptPlayermoveStruct.jump = 0;
+	localOSCScriptPlayermoveStruct.id = 0;
+	localOSCScriptPlayermoveStruct.x = 0;
+	localOSCScriptPlayermoveStruct.y = 0;
+	localOSCScriptPlayermoveStruct.z = 0;
+	localOSCScriptPlayermoveStruct.speed = 0;
+	localOSCScriptPlayermoveStruct.stop = 0;
+	localOSCScriptPlayermoveStruct.pitch = 0;
+	localOSCScriptPlayermoveStruct.yaw = 0;
+	localOSCScriptPlayermoveStruct.roll = 0;
+	localOSCScriptPlayermoveStruct.fly = 0;
+	localOSCScriptPlayermoveStruct.airspeed = 0;				
+}
+
+	
 simulated function setOSCScriptCameramoveData(OSCScriptCameramoveStruct fstruct)
 {
 	localOSCScriptCameramoveStruct = fstruct;
@@ -1357,22 +1383,22 @@ simulated function setOSCScriptCameramoveData(OSCScriptCameramoveStruct fstruct)
 
 }
 
+
+
 simulated function setOSCScriptPlayermoveData(OSCScriptPlayermoveStruct fstruct)
 {
+	//`log("OSCPlayerControllerDLL::setOSCScriptPlayermoveData::fstruct.id "$fstruct.id$" - fstruct.jump "$fstruct.jump);
+	
 	localOSCScriptPlayermoveStruct = fstruct;
-
-//	`log("localOSCScriptPlayermoveStruct.x:  "$localOSCScriptPlayermoveStruct.x);
-//	`log("localOSCScriptPlayermoveStruct.y:  "$localOSCScriptPlayermoveStruct.y);
-//	`log("localOSCScriptPlayermoveStruct.z:  "$localOSCScriptPlayermoveStruct.z);
-	//`log("localOSCScriptPlayermoveStruct.teleport:  "$localOSCScriptPlayermoveStruct.teleport);
-
-	//localOSCScriptPlayermoveStruct.x = getOSCScriptPlayermove();
+	
+	// Set pawnbot commands to array
+	OSCScriptPawnBotStructs[localOSCScriptPlayermoveStruct.id] = localOSCScriptPlayermoveStruct;
 }
 
 simulated function setOSCScriptPlayerTeleportData(OSCScriptPlayerTeleportStruct fstruct)
 {
 	localOSCScriptPlayerTeleportStruct = fstruct;
-
+	OSCScriptPlayerTeleportStructs[localOSCScriptPlayerTeleportStruct.id] = localOSCScriptPlayerTeleportStruct;
 }
 
 simulated function callConsoleCommand(float val)//OSCConsoleCommandStruct fstruct)
@@ -1415,18 +1441,32 @@ function OSCCallExecCommand(string val)
 
 event PlayerTick( float DeltaTime )
 {
-	// Add OSC Input call to the player Tick, called each tick from PlayerController
-	localOSCMessageStruct.test = getOSCTestfloat();
-	//localOSCMovementStruct.vectorX = getOSCTestfloat();
-
-	
-	
 	// Generic OSCConsoleCommand call
 //	if(localOSCScriptPlayermoveStruct.teleport == 1.0)
 //	{
 //		`log("TELEPORT == 1.0");
 //		//teleportPawn_(localOSCScriptPlayermoveStruct.teleportx, localOSCScriptPlayermoveStruct.teleporty, localOSCScriptPlayermoveStruct.teleportz);
 //	}
+	
+	
+	// OSCPlayerControllerDLL.uc will pass pawnbot data to all active pawnbots
+	//setOSCScriptPawnBotData(getOSCScriptPlayermove(), getOSCScriptPlayerTeleport());
+	//setOSCScriptPawnBotData();
+	
+	// Set pawnbot commands to array
+	//setOSCScriptPlayermoveData(getOSCScriptPlayermove());	
+	
+	// WORKING HERE: Call OSCPawnBot... calls here to populate local structs
+	//setOSCPawnBotData();
+	
+	
+//	`log("Pawn 1 Speed: "$OSCScriptPawnBotStructs[1].speed);
+//	`log("Pawn 2 Speed: "$OSCScriptPawnBotStructs[2].speed);
+//	`log("Pawn 3 Speed: "$OSCScriptPawnBotStructs[3].speed);
+	
+	//setOSCScriptPawnBotData();
+	//setOSCScriptPawnBotTeleportData(getOSCScriptPlayerTeleport());
+	setOSCScriptCameramoveData(getOSCScriptCameramove());	
 	
 	if(oscmoving)
 	{
@@ -1439,8 +1479,8 @@ event PlayerTick( float DeltaTime )
 		setOSCFingerTouches(localOSCFingerControllerStruct);
 		// OSC Script data for OSC control over pawns and camera
 		//`log("Before setSCScriptPlayermoveData");
-		setOSCScriptPlayermoveData(getOSCScriptPlayermove());
-		setOSCScriptCameramoveData(getOSCScriptCameramove());
+//		setOSCScriptPlayermoveData(getOSCScriptPlayermove());
+//		setOSCScriptCameramoveData(getOSCScriptCameramove());
 		setOSCScriptPlayerTeleportData(getOSCScriptPlayerTeleport());
 		
 		//`log("After setSCScriptPlayermoveData");		
@@ -1448,6 +1488,10 @@ event PlayerTick( float DeltaTime )
 	}
 	
 	//testInputData(); // rkh testing input data
+	
+	// testing
+//	if(testPawnStruct)
+//		getPawnStructCont();
 	
 	Super.PlayerTick(DeltaTime);
 	

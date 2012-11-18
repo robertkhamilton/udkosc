@@ -1,25 +1,302 @@
-playermove x 1 3
-playermove x 1 4
-playermove x 1 5
-playermove x 1 6
-playermove jump 600 1
-playermove jump 600 2
-playermove jump 600 3
-playermove jump 600 4
-playermove jump 600 5
-cameramove z 100
-cameramove z 100
-cameramove z 100
-cameramove z 100
-cameramove z 100
+playermove jump 2000.0 1
+playermove jump 2000.0 0
+ 
+playermove speed 150 1
+playermove x 0 1
+playermove pitch 90 2000 1
+playermove stop 1
 
-cameramove z 10000 9000
+playermove teleport 0 0 1000 1
+wait 3000
+playermove speed 200 1
+playermove x 1 1
+playermove yaw 90 1
+wait 3000
+playermove yaw 90 1
+wait 3000
+playermove yaw 90 3000 1
+wait 3000
+playermove yaw 0 1
+wait 3000
+playermove stop 1
+
+playermove pitch -1 1
+wait 3000
+playermove pitch 1 1
+
+
+playermove teleport 0 0 1000 1
+playermove speed 400 1
+playermove x 1 1
+playermove y 1 1
+playermove yaw .5 1
+wait 10000
+playermove stop 1
+playermove speed 0 1
+wait 1000
+playermove yaw 0 1
+
+playermove speed 0 1
+playermove teleport 0 0 1000 1
+wait 4000
+playermove speed 150.0 1
+playermove x 1 1
+wait 3000
+playermove stop 1
+wait 4000
+playermove x -1 1
+playermove speed 666 1
+playermove stop 1
+wait 4000
+playermove y 2 1
+
+
+playermove teleport 0.0 110.0 1000.0 1
+playermove x 1 1
+wait 5000
+playermove jump 666.0 1
+wait 5000
+playermove stop 1
+wait 20
+wait 5000
+playermove speed 150.0 1
+wait 20
+playermove x 1 1
+wait 3000
+playermove jump 1000.0 1
+
+playermove teleport 0.0 0.0 1000.0 0
+playermove teleport 0.0 220.0 1000.0 2
+playermove teleport 0.0 330.0 1000.0 3
+playermove teleport 0.0 440.0 1000.0 4
+playermove speed 50.0 0
+
+playermove x 1 0
+playermove y 1 0
+wait 3000
+playermove stop 0
+wait 2000
+playermove speed 50.0 0
+playermove speed 50.0 1
+playermove x 1 0
+playermove x 1 1
+playermove y 1 0
+wait 3000
+playermove jump 666.0 0
+playermove stop 0
+playermove stop 1
+playermove teleport 0.0 0.0 1000.0 0
+playermove teleport 0.0 110.0 1000.0 1
+playermove teleport 0.0 220.0 1000.0 2
+playermove teleport 0.0 330.0 1000.0 3
+playermove teleport 0.0 440.0 1000.0 4
+playermove speed 50.0 0
+playermove speed 50.0 1
+playermove x 1 0
+playermove x 1 1
+playermove y 1 0
+wait 3000
+playermove jump 666.0 0
+playermove stop 0
+playermove stop 1
+wait 2000
+
+# playermove speed 0 0 
+# playermove speed 0 1
+
+playermove speed 100 1
+playermove x 1 1
+wait 1000
+playermove stop 1
+wait 1000
+playermove x 2 1
+
+
+
+playermove stop 0
+playermove stop 1
+playermove stop 2
+playermove stop 3
+playermove stop 4
+playermove teleport 0.0 0.0 1000.0 0
+playermove teleport 0.0 110.0 1000.0 1
+playermove teleport 0.0 220.0 1000.0 2
+playermove teleport 0.0 330.0 1000.0 3
+playermove teleport 0.0 440.0 1000.0 4
+playermove speed 300 0
+playermove speed 300 1
+playermove speed 300 2
+playermove speed 300 3
+playermove speed 300 4
+playermove x 300 0
+playermove x 300 1
+playermove x 300 2
+playermove x 300 3
+playermove x 300 4
+wait 2000
+playermove jump 500.0 0
+playermove jump 500.0 4
+playermove jump 500.0 2
+playermove jump 500.0 3
+playermove jump 500.0 1
+playermove stop 0
+playermove stop 1
+playermove stop 2
+playermove stop 3
+playermove stop 4
+
+playermove x -1 1
+playermove speed 300 1
+
+
+playermove speed 300.0 1
+playermove x 1 20 1
+
+playermove jump 500.0 7
+playermove jump 500.0 8
+playermove jump 500.0 9
+playermove jump 1500.0 0
+playermove jump 500.0 4
+playermove jump 500.0 2
+playermove jump 500.0 3
+playermove jump 500.0 5
+playermove jump 500.0 6
+
+playermove teleport 0.0 0.0 2000.0 1
+
+playermove speed 300.0 1
+wait 20
+playermove speed 300.0 2
+wait 20
+playermove speed 300.0 3
+wait 20
+playermove x -1 1
+wait 20
+playermove y 1 2
+wait 20
+playermove x 1 3
+wait 20
+
 [
-cameramove z -9000 1400
-cameramove pitch -90 1400
+playermove x 1000.0 5000.0 2
+playermove x 2000.0 5000.0 3
+playermove y 3000.0 5000.0 2
 ]
-playermove jump 600 1
-playermove teleport 0 0 500 1
+
+wait 20
+playermove y 200.0 1
+wait 20
+playermove z 300.0 1
+wait 20
+playermove x 400.0 1
+
+playermove speed 0 1
+wait 20
+playermove speed 0 2
+wait 20
+playermove speed 0 3
+wait 20
+playermove teleport 1400 100 1600 1
+wait 20
+playermove teleport 1400 200 1600 2
+wait 20
+playermove teleport 1400 300 1600 3
+wait 20
+playermove teleport 1400 400 1600 4
+wait 20
+playermove teleport 1400 500 1600 5
+wait 20
+playermove teleport 1400 600 1600 6
+wait 20
+playermove teleport 1400 700 1600 7
+wait 1500
+wait 20
+playermove speed 130 1
+wait 20
+playermove x 1 1
+wait 20
+# playermove speed 500 1
+# wait 20
+playermove x 100 2
+wait 20
+# playermove speed 1200 1
+# wait 20
+playermove x 270 3
+
+playermove speed 1150 0
+wait 20
+playermove x 1 1
+wait 10
+playermove y 300 1
+wait 10
+playermove speed 1110 1
+wait 10
+playermove speed 0 2
+wait 1000
+playermove speed 0 1
+
+[
+cameramove x 500 5000
+cameramove y 500 5000
+cameramove z 5000 5000
+cameramove pitch -180 3000
+cameramove roll 90 2000
+]
+
+
+playermove speed 150 2
+wait 10
+playermove x 1 2
+wait 10
+playermove y 111 2
+wait 10
+playermove speed 150 3
+wait 10
+playermove x 1 3
+wait 10
+playermove y 221 3
+
+wait 300
+playermove jump 900 1
+wait 300
+playermove jump 900 2
+wait 300
+playermove jump 900 3
+
+
+playermove teleport 100 300 600 10
+wait 20
+playermove teleport 300 100 600 11
+wait 20
+playermove teleport 600 100 600 12
+wait 20
+playermove teleport 100 600 600 13
+playermove jump 500.0 2
+playermove stop 2
+playermove x 0 2
+playermove y 0 2
+
+wait 5000
+playermove jump 500.0 2
+playermove stop 2
+
+playermove speed 1300.0 1
+playermove x 1 1
+
+playermove x 1 1
+playermove wait 3000.0 1
+
+
+playermove x 1 3000.0 1
+playermove stop 1
+
+wait 15
+playermove jump 500.0 1
+wait 15
+playermove jump 500.0 4
+playermove speed 100 6
+playermove x 1 6
+playermove y 1 6
 
 playermove speed 500 1
 [
