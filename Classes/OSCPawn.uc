@@ -944,6 +944,7 @@ simulated function Tick(float DeltaTime)
 	
 	Super.Tick(DeltaTIme);
 	//showTargetInfo();
+
 	if(sendingOSC)
 		sendPlayerState();
 

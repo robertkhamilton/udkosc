@@ -32,6 +32,7 @@ var Pawn newPawn;
 var array<Pawn> OSCBot_Pawns;
 var array<Pawn> OSCPawns;
 
+
 // borrowing this for multiparameter testing
 struct OSCFingerController
 {
@@ -160,6 +161,7 @@ struct OSCPawnBotStateValuesStruct
 	var float roll;
 	var float fly;
 	var float airspeed;
+	var float crouch;	
 };
 
 struct OSCPawnBotTeleportStruct
@@ -278,6 +280,20 @@ simulated event PreBeginPlay()
 
 }
 
+simulated exec function OSCStartPawnBotOutput() {
+	`log("Initializing PawnBot OSC Output...");
+
+	// Set OSCOutput flag for each PawnBot
+	setPawnBotState(true);
+}
+
+simulated exec function OSCStopPawnBotOutput() {
+	`log("stopping PawnBot OSC Output...");
+
+	// Set OSCOutput flag for each PawnBot
+	setPawnBotState(false);
+}
+
 simulated exec function getPawnStruct(int pid)
 {
 	local OSCPawnBotStateValuesStruct tempstruct;	
@@ -328,6 +344,7 @@ simulated exec function spawnPawnBot()
 	if(P!=None)
 	{
 		C.Possess(P, false);
+		C.PostControllerIdChange(); //TEST Trying to fix OSC Output bug
 		OSCPawns.addItem(P);
 		//OSCScriptPawnBotStructs.addItem(localOSCScriptPlayermoveStruct);		// create array instance of playermove structs for each new pawnbot
 		//OSCScriptPlayerTeleportStructs.addItem(localOSCScriptPlayerTeleportStruct);
@@ -1269,14 +1286,14 @@ simulated function setOSCScriptPawnBotData(OSCScriptPlayermoveStruct playerstruc
 simulated function setOSCScriptPawnBotTeleportData(OSCScriptPlayerTeleportStruct teleportstruct)
 {
 	local OSCPawnBot P;
-	local int uid;
+	//local int uid;
 	local OSCScriptPlayerTeleportStruct tStruct; 	
 	
 	// Set Teleport struct directly
 	tStruct = teleportstruct;
 
 	P = OSCPawnBot(OSCPawns[tStruct.id]);
-	uid = P.uid;
+	//uid = P.uid;
 	OSCPawnController(P.Controller).OSCDirty = 1;
 	OSCPawnController(P.Controller).setOSCScriptTeleportStruct(tStruct);
 	
@@ -1318,6 +1335,7 @@ simulated function setOSCScriptPawnBotData()
 
 	*/
 
+	
 // Need to set these controllers' data directly from an array
 simulated function __x__setOSCScriptPawnBotData(OSCScriptPlayerTeleportStruct teleportstruct)
 {
@@ -1492,7 +1510,27 @@ event PlayerTick( float DeltaTime )
 	// testing
 //	if(testPawnStruct)
 //		getPawnStructCont();
-	
+		
 	Super.PlayerTick(DeltaTime);
 	
+}
+
+simulated function setPawnBotState(bool val)
+{
+	// Set each PawnBot to be sending OSC
+	
+	local OSCPawnBot P;
+
+//	P = OSCPawnBot(OSCPawns[tStruct.id]);
+
+	foreach WorldInfo.AllActors(class 'OSCPawnBot', P)
+	{
+		P.sendingOSC = val;
+	}
+
+}
+
+
+function AddOnlineDelegates(bool bRegisterVoice)
+{
 }

@@ -1,5 +1,29 @@
-playermove jump 2000.0 1
+playermove teleport 0 0 1000 1
+playermove x 1 1
+playermove speed 0 1
+[
+playermove yaw 7200 50000 1
+playermove speed 10000 50000 1
+]
+playermove stop 1
+
+
+playermove teleport 0 0 1000 1
+wait 1000
+
 playermove jump 2000.0 0
+playermove jump 2000.0 1
+playermove jump 2000.0 2
+playermove jump 2000.0 3
+playermove jump 2000.0 4
+playermove jump 2000.0 5
+playermove jump 2000.0 6
+playermove jump 2000.0 7
+playermove jump 2000.0 8
+playermove jump 2000.0 9
+playermove jump 2000.0 10
+wait 5000
+
  
 playermove speed 150 1
 playermove x 0 1

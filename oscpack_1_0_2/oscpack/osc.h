@@ -135,6 +135,17 @@ struct PlayerStateStruct
 	bool crouch;
 };
 
+struct PawnStateStruct
+{
+	FString Hostname;
+	int Port;
+	int id;
+	float LocX;
+	float LocY;
+	float LocZ;
+	bool crouch;
+};
+
 struct PlayerStateStructTEST
 {
 	FString Hostname;
@@ -245,7 +256,8 @@ struct OSCPawnBotStateValues
 	float roll;
 	float fly;
 	float airspeed;
-	OSCPawnBotStateValues():id(-1), x(0), y(0), z(0), speed(0), pitch(0), yaw(0), roll(0), fly(0), airspeed(0){}
+	float crouch;
+	OSCPawnBotStateValues():id(-1), x(0), y(0), z(0), speed(0), pitch(0), yaw(0), roll(0), fly(0), airspeed(0), crouch(0){}
 };
 
 
@@ -361,8 +373,11 @@ __declspec(dllexport) void sendOSCmessageTest3(MyPlayerStruct a);
 __declspec(dllexport) void sendOSCmessageTest4(MyPlayerStruct* a);
 __declspec(dllexport) void sendOSCpointClick(PointClickStruct* a);
 __declspec(dllexport) void sendOSCPlayerState(PlayerStateStruct* pState);
-__declspec(dllexport)void sendOSCProjectileState(ProjectileStateStruct* pState);
-__declspec(dllexport)void sendOSCMeshState(MeshStateStruct* mState);
+__declspec(dllexport) void sendOSCPawnState(PawnStateStruct* pState);
+__declspec(dllexport) void sendOSCProjectileState(ProjectileStateStruct* pState);
+__declspec(dllexport) void sendOSCMeshState(MeshStateStruct* mState);
+
+__declspec(dllexport) void testt(float x);
 
 __declspec(dllexport) void sendOSCPlayerStateTEST(PlayerStateStructTEST* pState);
 

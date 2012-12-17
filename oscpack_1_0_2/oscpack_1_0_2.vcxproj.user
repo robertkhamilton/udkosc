@@ -2,5 +2,14 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <ShowAllFiles>true</ShowAllFiles>
+    <LocalDebuggerCommand Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\UDK\UDK-2012-07\Binaries\Win32\UDK.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommandArguments Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    </LocalDebuggerCommandArguments>
+    <LocalDebuggerWorkingDirectory Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommand Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\UDK\UDK-2012-07\Binaries\Win32\UDK.exe</LocalDebuggerCommand>
+    <DebuggerFlavor Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArguments Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">OSC-sound_room_01?game=UT3OSC.UT3OSC -log</LocalDebuggerCommandArguments>
+    <LocalDebuggerWorkingDirectory Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(OutDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 </Project>

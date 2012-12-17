@@ -144,7 +144,7 @@ state Idle
 		`log("******************I'M IN State IDLE");
 }
 
-
+/*
 auto state OSCMove
 {
 	local Vector currentTarget;
@@ -163,7 +163,7 @@ auto state OSCMove
 		//MoveToward(Target, Target, 128);
 		goto 'Begin';
 }
-
+*/
 state Defending{
 	Begin:
 		GotoState('OSCMove');

@@ -25,11 +25,13 @@
 #include <map> 
 #include <windows.h>
 
+#include <Ws2tcpip.h>
+
 #define C_DATA_SIZE	30000000
 
 #define PORT 7000
 #define APORT 7001
-#define CURRENTHOST "10.0.1.3"
+#define CURRENTHOST "localhost"
 #define CURRENTPORT 7000
 #define OUTPUT_BUFFER_SIZE 2048
 
@@ -732,6 +734,63 @@ __declspec(dllexport)FVector* getOSCFinger1()
 	}
 */
 
+__declspec(dllexport) void testt(float x)
+{
+	float testx;
+
+	testx = x;
+
+    std::cout << "============================================ \n";
+    std::cout <<"testval: " << testx << std::endl;
+}
+
+
+__declspec(dllexport)void sendOSCPawnState(PawnStateStruct* pState)
+{
+   char buffer[OUTPUT_BUFFER_SIZE];
+   std::wstring temp;
+
+   osc::OutboundPacketStream p( buffer, OUTPUT_BUFFER_SIZE );
+
+/*
+   char* ip = WcharToChar(1, pState->Hostname.Data);
+
+   struct in_addr addr;
+
+   // check to see if its a xxx.xxx.xx.xx style ip	
+   if(inet_pton(AF_INET, ip, &addr) > 0)
+   {
+	   UdpTransmitSocket socket( IpEndpointName((int)addr.S_un.S_un_b.s_b1, (int)addr.S_un.S_un_b.s_b2, (int)addr.S_un.S_un_b.s_b3, (int)addr.S_un.S_un_b.s_b4, (int)pState->Port ));
+   } else {
+	   //std::string curr = ip;
+		
+	   UdpTransmitSocket socket( IpEndpointName( "localhost", (int)pState->Port ));
+
+	  // UdpTransmitSocket socket( IpEndpointName( ip, (int)pState->Port ));
+   }
+*/
+  //UdpTransmitSocket socket( IpEndpointName( CURRENTHOST, CURRENTPORT ));
+  //UdpTransmitSocket socket( IpEndpointName( WcharToChar(1, pState->Hostname.Data), (int)pState->Port ));
+//	UdpTransmitSocket socket( IpEndpointName( "localhost", (int)pState->Port ));
+	//UdpTransmitSocket socket( IpEndpointName( inet_addr(ip), (int)pState->Port ));
+UdpTransmitSocket socket( IpEndpointName( WcharToChar(1, pState->Hostname.Data), (int)pState->Port ));
+		
+
+   p.Clear();
+
+	p << osc::BeginMessage( "/pawn" )
+		//<< WcharToChar(1, pState->PlayerName.Data)
+	    << (int)pState->id
+		<< (float)pState->LocX
+		<< (float)pState->LocY
+		<< (float)pState->LocZ
+		<< (bool)pState->crouch
+	  << osc::EndMessage;
+	
+   if(p.IsReady()){ socket.Send( p.Data(), p.Size() );}
+   
+}
+
 __declspec(dllexport)void sendOSCPlayerState(PlayerStateStruct* pState)
 {
    char buffer[OUTPUT_BUFFER_SIZE];
@@ -1040,6 +1099,19 @@ void getIPAddress (int index){
 
 }
 
+// returns count of non-overlapping occurrences of 'sub' in 'str'
+int countSubstring(const std::string& str, const std::string& sub)
+{
+    if (sub.length() == 0) return 0;
+    int count = 0;
+    for (size_t offset = str.find(sub); offset != std::string::npos;
+	 offset = str.find(sub, offset + sub.length()))
+    {
+        ++count;
+    }
+    return count;
+}
+
 char* WcharToChar(int mode, wchar_t* val)
 {
 	// mode will be used later for multiple conversion types
@@ -1050,10 +1122,11 @@ char* WcharToChar(int mode, wchar_t* val)
     size_t convertedChars = 0;
 	char char_result[newsize];
     wcstombs_s(&convertedChars, char_result, origsize, val, _TRUNCATE);
-
+	std::cout << "char_result: " << char_result << std::endl;
    return char_result;
 
 }
+
 void sendOSCmessage_projectile(osc_projectile_vars currentProjectile) //, char *type)
 {
 //	std::string classname = currentProjectile.classname;

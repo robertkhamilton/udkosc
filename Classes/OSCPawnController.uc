@@ -96,7 +96,7 @@ auto state OSCPawnMove
 		{
 
 			GetAxes(Pawn.Rotation,X,Y,Z);
-			
+/*			
 		if(pawnUID == 1)
 		{
 			`log("OSCVector.X: "$OSCVector.X$", OSCVector.Y: "$OSCVector.Y$", OSCVector.Z: "$OSCVector.Z$", OSCGroundSpeed: "$OSCGroundSpeed$", OSCStop: "$OSCStop);
@@ -104,13 +104,13 @@ auto state OSCPawnMove
 			`log("OSCJump: "$OSCJump$" - id: "$pawnUID$", X: "$OSCVector.X$", Y: "$OSCVector.Y);
 			`log("X: "$X$", Y: "$Y);
 		}
-			
+*/			
 			NewAccel = OSCVector.X*X + OSCVector.Y*Y;
 			NewAccel = Pawn.AccelRate * Normal(NewAccel);
 			
 			if(OSCStop > 0.0)
 			{
-				`log("OSCStop: "$OSCStop$" - id: "$pawnUID);
+	//			`log("OSCStop: "$OSCStop$" - id: "$pawnUID);
 				NewAccel.X = 0;
 				NewAccel.Y = 0;
 				NewAccel.Z = 0;
@@ -156,7 +156,7 @@ auto state OSCPawnMove
 		
 		if(OSCStop > 0.0)
 		{
-			`log("OSCStop: "$OSCStop$" - id: "$pawnUID);
+		//	`log("OSCStop: "$OSCStop$" - id: "$pawnUID);
 			NewAccel.X = 0;
 			NewAccel.Y = 0;
 			NewAccel.Z = 0;
@@ -301,4 +301,14 @@ state Idle
 {	
 	Begin:
 		`log("IN OSCPawnController state IDLE");
+}
+
+event InitInputSystem()
+{
+	//Super.InitInputSystem();
+	//AddOnlineDelegates(false);
+}
+
+function AddOnlineDelegates(bool bRegisterVoice)
+{
 }
