@@ -1511,8 +1511,9 @@ event PlayerTick( float DeltaTime )
 //	if(testPawnStruct)
 //		getPawnStructCont();
 		
+//	`log("PlayerTick - OSCPlayerControllerDLL before...");
 	Super.PlayerTick(DeltaTime);
-	
+//	`log("PlayerTick - OSCPlayerControllerDLL after...");	
 }
 
 simulated function setPawnBotState(bool val)

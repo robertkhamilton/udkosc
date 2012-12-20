@@ -22,6 +22,7 @@ dllimport final function OSCPawnBotDiscreteValuesStruct getOSCPawnBotDiscreteVal
 DefaultProperties
 {
 	velRotation = 5000;
+	InputClass=class'UT3OSC.OSCPawnInput';
 }
 
 simulated function setOSCScriptPlayermoveStruct(OSCScriptPlayermoveStruct fstruct)
@@ -38,8 +39,7 @@ simulated function setOSCScriptTeleportStruct(OSCScriptPlayerTeleportStruct tstr
 
 auto state OSCPawnMove
 {
-	
-	
+		
 	function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, Rotator DeltaRot)
 	{
 	
@@ -64,9 +64,10 @@ auto state OSCPawnMove
 		local Rotator NewRotation, DesiredRotation;
 		
 		
+		`log("Teleport id="$localOSCPawnBotTeleportStruct.id$", "$localOSCPawnBotTeleportStruct.teleportx$", "$localOSCPawnBotTeleportStruct.teleporty$", "$localOSCPawnBotTeleportStruct.teleportz);
+		
 		if (localOSCPawnBotTeleportStruct.teleport > 0)
-		{
-//			`log("Teleport id="$localOSCPawnBotTeleportStruct.id$", "$localOSCPawnBotTeleportStruct.teleportx$", "$localOSCPawnBotTeleportStruct.teleporty$", "$localOSCPawnBotTeleportStruct.teleportz);
+		{		
 			OSCPawnBot(Pawn).teleport(localOSCPawnBotTeleportStruct.teleportx, localOSCPawnBotTeleportStruct.teleporty, localOSCPawnBotTeleportStruct.teleportz);					
 		}
 		
@@ -177,8 +178,8 @@ auto state OSCPawnMove
 	}
 
 	
-function UpdateRotation( float DeltaTime )
-{
+	function UpdateRotation( float DeltaTime )
+	{
 /*
 		local float deltaRotation;
 		local Rotator newRotation;
@@ -225,7 +226,7 @@ function UpdateRotation( float DeltaTime )
 		if ( Pawn != None )
 			Pawn.FaceRotation(NewRotation, deltatime);
 		
-}
+	}
 	
 	
 	simulated function cleanLocalOSCPlayermoveStruct()
@@ -247,6 +248,8 @@ function UpdateRotation( float DeltaTime )
 		localOSCPawnBotStateValuesStruct = getOSCPawnBotStateValues(pawnUID);
 		localOSCPawnBotDiscreteValuesStruct = getOSCPawnBotDiscreteValues(pawnUID);
 		localOSCPawnBotTeleportStruct = getOSCPawnBotTeleportValues(pawnUID);
+		
+		//`log("IN setOSCPawnBotData for pawnid: "$pawnUID);
 	}
 	
 	simulated function setOSCScriptPlayermoveData()		//(OSCScriptPlayermoveStruct fstruct)
@@ -282,10 +285,16 @@ function UpdateRotation( float DeltaTime )
 	{
 		//setOSCScriptPlayermoveData();
 		
+		//`log("TESTING: In PlayerTick, OSCPawnController");
+		
 		// Make state, discrete and teleport calls...
 		setOSCPawnBotData();
-		
-		Super.PlayerTick(DeltaTime);
+	
+	//`log("PlayerTick - OSCPawnController before...");
+	Super.PlayerTick(DeltaTime);
+	//`log("PlayerTick - OSCPawnController after...");	
+	
+//		Super.PlayerTick(DeltaTime);
 		//setOSCScriptPlayermoveData(getOSCScriptPlayermove());
 	}
 	
@@ -294,7 +303,6 @@ function UpdateRotation( float DeltaTime )
 		
 		`log("IN OSCPawnController state OSCPawnMove::Pawn.uid"$OSCPawnBot(Pawn).getUID());
 		
-
 }
 
 state Idle
@@ -311,4 +319,9 @@ event InitInputSystem()
 
 function AddOnlineDelegates(bool bRegisterVoice)
 {
+}
+
+event PlayerTick(float DeltaTime)
+{
+	Super.PlayerTick(DeltaTime);
 }

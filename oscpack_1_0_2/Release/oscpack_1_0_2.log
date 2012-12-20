@@ -1,4 +1,4 @@
-﻿Build started 12/17/2012 10:27:58 AM.
+﻿Build started 12/20/2012 3:06:08 PM.
      1>Project "C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\oscpack_1_0_2.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
          Creating "Release\oscpack_1_0_2.unsuccessfulbuild" because "AlwaysCreate" was specified.
@@ -84,4 +84,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:07.63
+Time Elapsed 00:00:13.21

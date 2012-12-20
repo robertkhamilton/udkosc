@@ -127,6 +127,8 @@ auto state OSCMove
 
 simulated function Tick(float DeltaTime)
 {
+	// Call this Pawn's Controller's playertick method
+	OSCPawnController(Controller).PlayerTick(DeltaTime);
 
 	Super.Tick(DeltaTIme);
 
