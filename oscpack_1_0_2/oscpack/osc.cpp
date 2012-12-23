@@ -774,7 +774,14 @@ __declspec(dllexport)void sendOSCPawnState(PawnStateStruct* pState)
 //	UdpTransmitSocket socket( IpEndpointName( "localhost", (int)pState->Port ));
 	//UdpTransmitSocket socket( IpEndpointName( inet_addr(ip), (int)pState->Port ));
 UdpTransmitSocket socket( IpEndpointName( WcharToChar(1, pState->Hostname.Data), (int)pState->Port ));
-		
+	
+   // switching from bool to int for Chuck (doesn't handle booleans)
+   int localCrouch;
+   localCrouch = 0;
+   if(pState->crouch)
+   {
+	   localCrouch = 1;
+   }
 
    p.Clear();
 
@@ -784,7 +791,8 @@ UdpTransmitSocket socket( IpEndpointName( WcharToChar(1, pState->Hostname.Data),
 		<< (float)pState->LocX
 		<< (float)pState->LocY
 		<< (float)pState->LocZ
-		<< (bool)pState->crouch
+		<< (int)localCrouch
+//		<< (bool)pState->crouch
 	  << osc::EndMessage;
 	
    if(p.IsReady()){ socket.Send( p.Data(), p.Size() );}
