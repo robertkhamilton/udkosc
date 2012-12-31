@@ -31,6 +31,7 @@ CAMERASPEED = "speed"
 CAMERAPITCH = "pitch"
 CAMERAYAW = "yaw"
 CAMERAROLL = "roll"
+CAMERATELEPORT = "teleport"
 SLEW = "slew"
 DUR = "dur"
 SLEWRATE = 20.0 # ms
@@ -309,7 +310,7 @@ def createMove(params, val, *timetag)
           # Don't Aggregate jump height, teleport, userid
           if k==PLAYERJUMP || k==USERID
             $currentVals["#{val}#{k}"] = v.to_f()
-          elsif k==PLAYERTELEPORT
+          elsif val==PLAYERMOVE && k==PLAYERTELEPORT
             # $currentVals["#{val}#{k}"] = "#{v[0]} #{v[1]} #{v[2]}"
             msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, v[0].to_f(), v[1].to_f(), v[2].to_f(), localUID)
             oscMsg = Hash.new
@@ -319,18 +320,25 @@ def createMove(params, val, *timetag)
             #puts "CURRENTVALS: #{val}: #{k}"
             # $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
             if val==CAMERAMOVE
-              $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
+              if k==CAMERATELEPORT
+            	msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, v[0].to_f(), v[1].to_f(), v[2].to_f())
+            	oscMsg = Hash.new
+            	oscMsg[OSCMESSAGE] = msg
+            	messageArray << oscMsg
+              else
+              	$currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
+              end
             else
               $currentVals["#{val}#{k}"] = v.to_f()
             end
           end
 
-          if k!=PLAYERTELEPORT
+          if k!=PLAYERTELEPORT && k!=CAMERATELEPORT
             msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, $currentVals["#{val}#{k}"], localUID)
           end
         end
 
-        if k!=PLAYERTELEPORT
+        if k!=PLAYERTELEPORT && k!=CAMERATELEPORT
           oscMsg = Hash.new
           oscMsg[OSCMESSAGE] = msg
           messageArray << oscMsg
@@ -396,12 +404,26 @@ def buildHash(val)
 
     when CAMERAMOVE
 
-      (1..count-2).step(2) {|i| params[val[i]] = val[i+1] }
 
-      if count.even?
-        params[SLEW] = val[count-1]
-      end
+	  
+	  if val[1]==CAMERATELEPORT
 
+	    cameraTeleportCoordinates = Array.new
+	    cameraTeleportCoordinates[0] = val[2]
+	    cameraTeleportCoordinates[1] = val[3]
+	    cameraTeleportCoordinates[2] = val[4]
+	    params[val[1]] = cameraTeleportCoordinates	    
+	    
+    else
+
+        (1..count-2).step(2) {|i| params[val[i]] = val[i+1] }
+
+        if count.even?
+          params[SLEW] = val[count-1]
+        end
+        
+	  end
+	  
     when WAIT
       params[DUR] = val[1]
   end
@@ -513,6 +535,7 @@ def initCurrentValues
   $currentVals["#{CAMERAMOVE}#{CAMERAPITCH}"] = 0.0
   $currentVals["#{CAMERAMOVE}#{CAMERAYAW}"] = 0.0
   $currentVals["#{CAMERAMOVE}#{CAMERAROLL}"] = 0.0
+  $currentVals["#{CAMERAMOVE}#{CAMERATELEPORT}"] = 0.0  
   $currentVals["#{PLAYERMOVE}#{PLAYERSTOP}"] = 0.0
   $currentVals["#{PLAYERMOVE}#{PLAYERJUMP}"] = 0.0
   $currentVals["#{PLAYERMOVE}#{PLAYERCROUCH}"] = 0.0
