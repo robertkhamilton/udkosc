@@ -31,7 +31,7 @@ RUNNING OSCControl
 
 COMMAND SYNTAX
 
-	Scripting commands are formateed in a human-readable format. There are two primary classes of scripting commands, those that control Actors and those that control Cameras.
+	Scripting commands are formatted in a human-readable format. There are two primary classes of scripting commands, those that control Actors and those that control Cameras.
 
 	Actor or "Player" commands start with "playermove", and are followed by a series of parameters, their associated target values, an optional "slew" time, and a userid number.
 
