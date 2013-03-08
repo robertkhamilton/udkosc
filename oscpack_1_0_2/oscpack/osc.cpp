@@ -236,6 +236,19 @@ protected:
 				OSCScriptPlayermoveStruct.id = a2;
 				OSCScriptPlayermoveStruct.z = a1;
 */
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2, a3, a4, a5, a6, a7, a8, a9;
+                args >> a1 >> a2 >> a3 >> a4 >> a5 >> a6 >> a7 >> a8 >> a9 >> osc::EndMessage;
+				stateParams[(int)a9].x = a1;
+				stateParams[(int)a9].y = a2;
+				stateParams[(int)a9].z = a3;
+				discreteParams[(int)a9].jump = a4;
+				stateParams[(int)a9].speed = a5;
+				stateParams[(int)a9].pitch = a6;
+				stateParams[(int)a9].yaw = a7;
+				stateParams[(int)a9].roll = a8;
+				stateParams[(int)a9].id = (int)a9;			
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/x" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
                 float a1, a2;
@@ -372,6 +385,17 @@ protected:
 				teleportParams[(int)a4].teleporty = a2;
 				teleportParams[(int)a4].teleportz = a3;
 				teleportParams[(int)a4].teleport = 1.0;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/cameramove" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2, a3, a4, a5, a6, a7;
+                args >> a1 >> a2 >> osc::EndMessage;
+				OSCScriptCameramoveStruct.x = a1;
+				OSCScriptCameramoveStruct.y = a2;
+				OSCScriptCameramoveStruct.z = a3;
+				OSCScriptCameramoveStruct.speed = a4;
+				OSCScriptCameramoveStruct.pitch = a5;
+				OSCScriptCameramoveStruct.yaw = a6;
+				OSCScriptCameramoveStruct.roll = a7;
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/cameramove/x" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
                 float a1;
@@ -580,17 +604,18 @@ _declspec(dllexport)OSCPawnBotStateValues* getOSCPawnBotStateValues(int* id)
 	static OSCPawnBotStateValues localStruct;
 	localStruct = stateParams[(int)id];
 
-	if(localStruct.pitch > 0.0)
+	if(localStruct.pitch != 0.0)
 	{
 		stateParams[(int)id].pitch = 0.0;
 	}
 
-	if(localStruct.yaw > 0.0)
+	// need to allow negative values, so can't say "> 0.0"
+	if(localStruct.yaw != 0.0)
 	{
 		stateParams[(int)id].yaw = 0.0;
 	}
 
-	if(localStruct.roll > 0.0)
+	if(localStruct.roll != 0.0)
 	{
 		stateParams[(int)id].roll = 0.0;
 	}
@@ -813,6 +838,9 @@ __declspec(dllexport)void sendOSCPlayerState(PlayerStateStruct* pState)
 		<< (float)pState->LocY
 		<< (float)pState->LocZ
 		<< (bool)pState->crouch
+		<< (float)pState->Pitch
+		<< (float)pState->Yaw
+		<< (float)pState->Roll
 	  << osc::EndMessage;
 	
    if(p.IsReady()){ socket.Send( p.Data(), p.Size() );}

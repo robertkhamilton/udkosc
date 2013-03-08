@@ -124,6 +124,17 @@ struct PointClickStructTEST
 	FString HitInfo_hitcomponent;
 };
 
+struct PlayerStateStruct_works
+{
+	FString Hostname;
+	int Port;
+	FString PlayerName;
+	float LocX;
+	float LocY;
+	float LocZ;
+	bool crouch;
+};
+
 struct PlayerStateStruct
 {
 	FString Hostname;
@@ -133,6 +144,9 @@ struct PlayerStateStruct
 	float LocY;
 	float LocZ;
 	bool crouch;
+	float Pitch;
+	float Yaw;
+	float Roll;
 };
 
 struct PawnStateStruct

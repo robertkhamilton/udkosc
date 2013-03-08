@@ -94,7 +94,7 @@ struct MyPlayerStruct
 	var string testval;
 };
 
-struct PlayerStateStruct
+struct PlayerStateStruct_works
 {
 	var string Hostname;
 	var int Port;
@@ -105,6 +105,20 @@ struct PlayerStateStruct
 	var bool crouch;
 };
 
+// Adding LookPitch... etc to track pawn view to pass for binaural testing
+struct PlayerStateStruct
+{
+	var string Hostname;
+	var int Port;
+	var string PlayerName;
+	var float LocX;
+	var float LocY;
+	var float LocZ;
+	var bool crouch;
+	var float Pitch;
+	var float Yaw;
+	var float Roll;
+};
 
 struct PlayerStateStructTEST
 {
@@ -381,6 +395,22 @@ simulated event PreBeginPlay()
 	OSCFingerOffsets = vect(-160.00000, -210.00000, 0.00001);	
 }
 
+// Overloading FaceRotation from UTPawn to let pawn pitch follow camera
+simulated function FaceRotation(rotator NewRotation, float DeltaTime)
+{
+	if ( Physics == PHYS_Ladder )
+	{
+		NewRotation = OnLadder.Walldir;
+	}
+	else if ( (Physics == PHYS_Walking) || (Physics == PHYS_Falling) )
+	{
+		//NewRotation.Pitch = 0;
+	}
+	NewRotation.Roll = Rotation.Roll;
+    NewRotation.Pitch = Rotation.Pitch;
+	SetRotation(NewRotation);
+}
+
 simulated function sendPlayerState()
 {
 	
@@ -393,6 +423,7 @@ simulated function sendPlayerState()
 	//local string OSCHostname;
 	//local int OSCPort;
 	local bool sendOSC;
+	local Rotator viewrotator;
 	
 	//OSCWI = GetWorldInfo(); 
 	
@@ -414,7 +445,18 @@ simulated function sendPlayerState()
 	psStruct.LocY = Location.Y;
 	psStruct.LocZ = Location.Z;
 	psStruct.Crouch = isCrouching;
-	
+    	
+	// adding rotation to the player output call
+	psStruct.Yaw = Rotation.Yaw%65535;
+	//AimNode.AngleOffset.Y
+//	ClientMessage("Yaw: "$Rotation.Yaw%65535);
+
+    // get view rotation for Pitch for osc output
+	viewrotator = GetViewRotation();	
+	psStruct.Pitch = viewrotator.Pitch%65535;
+	psStruct.Roll = Rotation.Roll%65535;
+
+	//	Modulo = Rotation.Yaw % 65535;	
 
 //ClientMessage("hostname="$OSCHostname$"");
 //ClientMessage("hostname="$OSCWI.OSCHostname$"");
@@ -428,6 +470,9 @@ simulated function sendPlayerState()
 //	psStruct.Hostname = OSCHostname;
 	psStruct.Hostname = OSCParameters.getOSCHostname();
 	psStruct.Port = OSCParameters.getOSCPort();
+	
+
+
 	//psStruct.Port = OSCPort;	
 
 //	psStruct.Hostname = OSCWI.OSCHostname;
