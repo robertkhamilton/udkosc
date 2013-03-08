@@ -29,5 +29,101 @@ UDKOSC INSTALLATION STEP-THROUGH
 	 
 
 	 
+7) Manual config updates
+	- For DefaultEngine.ini
+		-- add "+NonNativePackages=UT3OSC" as 3rd entry in [Engine.ScriptPackages] section 
+		-- add "+EditPackages=UT3OSC" as 3rd entry in [UnrealEd.EditorEngine] section
+	- For DefaultGame.ini
+		-- replace entire [Engine.GameInfo] section with:
+		
+			[Engine.GameInfo]
+			DefaultGame=UT3OSC.UT3OSC
+			DefaultServerGame=UT3OSC.UT3OSC
+			PlayerControllerClassName=UT3OSC.OSCPlayerControllerDll
+			GameDifficulty=+1.0
+			MaxPlayers=32
+			DefaultGameType="UT3OSC.UT3OSC";
+			+DefaultMapPrefixes=(Prefix="DM",bUsesCommonPackage=FALSE,GameType="UTGame.UTDeathmatch")
+			+DefaultMapPrefixes=(Prefix="CTF",bUsesCommonPackage=FALSE,GameType="UTGameContent.UTCTFGame_Content")
+			+DefaultMapPrefixes=(Prefix="VCTF",bUsesCommonPackage=FALSE,GameType="UTGameContent.UTVehicleCTFGame_Content")
+			+DefaultMapPrefixes=(Prefix="OSC",bUsesCommonPackage=FALSE,GameType="UT3OSC.UT3OSC")
+		
+		-- The WEAPONS section should look like this:
+		
+			;///////////////
+			; Weapons
+			;///////////////
+			[UTWeap_RocketLauncher UTUIDataProvider_Weapon]
+			ClassName=UT3OSC.OSCWeap_RocketLauncher_Content
+			AmmoClassPath=UTGame.UTAmmo_RocketLauncher
+
+			[OSCWeap_SeekingShockRifle UTUIDataProvider_Weapon]
+			ClassName=UT3OSC.OSCWeap_SeekingShockRifle
+			AmmoClassPath=UTGame.UTAmmo_ShockRifle
+
+			[UTWeap_LinkGun UTUIDataProvider_Weapon]
+			ClassName=UT3OSC.OSCWeap_LinkGun
+			AmmoClassPath=UTGame.UTAmmo_LinkGun
 	 
+			[UTWeap_ShockRifle UTUIDataProvider_Weapon]
+			ClassName=UTGameContent.UTWeap_ShockRifle
+			AmmoClassPath=UTGame.UTAmmo_ShockRifle
+			
+			
+		--- The UT3 GAME MODES section should start like this:
+
+			;///////////////
+			; UT3 Game Modes
+			;///////////////
+			[UT3OSC UTUIDataProvider_GameModeInfo]
+			GameMode=UT3OSC.UT3OSC
+			DefaultMap=OSC-tele_harmonium__g_03
+			GameSearchClass=UTGameSearchDM
+			PreviewImageMarkup=UI_FrontEnd_Art.GameTypes.___Deathmatch
+			DefaultMap=DM-Deck
+			Prefixes=OSC
+			OptionSet=DM
+			IconImage=UI_HUD.HUD.UI_HUD_BaseD
+			IconU=442
+			IconV=76
+			IconUL=129
+			IconVL=104
+
+		--- The UT3 MAPS sections should start like this:
+		
+			;///////////////
+			; UT3 Maps
+			;///////////////
+			[OSC-tele_harmonium_level01mod UTUIDataProvider_MapInfo]
+			MapName=OSC-tele_harmonium__g_03
+			PreviewImageMarkup=UI_FrontEnd_Art.MapPics.___Map-Pic-vCTF-Necropolis
+			Description=<Strings:UTGAMEUI.CampaignBriefing.BriefDesc38>
+
+
+	- For DefaultInput.ini
+		-- Following the EDITOR BINDINGS section, add this entire section:
+		
+			;-----------------------------------------------------------------------------------------
+			; UT3OSC Bindings
+			;-----------------------------------------------------------------------------------------
+			.Bindings=(Name="one",Command="OSCStartOutput",Control=False,Shift=False,Alt=True)
+			.Bindings=(Name="two",Command="OSCStopOutput",Control=False,Shift=False,Alt=True)
+			.Bindings=(Name="three",Command="OSCStartInput",Control=False,Shift=False,Alt=True)
+			.Bindings=(Name="four",Command="OSCSendDeltas",Control=False,Shift=False,Alt=True)
+			.Bindings=(Name="nine",Command="DestroyAllShockballs True",Control=True,Shift=False,Alt=True)
+			.Bindings=(Name="nine",Command="DestroyAllShockballs",Control=False,Shift=False,Alt=True)
+			.Bindings=(Name="zero",Command="DestroyAllProjectiles",Control=False,Shift=False,Alt=True)
+			.Bindings=(Name="F",Command="FlyWalk",Control=False,Shift=True,Alt=False)
+			.Bindings=(Name="seven",Command="freezeShockBall",Control=False,Shift=False,Alt=True)
+			.Bindings=(Name="BackSlash",Command="setSeekingShockBallTargetClassName 3",Control=False,Shift=True,Alt=False)
+			.Bindings=(Name="BackSlash",Command="setSeekingShockBallTargetClassName 2",Control=False,Shift=False,Alt=True)
+			.Bindings=(Name="BackSlash",Command="setSeekingShockBallTargetClassName 1",Control=True,Shift=False,Alt=False)
+			.Bindings=(Name="Equals",Command="increaseDrawScaleSeekingShockBall .02",Control=False,Shift=False,Alt=True)
+			.Bindings=(Name="Underscore",Command="decreaseDrawScaleSeekingShockBall .02",Control=False,Shift=False,Alt=True)
+			.Bindings=(Name="NumPadZero",Command="setProjectileTargets 0 0 250",Control=False,Shift=False,Alt=True)
+			.Bindings=(Name="NumPadOne",Command="setSeekingShockBallTargetClassName 1",Control=False,Shift=False,Alt=True)
+			.Bindings=(Name="NumPadTwo",Command="setSeekingShockBallTargetClassName 2",Control=False,Shift=False,Alt=True)
+			.Bindings=(Name="NumPadThree",Command="setSeekingShockBallTargetClassName 3",Control=False,Shift=False,Alt=True)		
+
+			
 	 ****** last updated by rkh on 3/8/2013
