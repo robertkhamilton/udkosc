@@ -1,105 +1,33 @@
-------------------01/09/2012------------------
+UDKOSC INSTALLATION STEP-THROUGH
 
-INSTALL INSTRUCTIONS
+1) Download UDK:
+	February 2013 UDK Beta (1.9 GB .exe) 
+	MD5 is 08058b9dc1ae87183012e6e00dce74ac
 
-udkosc > oscpack_1_0_2
+2) Run UDK installer
+	Install to C:/UDK/UDK-2013-02
 
-- oscpack_1_0_2.dll
-=> /UDK-2011-12/Binaries/Win32/UserCode/
+3) Download UDKOSC from github: master branch
+	
+	https://github.com/robertkhamilton/udkosc
+	
+4) Copy oscpack_1_0_2.dll from UDKOSC to UDK
+	- oscpack_1_0_2.dll can be found in the UDKOSC project at udkosc/oscpack_1_0_2/oscpack_1_0_2.dll
+    - copy it to C:/UDK/UDK-2013-02/Binaries/Win32/UserCode/
+	
+5) Copy UDKOSC classes directory into UDK Development directory
+     - "Classes" directory can be found at udkosc/Classes
+	 - Copy entire Classes directory to C:/Udk/UDK-2013-02/Development/Src
+	 - rename Classes directory to "UT3OSC", 
 
+6) Copy UDKOSC-specific config files
+	 - From the udkosc/Config directory, copy the two files DefaultOSC and DefaultUT3OSC to C:/UDK/UDK-2013-02/UDKGame/Config/ directory
+	 - Three additional configs with modifications allowing UDKOSC to run must be used as well. As these files change regularly with each new version of UDK, please follow these instructions for setup:
+		-- For versions of the UDK that have been tested with UDKOSC, there will be version folders in the udkosc/Config directory such as udkosc/Config/2012-07. There are 3 config files here that need to be copied to C:/UDK/UDK-2012-07/UDKGame/Config/ 
+		-- The DefaultEngine, DefaultGame and DefaultInput config files for your specific UDK version should be copied into C:/UDK/UDK-2013-02/UDKGame/Config/, overwriting the existing versions that ship with UDK
+		-- NOTE*** As changes are often made to these 3 files with each successive version of UDK, if modified configs for the version of UDK which you're using don't exist in udkosc/Config you compare I suggest comparing the differences between the sample configs included in the UDKOSC package and the version of UDK which you're using and copying UDKOSC specific lines into the new versions of those configs.
+	 
 
-udkosc > Config
-
-- DefaultGame.ini
-- DefaultOSC.ini
-- DefaultUT3OSC.ini
-- DefaultEngine.ini
-- DefaultInput.ini
-
-=> /UDK-2011-12/UDKGame/Config
-
-
-udkosc > Classes
-
-=> /UDK-2011-12/Development/Src/UT3OSC/Classes/
-
-- ActorFactoryOSCInterpActor.uc
-- ActorFactoryOSCKActor.uc
-- ActorFactoryOSCKActorFromStatic.uc
-- ActorFactoryOSCStaticMeshActor.uc
-- ActorFactoryOSCTrigger.uc
-- OSCInterpActor.uc
-- OSCKActor.uc
-- OSCKActorFromStatic.uc
-- OSCParams.uc
-- OSCPawn.uc
-- OSCPlayerController.uc
-- OSCPlayerControllerDLL.uc
-- OSCProj_LinkPlasma.uc
-- OSCProj_SeekingRocket.uc
-- OSCProj_SeekingShockBall.uc
-- OSCProj_SeekingShockBall_original.txt
-- OSCProj_ShockBall.uc
-- OSCSeekingShockBallLight.uc
-- OSCSeqAct_SetGameTIme.uc
-- OSCStaticMeshACtor.uc
-- OSCTrigger.uc
-- OSCWeap_LinkGun.uc
-- OSCWeap_RocketLauncher_Content.uc
-- OSCWeap_SeekingShockRifle.uc
-- OSCWeap_ShockRifle.uc
-- OSCWorldInfo.uc
-- ut3osc.uc
-
-
-
-
-DEV NOTES:
-
-------------------1/07/2012------------------
-
-
-- Added oscpack_1_0_2.dll to G:/UDK/UDK-201-12/Binaries/Win32/UserCode directory
-
-- updated DefaultGame.ini with OSC specfic changes
-
-- added DefaultOSC.ini 
-
-- added DefaultUT3OSC.ini
-
-- updated DefaultEngine.ini to reference UT3OSC packages
-
-- updated DefaultInput.ini with UT3OSC custom key bindings
-
-==========
-
-Full Recompile
-
-ERROR:
-
-G:\UDK\UDK-2011-12\Development\Src\ut3osc\Classes\OSCProj_SeekingShockBall.uc(273) : Error, Unrecognized member 'LocationName' in class 'TriggerVolume'
-
-==========
-
-Volume.uc no longer hsa a Location. WHat happened to it?
-
-Used to have:
-
-var(Location) int LocationPriority;
-var(Location) localized string LocationName;
-
-So in OSCProj_SeekingShockBall.uc we had:
-
-if(InStr(P.LocationName, seekTargetVolumeType)>=0)
-
-- this used to check the name of the TriggerVolume as entered in the editor so that we could seek balls to a given Volume Type, as used in TH in the center ring of lights
-
-
-===========
-
-removed setSeekTargetTriggerVol() and commented out the call to it.
-
-
-=============
-
-NOT LOADING UT3OSC Game TYpe
+	 
+	 
+	 ****** last updated by rkh on 3/8/2013
