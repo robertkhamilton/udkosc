@@ -17,8 +17,8 @@ UDKOSC INSTALLATION STEP-THROUGH
 	
 5) Copy UDKOSC classes directory into UDK Development directory
      - "Classes" directory can be found at udkosc/Classes
-	 - Copy entire Classes directory to C:/Udk/UDK-2013-02/Development/Src
-	 - rename Classes directory to "UT3OSC", 
+	 - Copy entire Classes directory to C:/Udk/UDK-2013-02/Development/Src/UT3OSC/
+	 - You will need to create the directory named "UT3OSC", 
 
 6) Copy UDKOSC-specific config files
 	 - From the udkosc/Config directory, copy the two files DefaultOSC and DefaultUT3OSC to C:/UDK/UDK-2013-02/UDKGame/Config/ directory
