@@ -19,7 +19,8 @@ UDKOSC INSTALLATION STEP-THROUGH
      - "Classes" directory can be found at udkosc/Classes
 	 - Copy entire Classes directory to C:/Udk/UDK-2013-02/Development/Src/UT3OSC/
 	 - You will need to create the directory named "UT3OSC", 
-
+	 - NOTE***  If you get an error like "C:\UDK\UDK-2013-02\Development\Src\UT3OSC\Classes\OSCBot_Pawn.uc(2) : Error, Class 'OSCBot_Pawn' cannot extend 'OSCPawn' as it is DLLBind(oscpack_1_0_2)'" when compiling, please remove OSCBot_Pawn.uc or rename the file to OSCBot_Pawn_uc
+	 
 6) Copy UDKOSC-specific config files
 	 - From the udkosc/Config directory, copy the two files DefaultOSC and DefaultUT3OSC to C:/UDK/UDK-2013-02/UDKGame/Config/ directory
 	 - Three additional configs with modifications allowing UDKOSC to run must be used as well. As these files change regularly with each new version of UDK, please follow these instructions for setup:
