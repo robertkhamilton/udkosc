@@ -2,6 +2,8 @@ class OSCPawnController extends OSCPlayerController
  DLLBind(oscpack_1_0_2)
  dependson(OSCPlayerControllerDLL);
 
+var class<UTFamilyInfo> CharacterClass;
+ 
 var int pawnUID;
 
 var float velRotation;
@@ -19,11 +21,20 @@ dllimport final function OSCPawnBotStateValuesStruct getOSCPawnBotStateValues(in
 dllimport final function OSCPawnBotTeleportStruct getOSCPawnBotTeleportValues(int id);
 dllimport final function OSCPawnBotDiscreteValuesStruct getOSCPawnBotDiscreteValues(int id);
 
-DefaultProperties
+simulated event PostBeginPlay()
 {
-	velRotation = 5000;
-	InputClass=class'UT3OSC.OSCPawnInput';
+  super.PostBeginPlay();
+   
+  SetupPlayerCharacter();
 }
+
+/** Set player's character info class & perform any other initialization */
+function SetupPlayerCharacter()
+{
+  //Set character to our custom character
+  ServerSetCharacterClass(CharacterClass);
+}
+
 
 simulated function setOSCScriptPlayermoveStruct(OSCScriptPlayermoveStruct fstruct)
 {
@@ -34,8 +45,6 @@ simulated function setOSCScriptTeleportStruct(OSCScriptPlayerTeleportStruct tstr
 {
 	localOSCScriptTeleportStruct = tstruct;
 }	
-
-
 
 auto state OSCPawnMove
 {
@@ -71,7 +80,6 @@ auto state OSCPawnMove
 			OSCPawnBot(Pawn).teleport(localOSCPawnBotTeleportStruct.teleportx, localOSCPawnBotTeleportStruct.teleporty, localOSCPawnBotTeleportStruct.teleportz);					
 		}
 		
-
 		OSCJump = localOSCPawnBotDiscreteValuesStruct.jump;
 		OSCVector.X = localOSCPawnBotStateValuesStruct.x;
 		OSCVector.Y = localOSCPawnBotStateValuesStruct.y;
@@ -324,4 +332,13 @@ function AddOnlineDelegates(bool bRegisterVoice)
 event PlayerTick(float DeltaTime)
 {
 	Super.PlayerTick(DeltaTime);
+}
+
+DefaultProperties
+{
+	velRotation = 5000;
+	InputClass=class'UT3OSC.OSCPawnInput';
+	
+	//Points to the UTFamilyInfo class for your custom character
+	//CharacterClass=class'UT3OSC.OSCFamilyInfo_OSCPawnBot'
 }

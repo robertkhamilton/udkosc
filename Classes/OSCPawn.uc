@@ -10,6 +10,12 @@ class OSCPawn extends UTPawn
  notplaceable
  DLLBind(oscpack_1_0_2);
 
+var(NPC) SkeletalMeshComponent CurrentMesh;
+var SkelControl_CCD_IK TrunkMover;
+
+var bool isValkordia;
+var bool isTrumbruticus;
+
 var int uid;
 
 var bool sendingOSC;	// toggle to send OSC for this pawn
@@ -48,36 +54,6 @@ var bool OSCFreeCamera;
 // testing
 var Rotator OSCRotation;
 
-defaultproperties
-{
-	//groundspeed=10000.0
-	seekingTurnRate=20.00000
-	
-	bHidden=false;
-	
-	
-	// for iPad
-	// x range = 0 to 320
-	// y range = 0 to 420
-	// finger touch ~ 7 to 20
-	/*
-	OSCFingerSourceMax.X=320.00000
-	OSCFingerSourceMin.X=0.00000
-	OSCFingerSourceMax.Y=420.00000
-	OSCFingerSourceMin.Y=0.00000
-	OSCFingerSourceMax.Z=20.00000
-	OSCFingerSourceMin.Z=7.00000
-	OSCFingerOffsets.X = -160.00000
-	OSCFingerOffset.Y = -210.0000
-	OSCFingerOffset.Z = 0.00000
-	OSCFingerWorldMax.X = 3000.00000
-	OSCFingerWorldMin.X = -3000.00000
-	OSCFingerWorldMax.Y = 3000.00000
-	OSCFingerWorldMin.Y = -3000.00000
-	OSCFingerWorldMax.Z = 3000.00000
-	OSCFingerWorldMin.Z = 0.00001
-*/
-}
 /*
 event PostBeginPlay()
 {
@@ -222,8 +198,89 @@ dllimport final function initOSCReceiver();
 dllimport final function OSCScriptPlayerRotationStruct getOSCScriptPlayerRotation();
 
 //dllimport final function sendOSCPlayerStateTEST(PlayerStateStructTEST a);
-
 //dllimport final function sendMotionState(string currState, vector loc);
+//override to do nothing
+//simulated function SetCharacterClassFromInfo(class<UTFamilyInfo> Info)
+//{
+//}
+
+//var AnimNodeBlend ThrottleBlendNode;
+//simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
+//{
+//    super.PostInitAnimTree(SkelComp);
+// 
+//    if (SkelComp == Mesh)
+//    {
+//        ThrottleBlendNode = AnimNodeBlend(Mesh.FindAnimNode('Throttle Blend'));
+//    }
+//}
+
+simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
+{
+	super.PostInitAnimTree(SkelComp);
+	
+	// For Trumbruticus trunk moving demo
+	//TrunkMover = SkelControl_CCD_IK(Mesh.FindSkelControl('TrunkMover'));
+	
+	 
+}
+
+simulated exec function ChangePlayerMesh(float a)
+{
+	local AnimNode temp;
+
+	if(a==1)
+	{
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree_spawntest');
+
+		//self.Mesh.GlobalAnimRateScale=self.GroundSpeed/440.0;
+		//`log("Groundspeed = "$self.GroundSpeed);
+		
+		//Pawn.GroundSpeed
+		isValkordia=false;
+		isTrumbruticus=true;
+		
+		} else if(a==2) {
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01');	
+		
+		 // Search for the animation node blend list by name.
+		temp = self.Mesh.FindAnimNode('UDKAnimBlendByFlying');
+		
+
+		isValkordia=true;
+		isTrumbruticus=false;
+		
+	} else if(a==3) {	
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_LIAM_Cathode.Mesh.SK_CH_LIAM_Cathode');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'CH_AnimHuman.Anims.K_AnimHuman_BaseMale';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
+		
+		isValkordia=false;
+		isTrumbruticus=false;
+		
+	} else if(a==4) {
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_IronGuard_Male.Mesh.SK_CH_IronGuard_MaleA');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'CH_AnimHuman.Anims.K_AnimHuman_BaseMale';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
+		
+		isValkordia=false;
+		isTrumbruticus=false;
+	}
+}
+
+simulated exec function setEyeHeight(float X)
+{
+  BaseEyeheight=X;
+  
+}
 
 simulated exec function setOSCFingerOffsets(float X, float Y, float Z)
 {
@@ -419,25 +476,11 @@ simulated function sendPlayerState()
 	Local Actor traceHit;
 	local MyPlayerStruct tempVals;
 	local PlayerStateStruct psStruct;
-	//local OSCParams OSCParameters;
-	//local string OSCHostname;
-	//local int OSCPort;
 	local bool sendOSC;
 	local Rotator viewrotator;
-	
-	//OSCWI = GetWorldInfo(); 
-	
-//WorldInfo.WorldGravityZ = current gravity being used
 
 	end = Location + normal(vector(Rotation))*32768; // trace to "infinity"
 	traceHit = trace(loc, norm, end, Location, true,, hitInfo);
-
-	// By default only 4 console messages are shown at the time
- 	//ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
-	//ClientMessage("ActorTag: "$self.Tag$"");
- 	//ClientMessage("Location: "$Location.X$","$Location.Y$","$Location.Z);
- 	//ClientMessage("Material: "$hitInfo.Material$"  PhysMaterial: "$hitInfo.PhysMaterial);
-	//ClientMessage("Component: "$hitInfo.HitComponent);
 	
 	// Populate pcStruct with tracehit info using rkh String format hack
 	psStruct.PlayerName ="bob";
@@ -448,54 +491,35 @@ simulated function sendPlayerState()
     	
 	// adding rotation to the player output call
 	psStruct.Yaw = Rotation.Yaw%65535;
-	//AimNode.AngleOffset.Y
-//	ClientMessage("Yaw: "$Rotation.Yaw%65535);
 
     // get view rotation for Pitch for osc output
 	viewrotator = GetViewRotation();	
 	psStruct.Pitch = viewrotator.Pitch%65535;
 	psStruct.Roll = Rotation.Roll%65535;
 
-	//	Modulo = Rotation.Yaw % 65535;	
-
-//ClientMessage("hostname="$OSCHostname$"");
-//ClientMessage("hostname="$OSCWI.OSCHostname$"");
-
-	//OSCParameters = spawn(class'OSCParams');
 	OSCHostname = OSCParameters.getOSCHostname();
 	OSCPort = OSCParameters.getOSCPort();
-	
-	//ClientMessage("OSCParameters.getOSCHostname="$OSCHostname$"");
-	
-//	psStruct.Hostname = OSCHostname;
+
 	psStruct.Hostname = OSCParameters.getOSCHostname();
 	psStruct.Port = OSCParameters.getOSCPort();
+
+	sendOSC=true;
+
+	// only send OSC if nothing has changed (XYZ or crouch)
+	if(sendDeltaOSC) {
+		if( (Location.X == lastX) && (Location.Y == lastY) && (Location.Z == lastZ) && (isCrouching==lastCrouch))
+			sendOSC=false;
+	}
+
+	if(sendOSC)
+		sendOSCPlayerState(psStruct);
+
+	// update last xyz coordinates
+	lastX = Location.X;
+	lastY = Location.Y;
+	lastZ = Location.Z;
+	lastCrouch = isCrouching;
 	
-
-
-	//psStruct.Port = OSCPort;	
-
-//	psStruct.Hostname = OSCWI.OSCHostname;
-//	psStruct.Port = OSCWI.OSCPort;	
-
-
-sendOSC=true;
-
-// only send OSC if nothing has changed (XYZ or crouch)
-if(sendDeltaOSC) {
-	if( (Location.X == lastX) && (Location.Y == lastY) && (Location.Z == lastZ) && (isCrouching==lastCrouch))
-		sendOSC=false;
-}
-
-if(sendOSC)
-	sendOSCPlayerState(psStruct);
-
-// update last xyz coordinates
-lastX = Location.X;
-lastY = Location.Y;
-lastZ = Location.Z;
-lastCrouch = isCrouching;
-
 }
 
 function showTargetInfo()
@@ -935,7 +959,16 @@ state OSCPlayerMoving
 	
 }
 
-
+simulated function setPawnAnimSpeed()
+{
+	if(isTrumbruticus)
+	{
+		self.Mesh.GlobalAnimRateScale=self.GroundSpeed/440.0;
+	}
+	
+	//`log("GlobalAnimRateScale = "$self.Mesh.GlobalAnimRateScale);
+	//`log("Groundspeed = "$self.GroundSpeed);
+}
 
 simulated function Tick(float DeltaTime)
 {
@@ -993,6 +1026,8 @@ simulated function Tick(float DeltaTime)
 	if(sendingOSC)
 		sendPlayerState();
 
+	// Scale player animation speed by pawn speed
+	setPawnAnimSpeed();
 	
 }
 
@@ -1045,4 +1080,64 @@ simulated function setUID(int val)
 		`log("UID IS NONE");
 		uid = val;
 	}
+}
+
+
+defaultproperties
+{
+	//groundspeed=10000.0
+	seekingTurnRate=20.00000
+	
+	bHidden=false;
+	
+	
+	// for iPad
+	// x range = 0 to 320
+	// y range = 0 to 420
+	// finger touch ~ 7 to 20
+	/*
+	OSCFingerSourceMax.X=320.00000
+	OSCFingerSourceMin.X=0.00000
+	OSCFingerSourceMax.Y=420.00000
+	OSCFingerSourceMin.Y=0.00000
+	OSCFingerSourceMax.Z=20.00000
+	OSCFingerSourceMin.Z=7.00000
+	OSCFingerOffsets.X = -160.00000
+	OSCFingerOffset.Y = -210.0000
+	OSCFingerOffset.Z = 0.00000
+	OSCFingerWorldMax.X = 3000.00000
+	OSCFingerWorldMin.X = -3000.00000
+	OSCFingerWorldMax.Y = 3000.00000
+	OSCFingerWorldMin.Y = -3000.00000
+	OSCFingerWorldMax.Z = 3000.00000
+	OSCFingerWorldMin.Z = 0.00001
+*/
+
+/*
+Begin Object Name=WPawnSkeletalMeshComponent
+AnimTreeTemplate=AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree'
+End Object
+*/
+
+/*
+  Begin Object Class=SkeletalMeshComponent Name=OSCMesh_trumbruticus
+    SkeletalMesh=SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01'
+    PhysicsAsset=PhysicsAsset'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Physics'
+    AnimSets(0)=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims'
+    AnimtreeTemplate=AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree'
+  End Object
+  CurrentMesh=OSCMesh_trumbruticus
+  Mesh=OSCMesh_trumbruticus
+  Components.Add(OSCMesh_trumbruticus)	
+  
+  Begin Object Name=CollisionCylinder
+      CollisionRadius=+0021.000000
+      CollisionHeight=+0044.000000
+  End Object
+  
+  CylinderComponent=CollisionCylinder
+  CylinderComponent.bDrawBoundingBox = True
+*/  
+  CamOffset = (X=60, Y=0, Z= 0)
+  
 }

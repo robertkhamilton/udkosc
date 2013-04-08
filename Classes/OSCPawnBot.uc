@@ -69,12 +69,6 @@ dllimport final function sendOSCPawnState(PawnStateStruct a);
 dllimport final function testt(float thisx);
 // ************************************************************************************************
 
-DefaultProperties
-{
-	uid=-1;
-	bRollToDesired=true;
-	RemoteRole=ROLE_SimulatedProxy; // just for testing crashing bug
-}
 
 simulated event PreBeginPlay()
 {
@@ -82,6 +76,11 @@ simulated event PreBeginPlay()
 	OSCParameters = spawn(class'OSCParams');	
 	OSCHostname = OSCParameters.getOSCHostname();
 	OSCPort = OSCParameters.getOSCPort();	
+}
+
+//override to do nothing
+simulated function SetCharacterClassFromInfo(class<UTFamilyInfo> Info)
+{
 }
 
 simulated reliable client function teleport(float x, float y, float z)
@@ -199,4 +198,31 @@ simulated function sendPawnState()
 	lastY = Location.Y;
 	lastZ = Location.Z;
 	//lastCrouch = isCrouching;
+}
+
+defaultproperties
+{
+  uid=-1;
+  bRollToDesired=true;
+  RemoteRole=ROLE_SimulatedProxy; // just for testing crashing bug
+
+  Begin Object Class=SkeletalMeshComponent Name=OSCMesh_trumbruticus
+    SkeletalMesh=SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01'
+    PhysicsAsset=PhysicsAsset'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Physics'
+    AnimSets(0)=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims'
+    AnimTreeTemplate=AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree_spawntest'
+//AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree'
+  End Object
+  Mesh=OSCMesh_trumbruticus
+  Components.Add(OSCMesh_trumbruticus)	
+  
+  Begin Object Name=CollisionCylinder
+      CollisionRadius=+0021.000000
+      CollisionHeight=+0044.000000
+	  bDrawBoundingBox=True
+  End Object
+  
+  CylinderComponent=CollisionCylinder
+  CylinderComponent.bDrawBoundingBox = True
+  
 }

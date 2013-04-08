@@ -50,7 +50,7 @@ defaultproperties
 {
  //DefaultWorldInfoClass=class'UT3OSC.OSCWorldInfo'
  DefaultPawnClass=class'UT3OSC.OSCPawn'
- PawnClass=class'UT3OSC.OSCBot_Pawn'
+ PawnClass=class'UT3OSC.OSCPawnBot'
  PlayerControllerClass=class'UT3OSC.OSCPlayerControllerDLL'
 
  DefaultInventory[0] = class'UT3OSC.OSCWeap_SeekingShockRifle'
@@ -59,6 +59,8 @@ defaultproperties
  DefaultInventory[2] = class'UT3OSC.OSCWeap_LinkGun'
  //fingerTouchArray=(object1, object2, object3, object4, object5);
  
+// PlayerReplicationInfoClass=class'UT3OSC.OSCPlayerReplicationInfo'
+	
  BotClass=class'UT3OSC.OSCBot'
 
  }

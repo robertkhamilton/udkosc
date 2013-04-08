@@ -9,6 +9,8 @@
 class OSCPlayerControllerDLL extends OSCPlayerController
  DLLBind(oscpack_1_0_2);
  
+var class<UTFamilyInfo> CharacterClass;
+
 var bool testPawnStruct;
 
 var bool flying;
@@ -238,11 +240,7 @@ dllimport final function OSCPawnBotDiscreteValuesStruct getOSCPawnBotDiscreteVal
 //dllimport final function OSCSinglePawnBotStateValues getOSCSinglePawnBotStateValues();
 //dllimport final function OSCPawnBotState getOSCPawnBotState();
 
-defaultproperties 
-{
-	OSCBotCount=0;
-	OSCPawnBotCount=0;
-}
+
 
 // borrowing this for multiparameter testing
 simulated event PreBeginPlay()
@@ -278,6 +276,32 @@ simulated event PreBeginPlay()
 
 	//OSCPawns.addItem(Pawn);
 
+}
+
+simulated exec function trunkmove(float valx, float valy, float valz)
+{
+	local vector TrunkLocation;
+	local OSCPawn Utp;
+
+	TrunkLocation.Z = valx; //giant multiplier so we extend the trunk more.
+	TrunkLocation.X = valz;
+	TrunkLocation.Y = valy;
+	Utp=OscPawn(Pawn); //this simply gets our pawn so we can then point to our SkelControl
+	Utp.TrunkMover.EffectorLocation=Pawn.Location + TrunkLocation; 
+}
+
+simulated event PostBeginPlay()
+{
+  super.PostBeginPlay();
+   
+  SetupPlayerCharacter();
+}
+
+/** Set player's character info class & perform any other initialization */
+function SetupPlayerCharacter()
+{
+  //Set character to our custom character
+  ServerSetCharacterClass(CharacterClass);
 }
 
 simulated exec function OSCStartPawnBotOutput() {
@@ -821,7 +845,7 @@ state OSCPlayerMoving
 		local int				OSCCurrentID;
 		//local float 			OSCTeleport;
 		//ROB HACKING - adding test vector pulling from OSC
-		local vector			OSCVector, OSCX, OSCY, OSCZ;
+		local vector			OSCVector; //, OSCX, OSCY, OSCZ;
 		local float 			OSCGroundSpeed;
 		local vector			OSCCamera;
 		local float				OSCStop;
@@ -1048,7 +1072,7 @@ function showTargetInfo()
 	Local vector loc, norm, end;
 	Local TraceHitInfo hitInfo;
 	Local Actor traceHit;
-	local MyPlayerStruct tempVals;
+//	local MyPlayerStruct tempVals;
 	
 	end = Location + normal(vector(Rotation))*32768; // trace to "infinity"
 	traceHit = trace(loc, norm, end, Location, true,, hitInfo);
@@ -1508,7 +1532,7 @@ event PlayerTick( float DeltaTime )
 	//testInputData(); // rkh testing input data
 	
 	// testing
-//	if(testPawnStruct)
+//	if(testPawnStruct)	
 //		getPawnStructCont();
 		
 //	`log("PlayerTick - OSCPlayerControllerDLL before...");
@@ -1534,4 +1558,11 @@ simulated function setPawnBotState(bool val)
 
 function AddOnlineDelegates(bool bRegisterVoice)
 {
+}
+
+defaultproperties 
+{
+	OSCBotCount=0;
+	OSCPawnBotCount=0;
+	//CharacterClass=class'UT3OSC.OSCFamilyInfo_OSCPawnBot'
 }
