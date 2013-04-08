@@ -28,9 +28,11 @@ UDKOSC INSTALLATION STEP-THROUGH
 		-- The DefaultEngine, DefaultGame and DefaultInput config files for your specific UDK version should be copied into C:/UDK/UDK-2013-02/UDKGame/Config/, overwriting the existing versions that ship with UDK
 		-- NOTE*** As changes are often made to these 3 files with each successive version of UDK, if modified configs for the version of UDK which you're using don't exist in udkosc/Config you compare I suggest comparing the differences between the sample configs included in the UDKOSC package and the version of UDK which you're using and copying UDKOSC specific lines into the new versions of those configs.
 	 
-
+7) Maps
+	- Maps you wish to load as UDKOSC maps must be placed in a directory named UT3OSC under UDKGame/Content/maps/
+	- these maps need to have "OSC-" appended to their names
 	 
-7) Manual config updates
+8) Manual config updates
 	- For DefaultEngine.ini
 		-- add "+NonNativePackages=UT3OSC" as 3rd entry in [Engine.ScriptPackages] section 
 		-- add "+EditPackages=UT3OSC" as 3rd entry in [UnrealEd.EditorEngine] section
