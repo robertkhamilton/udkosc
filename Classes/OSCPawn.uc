@@ -16,6 +16,13 @@ var SkelControl_CCD_IK TrunkMover;
 var bool isValkordia;
 var bool isTrumbruticus;
 
+var int camoffsetx, camoffsety, camoffsetz;
+
+var bool pawnDowntrace;
+var bool pawnSidetrace;
+
+var int gtracelength;
+
 var int uid;
 
 var bool sendingOSC;	// toggle to send OSC for this pawn
@@ -1029,8 +1036,163 @@ simulated function Tick(float DeltaTime)
 	// Scale player animation speed by pawn speed
 	setPawnAnimSpeed();
 	
+	if(pawnDowntrace)
+	{
+		downTrace();
+	}
+	
+	if(pawnSidetrace)
+	{
+		psideTrace();	
+	}
 }
 
+exec function sidetrace(int val)
+{
+
+	gtracelength = val;
+	
+	if(pawnSidetrace)
+	{
+		pawnSidetrace = false;
+	} else {
+		pawnSidetrace = true;
+	}
+}
+
+
+exec function pawntrace(int val)
+{
+	gtracelength = val;
+	
+	if(pawnDowntrace)
+	{
+		pawnDowntrace = false;
+	} else {
+		pawnDowntrace = true;
+	}
+}
+
+simulated function psideTrace()
+{
+	// Left and Right traces
+	sideTracer(16384);
+	sideTracer(-16384);
+}
+
+simulated function sideTracer(int rval)
+{
+
+	local vector loc, norm, end;
+	local TraceHitInfo hitInfo;
+	local Actor traceHit;
+    local vector tempRotation;
+	
+	local vector out_Location;
+	local rotator out_Rotation;
+	local vector startTrace;
+	local vector viewVector;
+	
+	local Rotator leftRot;
+	local bool left;
+	local string msg;
+	
+    startTrace = Location;
+    startTrace.Z +=BaseEyeHeight;
+	
+//	viewVector .X+= 90*DegToUnrRot;
+	
+	leftRot = Rotation;
+	leftRot.Yaw += rval;    //+=16384 for L or R, or +-90*DegToUnrRot;
+	end = startTrace + normal(vector(leftRot))*gtracelength;
+	traceHit = trace(loc, norm, end, startTrace, true,, hitInfo);
+	DrawDebugLine(startTrace, end, 255,0,0,false);
+	
+	if (traceHit != none)
+	{
+//		ClientMessage("Trace Left failed.");
+//		return;
+//	}
+//	else
+//	{
+		if(rval==16384)	// Right
+		{
+			left=false;
+			msg = "Right";
+		} else if(rval==-16384)  // Left 
+		{
+			left=true;
+			msg="Left";
+		}
+		
+		// float distance between Pawn (Location) and object (loc)
+		ClientMessage(msg$": "$VSize(Location - loc));
+// 		ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
+// 		ClientMessage("Location: "$loc.X$","$loc.Y$","$loc.Z);
+// 		ClientMessage("Material: "$hitInfo.Material$"  PhysMaterial: "$hitInfo.PhysMaterial);
+//		ClientMessage("Component: "$hitInfo.HitComponent);
+	}
+	
+}
+
+
+simulated function downTrace()
+{
+
+	local vector loc, norm, end;
+	local TraceHitInfo hitInfo;
+	local Actor traceHit;
+    local vector tempRotation;
+	
+	
+	//end = Location + normal(vector(Rotation))*gtracelength; // trace to "infinity"
+	end = Location + vect(0, 0, -1)*gtracelength;
+	traceHit = trace(loc, norm, end, Location, true,, hitInfo);
+
+	DrawDebugLine(Location, end, 255,0,0,false);
+	
+	ClientMessage("");
+
+	if (traceHit == none)
+	{
+		ClientMessage("Trace failed.");
+		return;
+	}
+	else
+	{
+		// Play a sound to confirm the information
+//		ClientPlaySound(SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_TargetLock');
+
+		// By default only 4 console messages are shown at the time
+ 		ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
+ 		ClientMessage("Location: "$loc.X$","$loc.Y$","$loc.Z);
+ 		ClientMessage("Material: "$hitInfo.Material$"  PhysMaterial: "$hitInfo.PhysMaterial);
+		ClientMessage("Component: "$hitInfo.HitComponent);
+	}
+
+/*
+   //local Actor traceHit;
+   local vector HitLocation, HitNormal;
+   local vector Start;
+   local vector End;
+   local vector ViewRotation;
+   local int StrafeDistance, TraceLength;
+
+   if(Rand(2) == 1)
+   {
+//     ViewRotation = Vector(Pawn.GetViewRotation());
+	  ViewRotation.X = 90 * DegToUnrRot;
+	  ViewRotation.Y = 90 * DegToUnrRot;
+      Start = GetPawnViewLocation();
+      End = GetPawnViewLocation() + (ViewRotation * 2000);
+
+      //traceHit = Trace(HitLocation, HitNormal, End, Start, true);
+      StrafeDistance = TraceLength + 500;
+
+      DrawDebugLine(Start, End, 255,0,0,false);
+   }
+*/
+}
 
 simulated exec function setProjectileTargets(float X, float Y, float Z)
 {
@@ -1082,6 +1244,16 @@ simulated function setUID(int val)
 	}
 }
 
+simulated exec function behindviewset(int _x, int _y, int _z)
+{
+//  CamOffset = (X=60, Y=0, Z= 0);
+	camoffsetx = _x;
+	camoffsety = _y;
+	camoffsetz = _z;
+	CamOffset.X = _x;
+	CamOffset.Y = _y;
+	CamOffset.Z = _z;//= (X=camoffsetx, Y=camoffsety, Z=camoffsetz)
+}
 
 defaultproperties
 {
@@ -1138,6 +1310,8 @@ End Object
   CylinderComponent=CollisionCylinder
   CylinderComponent.bDrawBoundingBox = True
 */  
-  CamOffset = (X=60, Y=0, Z= 0)
+
+ CamOffset = (X=60, Y=0, Z= 0)
+ // CamOffset = (X=camoffsetx, Y=camoffsety, Z=camoffsetz)
   
 }
