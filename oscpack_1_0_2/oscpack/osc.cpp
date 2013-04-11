@@ -841,6 +841,9 @@ __declspec(dllexport)void sendOSCPlayerState(PlayerStateStruct* pState)
 		<< (float)pState->Pitch
 		<< (float)pState->Yaw
 		<< (float)pState->Roll
+		<< (float)pState->leftTrace
+		<< (float)pState->rightTrace
+		<< (float)pState->downTrace
 	  << osc::EndMessage;
 	
    if(p.IsReady()){ socket.Send( p.Data(), p.Size() );}
@@ -908,6 +911,28 @@ __declspec(dllexport)void sendOSCPlayerStateTEST(PlayerStateStructTEST* pState)
    if(p.IsReady()){ socket.Send( p.Data(), p.Size() );}
 }
 
+__declspec(dllexport)void sendOSCPlayerTrace(DownTraceStruct* dt)
+{
+  char buffer[OUTPUT_BUFFER_SIZE];
+   osc::OutboundPacketStream p( buffer, OUTPUT_BUFFER_SIZE );
+   UdpTransmitSocket socket( IpEndpointName( CURRENTHOST, CURRENTPORT ));
+   p.Clear();
+
+	p << osc::BeginMessage( "/playertrace" )
+		<< WcharToChar(1, dt->TraceHit.Data)
+		<< WcharToChar(1, dt->TraceHit_class.Data)
+		<< WcharToChar(1, dt->TraceHit_class_outerName.Data)
+	    << (float)dt->LocX
+		<< (float)dt->LocY
+		<< (float)dt->LocZ
+		<< WcharToChar(1, dt->HitInfo_material.Data)
+		<< WcharToChar(1, dt->HitInfo_physmaterial.Data)
+		<< WcharToChar(1, dt->HitInfo_hitcomponent.Data)
+		<< (int)dt->uid
+	  << osc::EndMessage;
+	
+   if(p.IsReady()){ socket.Send( p.Data(), p.Size() );}
+}
 __declspec(dllexport)void sendOSCpointClick(PointClickStruct* pointClick)
 {
 /*

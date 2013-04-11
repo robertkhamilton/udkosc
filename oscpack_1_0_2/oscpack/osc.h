@@ -108,6 +108,21 @@ struct PointClickStruct
 	FString HitInfo_hitcomponent;
 };
 
+struct DownTraceStruct
+{
+	FString Hostname;
+	int Port;
+	FString TraceHit;
+	FString TraceHit_class;
+	FString TraceHit_class_outerName;
+	float LocX;
+	float LocY;
+	float LocZ;
+	FString HitInfo_material;
+	FString HitInfo_physmaterial;
+	FString HitInfo_hitcomponent;
+	int uid;
+};
 
 struct PointClickStructTEST
 {
@@ -147,6 +162,9 @@ struct PlayerStateStruct
 	float Pitch;
 	float Yaw;
 	float Roll;
+	float leftTrace;
+	float rightTrace;
+	float downTrace;
 };
 
 struct PawnStateStruct
@@ -390,6 +408,7 @@ __declspec(dllexport) void sendOSCPlayerState(PlayerStateStruct* pState);
 __declspec(dllexport) void sendOSCPawnState(PawnStateStruct* pState);
 __declspec(dllexport) void sendOSCProjectileState(ProjectileStateStruct* pState);
 __declspec(dllexport) void sendOSCMeshState(MeshStateStruct* mState);
+__declspec(dllexport) void sendOSCPlayerTrace(DownTraceStruct* a);
 
 __declspec(dllexport) void testt(float x);
 
