@@ -4,7 +4,7 @@ require 'yaml'
 
 port = ARGV[0]
 
-@server = OSC::Server.new( port )
+@server = OSC::Server.new(port)
 
 @messages = []
 @server.add_method // do | message |

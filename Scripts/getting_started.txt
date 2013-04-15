@@ -7,7 +7,8 @@ Controlling OSC Actor and Camera with OSCControl
 
 	OSCControl currently creates a time-ordered array of valid OSC messages and bundles and subsequently streams entire control scripts serially, meaning any timed commands written in the script will be sent in an ordered fashion. So at each execution of OSCControl, the generated batch of OSC messages and bundles are streamed out to the desired target host and port in real-time.At this time, OSCControl is not generating valid timetags on its own, though each message and bundle is formatted to contain timetags in the future.
 
-	To record and playback scripts without the (minimal) overhead of running OSCControl, two helper scripts, "oscrecorder.rb" and "oscplayer.rb" are included, which respectively encode OSC messages/bundles using YAML. 
+	To record and playback scripts without the (minimal) overhead of running OSCControl, two helper scripts, "oscrecorder.rb" and "oscplayer.rb" are included, which respectively encode OSC messages/bundles using YAML. To use these scripts, an example of the syntax would be "ruby recorder.rb > saved.yml" or "ruby player.rb localhost 7001 false < saved.yml". In the latter case, a target IP and PORT are passed in, followed by a boolean that toggles whether time at the beginning of the OSC recording should be ignored.
+
 
 SETUP
 
