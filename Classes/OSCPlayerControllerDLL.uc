@@ -33,6 +33,7 @@ var int OSCPawnBotCount;
 var Pawn newPawn;
 var array<Pawn> OSCBot_Pawns;
 var array<Pawn> OSCPawns;
+var array<Pawn> OSCBots;
 
 
 // borrowing this for multiparameter testing
@@ -303,6 +304,20 @@ function SetupPlayerCharacter()
   //Set character to our custom character
   ServerSetCharacterClass(CharacterClass);
 }
+/**/
+simulated exec function OSCStartBotOutput() {
+	`log("Initializing OSCBot OSC Output...");
+
+	// Set OSCOutput flag for each OSCBot
+	setOSCBotState(true);
+}
+
+simulated exec function OSCStopBotOutput() {
+	`log("stopping OSCBot OSC Output...");
+
+	// Set OSCOutput flag for each PawnBot
+	setOSCBotState(false);
+}
 
 simulated exec function OSCStartPawnBotOutput() {
 	`log("Initializing PawnBot OSC Output...");
@@ -332,6 +347,144 @@ simulated exec function getPawnStruct(int pid)
 	`log("OSCScriptPlayermoveStruct.x = "$temp2struct.x$", .id = "$temp2struct.id);
 }
 
+/*
+simulated exec function setController()
+{
+	local string CClassName;
+	local OSCAIController C;
+	local class <actor> CNewClass;
+	
+	CClassName = "UT3OSC.OSCAIController";	
+	
+	CNewClass = class<Controller>(DynamicLoadObject(CClassName, class'Class'));
+	
+	C = OSCAIController(Spawn(CNewClass));
+	
+	C.Possess(OSCPawnBot(OSCBots[0]), false);	
+}
+*/
+
+// CALL ONE GENERIC SPAWN function from here
+/*
+simultated exec function spawnOSCActor(string val)
+{
+	local string PClassName;
+	local string CClassName;
+	local OSCPawnBot P;
+	local OSCPawnController C;
+	
+	local Vector PawnLocation;
+	local Rotator PawnRotation;
+	local class <actor> PNewClass;
+	local class <actor> CNewClass;
+
+	if(val=="OSCBot")
+	{
+	
+	} else if(val=="OSCPawnBot") {
+		PClassName = "UT3OSC.OSCPawnBot";
+		CClassName = "UT3OSC.OSCPawnController";		
+	}
+}
+	
+//	PClassName = "UT3OSC.OSCPawnBot";
+//	CClassName = "UT3OSC.OSCPawnController";	
+	
+	PawnLocation.X = 0;		
+	PawnLocation.Y = 0;
+	PawnLocation.Z = 2000;
+	
+	PawnRotation = Pawn.Rotation; 
+	PNewClass = class<actor>(DynamicLoadObject(PClassName, class'Class'));
+	CNewClass = class<actor>(DynamicLoadObject(CClassName, class'Class'));
+
+		if(val=="OSCBot")
+	{
+	
+	} else if(val=="OSCPawnBot") {
+	//spawn a new pawn and attach this controller
+		P = OSCPawnBot(Spawn(PNewClass, , ,PawnLocation,PawnRotation));	
+		P.setUID(OSCPawnBotCount);	
+		OSCPawnBotCount++;
+		C = OSCPawnController(Spawn(CNewClass));
+	}
+	
+	P.SetOwner(C);
+	P.SetHidden(false);
+
+
+	if(P!=None)
+	{
+		C.Possess(P, false);
+		C.PostControllerIdChange(); //TEST Trying to fix OSC Output bug
+		OSCPawns.addItem(P);
+		//OSCScriptPawnBotStructs.addItem(localOSCScriptPlayermoveStruct);		// create array instance of playermove structs for each new pawnbot
+		//OSCScriptPlayerTeleportStructs.addItem(localOSCScriptPlayerTeleportStruct);
+		`log("Added"$PClassName$"  with uid: "$P.getUID());
+	}
+	else
+	{
+		`log("P WAS NONE***********");
+	}	
+}
+
+}
+*/
+simulated exec function spawnOSCBot()
+{
+	local OSCBot bot;
+	local string PClassName;
+	local string CClassName;
+	local OSCBot P;
+	local OSCAIController C;
+	//local OSCPawnController C;
+	
+	local Vector PawnLocation;
+	local Rotator PawnRotation;
+	local class <actor> PNewClass; 
+	local class <actor> CNewClass;
+	
+	PClassName = "UT3OSC.OSCBot";
+	CClassName = "UT3OSC.OSCAIController";	
+
+	PawnLocation.X = 0;		
+	PawnLocation.Y = 0;
+	PawnLocation.Z = 2000-100*OSCBotCount;
+	
+	PawnRotation = Pawn.Rotation; 
+	PNewClass = class<actor>(DynamicLoadObject(PClassName, class'Class'));
+	CNewClass = class<Controller>(DynamicLoadObject(CClassName, class'Class'));
+
+	//spawn a new pawn and attach this controller
+	C = OSCAIController(Spawn(CNewClass));
+	P = OSCBot(Spawn(PNewClass, C, ,PawnLocation,PawnRotation));	
+	
+	P.setUID(OSCBotCount);	
+	OSCBotCount++;
+
+		
+	P.SetOwner(C);
+	P.SetHidden(false);
+	//C = OSCPawnController(Spawn(CNewClass));
+
+//	P.GoToState('PlayerWalking');
+	P.setPhysics(PHYS_Falling);
+	P.SetMovementPhysics();
+	
+	if(P!=None)
+	{
+		C.Possess(P, false);
+		//C.PostControllerIdChange(); //TEST Trying to fix OSC Output bug
+		OSCBots.addItem(P);
+		`log("Added OSCBot with uid: "$P.getUID());
+	}
+	else
+	{
+		`log("P WAS NONE***********");
+	}	
+
+}
+/* */
 simulated exec function spawnPawnBot()
 {
 	local string PClassName;
@@ -430,6 +583,34 @@ simulated exec function OSCCheckPawnBots()
 	}
 }
 
+simulated exec function followOSCBots()
+{
+	local OSCBot P;
+	/**/
+	foreach WorldInfo.AllActors(class 'OSCBot', P)
+	{
+		OSCAIController(P.Controller).target=OSCPawn(Pawn);
+		OSCAIController(P.Controller).gotoState('Follow');
+		P.SetPhysics(PHYS_Flying);
+	}
+}
+
+
+simulated exec function followPawnBots()
+{
+	local OSCPawnBot C;
+	
+	foreach WorldInfo.AllActors(class 'OSCPawnBot', C)
+	{
+
+		if(C.follow)
+		{
+			C.follow=false;
+		} else {
+			C.follow=true;
+		}
+	}
+}
 
 simulated exec function OSCTeleportPawnBot(int valID, int valX, int valY, int valZ)
 {
@@ -447,6 +628,24 @@ simulated exec function OSCTeleportPawnBot(int valID, int valX, int valY, int va
 	}
 }
 
+simulated exec function OSCTeleportOSCBot(int valID, int valX, int valY, int valZ)
+{
+	local OSCBot C;
+	local int uid;
+	
+	`log("IN OSCTeleportOSCBot in OSCPlayerControllerDLL.uc");
+	
+	foreach WorldInfo.AllActors(class 'OSCBot', C)
+	{
+		uid = C.getUID();
+		
+		if (uid==valID)
+			C.teleport(valX, valY, valZ);
+	}
+}
+
+
+/*
 simulated exec function OSCMoveBots(int valID, int valX, int valY, int valZ)
 {
 	local OSCBot C;
@@ -464,7 +663,7 @@ simulated exec function OSCMoveBots(int valID, int valX, int valY, int valZ)
 				C.testmoveto(valID, valX, valY, valZ);
 		}
 }
-
+*/
 simulated exec function OSCPawnMove()
 {	
 	local OSCPawnController C;
@@ -1549,6 +1748,21 @@ simulated function setPawnBotState(bool val)
 //	P = OSCPawnBot(OSCPawns[tStruct.id]);
 
 	foreach WorldInfo.AllActors(class 'OSCPawnBot', P)
+	{
+		P.sendingOSC = val;
+	}
+
+}
+
+
+simulated function setOSCBotState(bool val)
+{
+	// Set each PawnBot to be sending OSC
+	
+	local OSCBot P;
+
+
+	foreach WorldInfo.AllActors(class 'OSCBot', P)
 	{
 		P.sendingOSC = val;
 	}

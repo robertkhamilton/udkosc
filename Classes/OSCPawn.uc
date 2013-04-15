@@ -10,24 +10,33 @@ class OSCPawn extends UTPawn
  notplaceable
  DLLBind(oscpack_1_0_2);
 
+ // vars for moving trumbruticus trunk in code
 var(NPC) SkeletalMeshComponent CurrentMesh;
 var SkelControl_CCD_IK TrunkMover;
 
+// state bools for skeletal mesh changing
 var bool isValkordia;
 var bool isTrumbruticus;
 
+// test vars for camera offsets
 var int camoffsetx, camoffsety, camoffsetz;
 
+// toggles and vars for side and down traces
 var bool pawnDowntrace;
 var bool pawnSidetrace;
-
 var int gtracelength;
+var float gLeftTrace;
+var float gRightTrace;
+var float gDownTrace;
 
+// Pawn's unique ID
 var int uid;
 
 var bool sendingOSC;	// toggle to send OSC for this pawn
 var bool receivingOSC; 	// receiving OSC flag to prevent multiple calls to oscpack to instantiate listener threads
 var bool sendDeltaOSC; // whether OSC messages are sent continuously or only on vector deltas
+
+// Old iPad finger-touch code
 var array<vector> fingerTouchArray;
 var vector object1;
 var vector object2;
@@ -35,23 +44,20 @@ var vector object3;
 var vector object4;
 var vector object5;
 
-var bool isCrouching;
+// vals for setting offsets and min/max for incoming XYZ co-ords
+var vector OSCFingerOffsets;
+var vector OSCFingerWorldMin;
+var vector OSCFIngerWorldMax;
+var vector OSCFingerSourceMax;
+var vector OSCFingerSourceMin;
+var bool OSCUseFingerTouches;
+var int currentFingerTouches[5];
 		
 var float lastX;
 var float lastY;
 var float lastZ;
 var bool lastCrouch;
-
-var bool OSCUseFingerTouches;
-var int currentFingerTouches[5];
-
-// vals for setting offsets and min/max for incoming XYZ co-ords
-var vector OSCFingerOffsets;
-var vector OSCFingerWorldMin;
-var vector OSCFIngerWorldMax;
-
-var vector OSCFingerSourceMax;
-var vector OSCFingerSourceMin;
+var bool isCrouching;
 
 var float seekingTurnRate;
 
@@ -61,12 +67,6 @@ var bool OSCFreeCamera;
 // testing
 var Rotator OSCRotation;
 
-/*
-event PostBeginPlay()
-{
-	super.PostBeginPlay();
-}
-*/
 
 struct MyPlayerStruct
 {
@@ -101,6 +101,9 @@ struct PlayerStateStruct
 	var float Pitch;
 	var float Yaw;
 	var float Roll;
+	var float leftTrace;
+	var float rightTrace;
+	var float downTrace;
 };
 
 struct PlayerStateStructTEST
@@ -243,6 +246,11 @@ simulated exec function ChangePlayerMesh(float a)
 		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims';
 		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree_spawntest');
 
+//		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01');
+//		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics');
+//		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
+//		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01');	
+		
 		//self.Mesh.GlobalAnimRateScale=self.GroundSpeed/440.0;
 		//`log("Groundspeed = "$self.GroundSpeed);
 		
@@ -257,9 +265,8 @@ simulated exec function ChangePlayerMesh(float a)
 		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01');	
 		
 		 // Search for the animation node blend list by name.
-		temp = self.Mesh.FindAnimNode('UDKAnimBlendByFlying');
+		//temp = self.Mesh.FindAnimNode('UDKAnimBlendByFlying');
 		
-
 		isValkordia=true;
 		isTrumbruticus=false;
 		
@@ -280,6 +287,20 @@ simulated exec function ChangePlayerMesh(float a)
 		
 		isValkordia=false;
 		isTrumbruticus=false;
+	} else if(a==5) {
+	
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.Test.test_trumbruticus_skel_01');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.Test.test_trumbruticus_skel_01_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.Test.test_trumbruticus_skel_01_Anims';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.Test.test_trumbruticus_AnimTree_spawntest');
+
+//		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01');
+//		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Physics');
+//		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims';
+//		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree_spawntest');
+		
+		isValkordia=false;
+		isTrumbruticus=false;		
 	}
 }
 
@@ -495,7 +516,11 @@ simulated function sendPlayerState()
 	psStruct.LocY = Location.Y;
 	psStruct.LocZ = Location.Z;
 	psStruct.Crouch = isCrouching;
-    	
+    
+	psStruct.leftTrace = gLeftTrace;
+	psStruct.rightTrace = gRightTrace;
+	psStruct.downTrace = gDownTrace;
+	
 	// adding rotation to the player output call
 	psStruct.Yaw = Rotation.Yaw%65535;
 
@@ -554,7 +579,7 @@ function showTargetInfo()
 	//ClientPlaySound(SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_TargetLock');
 
 	// By default only 4 console messages are shown at the time
- 	ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
+ 	ClientMessage("Hit: "$traceHit$"  class: "$traceHit$"."$traceHit.class);
  	ClientMessage("Location: "$loc.X$","$loc.Y$","$loc.Z);
  	ClientMessage("Material: "$hitInfo.Material$"  PhysMaterial: "$hitInfo.PhysMaterial);
 	ClientMessage("Component: "$hitInfo.HitComponent);
@@ -1097,6 +1122,8 @@ simulated function sideTracer(int rval)
 	local bool left;
 	local string msg;
 	
+	local float trace_distance;
+	
     startTrace = Location;
     startTrace.Z +=BaseEyeHeight;
 	
@@ -1115,18 +1142,22 @@ simulated function sideTracer(int rval)
 //	}
 //	else
 //	{
+		trace_distance = VSize(Location - loc);
+		
 		if(rval==16384)	// Right
 		{
 			left=false;
 			msg = "Right";
+			gRightTrace = trace_distance;
 		} else if(rval==-16384)  // Left 
 		{
 			left=true;
 			msg="Left";
+			gLeftTrace = trace_distance;
 		}
 		
 		// float distance between Pawn (Location) and object (loc)
-		ClientMessage(msg$": "$VSize(Location - loc));
+		ClientMessage(msg$": "$trace_distance);//VSize(Location - loc));
 // 		ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
 // 		ClientMessage("Location: "$loc.X$","$loc.Y$","$loc.Z);
 // 		ClientMessage("Material: "$hitInfo.Material$"  PhysMaterial: "$hitInfo.PhysMaterial);
@@ -1228,6 +1259,11 @@ event Possess(Pawn inPawn, bool bVehicleTransition)
 
 }
 
+exec function getPawnUid()
+{
+	ClientMessage("Pawn UID = "$getUID());
+}
+
 simulated function int getUID()
 {
 	return uid;
@@ -1285,31 +1321,12 @@ defaultproperties
 	OSCFingerWorldMin.Z = 0.00001
 */
 
-/*
-Begin Object Name=WPawnSkeletalMeshComponent
-AnimTreeTemplate=AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree'
-End Object
-*/
 
-/*
-  Begin Object Class=SkeletalMeshComponent Name=OSCMesh_trumbruticus
-    SkeletalMesh=SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01'
-    PhysicsAsset=PhysicsAsset'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Physics'
-    AnimSets(0)=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims'
-    AnimtreeTemplate=AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree'
-  End Object
-  CurrentMesh=OSCMesh_trumbruticus
-  Mesh=OSCMesh_trumbruticus
-  Components.Add(OSCMesh_trumbruticus)	
-  
-  Begin Object Name=CollisionCylinder
-      CollisionRadius=+0021.000000
-      CollisionHeight=+0044.000000
-  End Object
-  
-  CylinderComponent=CollisionCylinder
-  CylinderComponent.bDrawBoundingBox = True
-*/  
+Begin Object Name=WPawnSkeletalMeshComponent
+AnimTreeTemplate=AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree'
+End Object
+
+
 
  CamOffset = (X=60, Y=0, Z= 0)
  // CamOffset = (X=camoffsetx, Y=camoffsety, Z=camoffsetz)

@@ -90,6 +90,15 @@ auto state OSCPawnMove
 		OSCYaw  = localOSCPawnBotStateValuesStruct.yaw;
 		OSCRoll = localOSCPawnBotStateValuesStruct.roll;
 		
+				// Testing follow functions
+		if ( OSCPawnBot(Pawn).follow==true )
+		{
+			OSCVector.X = OSCPawnBot(Pawn).targetAccel.X;
+			OSCVector.Y = OSCPawnBot(Pawn).targetAccel.Y;
+			OSCVector.Z = OSCPawnBot(Pawn).targetAccel.Z;
+			
+			`log("                *****************                       ******************* XYZ in PawnController");
+		}	
 		
 		if (OSCJump > 0.0) 
 		{
@@ -99,7 +108,7 @@ auto state OSCPawnMove
 
 		if( Pawn == None )
 		{
-			GotoState('Dead');
+			GotoState('Dead'); //"
 		}
 		else
 		{
@@ -134,7 +143,7 @@ auto state OSCPawnMove
 			
 			Pawn.GroundSpeed = OSCGroundSpeed;   	// Add OSC speed control
 
-			DoubleClickMove = PlayerInput.CheckForDoubleClickMove( DeltaTime/WorldInfo.TimeDilation );
+			//DoubleClickMove = PlayerInput.CheckForDoubleClickMove( DeltaTime/WorldInfo.TimeDilation );
 			
 			//OldRotation = Rotation;
 			
@@ -222,8 +231,16 @@ auto state OSCPawnMove
 		DeltaRot.Yaw = OSCYaw;
 		DeltaRot.Pitch = OSCPitch;
 		DeltaRot.Roll = OSCRoll;
-
+		
 		ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
+
+				// Testing follow functions
+		if ( OSCPawnBot(Pawn).follow==true )
+		{
+			ViewRotation = OSCPawnBot(Pawn).targetRotation;
+			`log("                *****************                       ******************* PawnController");
+		}		
+
 		SetRotation(ViewRotation);
 
 		ViewShake( deltaTime );
@@ -231,8 +248,17 @@ auto state OSCPawnMove
 		NewRotation = ViewRotation;
 		NewRotation.Roll = Rotation.Roll;
 
+//		// Testing follow functions
+//		if ( OSCPawnBot(Pawn).follow==true )
+//		{
+//			NewRotation = OSCPawnBot(Pawn).targetRotation;
+//		}
+		
 		if ( Pawn != None )
+		{
 			Pawn.FaceRotation(NewRotation, deltatime);
+		}
+		
 		
 	}
 	
