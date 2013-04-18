@@ -61,6 +61,7 @@ event Possess(Pawn inPawn, bool bVehicleTransition)
 
 auto state Follow
 {
+	local int leaders[5];
 
 	event Tick(float deltaTime)
 	{
@@ -69,7 +70,7 @@ auto state Follow
 		local float DistanceToPlayer, ChaseDistance;
 		local Vector currentVelocity;
 		local float minRot;
-		
+		local Vector triVector;
 //		local Vector currentTarget;
     	
 //		local int OffsetX;
@@ -94,7 +95,26 @@ auto state Follow
 		
 		if(Target!=None)
 		{
-			selfToPlayer =  Target.Location - self.Pawn.Location;
+			`log("SETTING TARGET *************************************");
+
+			if(OSCBot(Pawn).uid == 0)
+			{
+				triVector = vect(-300,0,0);
+			} else if(OSCBot(Pawn).uid == 1) {
+				triVector = vect(-300,300,0);			
+			} else if(OSCBot(Pawn).uid == 2) {
+				triVector = vect(-300,-300,0);	
+			} else if(OSCBot(Pawn).uid == 3) {
+				triVector = vect(-300,0,300);	
+			} else if(OSCBot(Pawn).uid == 4) {
+				triVector = vect(-300,0,-300);
+			}			
+			
+			// Make Targets offset from PawnBot target
+			selfToPlayer =  Target.Location + (triVector >> Target.Rotation) - self.Pawn.Location;
+//			selfToPlayer =  Target.Location + (vect(-300,0,0) >> Target.Rotation)- self.Pawn.Location;
+
+//			selfToPlayer =  Target.Location - self.Pawn.Location;
 //			selfToPlayer =  currentTarget - self.Pawn.Location;
 
 			DistanceToPlayer = VSize(selfToPlayer);
@@ -138,13 +158,27 @@ auto state Follow
 
 //			if (DistanceToPlayer < ChaseDistance )
 //			{
-				self.Pawn.Velocity = Normal(selfToPlayer) * 45;
+				self.Pawn.Velocity = Normal(selfToPlayer) * 20;// * 45;
 
 				self.Pawn.FaceRotation(RInterpTo(DeltaRot, rotator(selfToPlayer), deltaTime, 90000, true), deltaTime);
-				self.Pawn.Move(self.Pawn.Velocity * 0.6);		
-				// constantly move forward
-//				self.Pawn.Acceleration.X=1.0;
 				
+				self.Pawn.AirSpeed = Pawn(Target).AirSpeed;
+				self.Pawn.GroundSpeed = Pawn(Target).GroundSpeed;
+				
+				self.Pawn.Move(self.Pawn.Velocity * 0.6);		
+
+				if(DistanceToPlayer < 400)
+				{
+					self.Pawn.AirSpeed = Pawn(Target).AirSpeed *  0.6;
+					self.Pawn.GroundSpeed = Pawn(Target).GroundSpeed *  0.6;			
+				//	Pawn.SetPhysics(PHYS_Walking);					
+				} else {
+				//	Pawn.SetPhysics(PHYS_Flying);
+				}
+				// constantly move forward?
+//				self.Pawn.Acceleration.X=1.0;
+
+/*				
 				if(DistanceToPlayer < 500)
 				{
 					// forwards moving constantly?
@@ -152,7 +186,7 @@ auto state Follow
 					
 					self.Pawn.AirSpeed=(Pawn(Target).AirSpeed)*(0.5);
 					self.Pawn.GroundSpeed=(Pawn(Target).GroundSpeed)*(0.5);
-					
+					/**/
 					// Keep the flying forwards (don't stop)
 //					currentVelocity=self.Pawn.Velocity;
 //					`log("LOGGING CURRENT VELOCITY: "$currentVelocity.X);
@@ -163,6 +197,7 @@ auto state Follow
 				} else {
 				//self.Pawn.Move(self.Pawn.Velocity * 0.6);		
 				}
+*/				
 //			}
 		}
 	}
@@ -170,11 +205,38 @@ auto state Follow
 Begin:
 
 //    Target = GetALocalPlayerController().Pawn;
-	if(OSCBot(self.Pawn).uid==0) {
-		GotoState('OSCMove');
-	} else {
-		Target = OSCPlayerControllerDLL(GetALocalPlayerController()).OSCBots[0];
+
+
+// HERE IS WHERE WE SET UP OUR FLOCK GROUPS (HACKY BUT WILL WORK FOR NOW)
+//
+// SET UID % 6 or something like that to be leaders, set their isLeader boolean and for the others, set their leader int
+//
+/*
+	leaders[0] = 0;
+	leaders[1] = 1;
+	leaders[2] = 2;
+	leaders[3] = 3;
+	leaders[4] = 4;
+	
+	switch( OSCBot(self.Pawn).uid)
+	{
+		case 0:
+		case 6:
+		case 12:
+			//`log("OSCBot uid is 0 - fallthroughs also for others, set leader status here too");
+			GotoState('OSCMove');
+			break;
+		default:
+			//`log("OSCBot uid > 0");
+			break;
+		
 	}
+*/	
+//	if(OSCBot(self.Pawn).uid==0) {
+//		GotoState('OSCMove');
+//	} else {
+		//Target = OSCPlayerControllerDLL(GetALocalPlayerController()).OSCBots[0];
+//	}
 
     //Target is an Actor variable defined in my custom AI Controller.
     //Of course, you would normally verify that the Pawn is not None before proceeding.
@@ -284,6 +346,9 @@ simulated Function PostBeginPlay()
 	
 	super.PostBeginPlay();
 	
+  Pawn.SetPhysics(PHYS_Flying);
+  Pawn.SetMovementPhysics();	
+  
 //	PC = GetALocalPlayerController();
 //	PC = /*GetWorldInfo().*/GetALocalPlayerController();
 //	FollowTargetPawn = OSCPawn(PC.Pawn);

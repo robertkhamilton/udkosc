@@ -26,6 +26,9 @@ simulated event PostBeginPlay()
   super.PostBeginPlay();
    
   SetupPlayerCharacter();
+  
+  Pawn.SetPhysics(PHYS_Flying);
+  Pawn.SetMovementPhysics();	
 }
 
 /** Set player's character info class & perform any other initialization */
@@ -48,7 +51,7 @@ simulated function setOSCScriptTeleportStruct(OSCScriptPlayerTeleportStruct tstr
 
 auto state OSCPawnMove
 {
-		
+	
 	function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, Rotator DeltaRot)
 	{
 	
@@ -72,8 +75,18 @@ auto state OSCPawnMove
 		local Vector Direction;
 		local Rotator NewRotation, DesiredRotation;
 		
+		`log("pawnUID: "$pawnUID);
+		`log("localOSCPawnBotDiscreteValuesStruct.jump: "$localOSCPawnBotDiscreteValuesStruct.jump);
+		`log("localOSCPawnBotDiscreteValuesStruct.stop: "$localOSCPawnBotDiscreteValuesStruct.stop);
+		`log("localOSCPawnBotStateValuesStruct.x: "$localOSCPawnBotStateValuesStruct.x);
+		`log("localOSCPawnBotStateValuesStruct.y: "$localOSCPawnBotStateValuesStruct.y);
+		`log("localOSCPawnBotStateValuesStruct.z: "$localOSCPawnBotStateValuesStruct.z);
+		`log("localOSCPawnBotStateValuesStruct.speed: "$localOSCPawnBotStateValuesStruct.speed);	
+		`log("localOSCPawnBotStateValuesStruct.pitch: "$localOSCPawnBotStateValuesStruct.pitch);	
+		`log("localOSCPawnBotStateValuesStruct.yaw: "$localOSCPawnBotStateValuesStruct.yaw);	
+		`log("localOSCPawnBotStateValuesStruct.roll: "$localOSCPawnBotStateValuesStruct.roll);
 		
-		`log("Teleport id="$localOSCPawnBotTeleportStruct.id$", "$localOSCPawnBotTeleportStruct.teleportx$", "$localOSCPawnBotTeleportStruct.teleporty$", "$localOSCPawnBotTeleportStruct.teleportz);
+//		`log("Teleport id="$localOSCPawnBotTeleportStruct.id$", "$localOSCPawnBotTeleportStruct.teleportx$", "$localOSCPawnBotTeleportStruct.teleporty$", "$localOSCPawnBotTeleportStruct.teleportz);
 		
 		if (localOSCPawnBotTeleportStruct.teleport > 0)
 		{		
@@ -86,6 +99,7 @@ auto state OSCPawnMove
 		OSCVector.Z = localOSCPawnBotStateValuesStruct.z;
 		OSCGroundSpeed = localOSCPawnBotStateValuesStruct.speed;
 		OSCStop = localOSCPawnBotDiscreteValuesStruct.stop;
+		
 		OSCPitch = localOSCPawnBotStateValuesStruct.pitch;
 		OSCYaw  = localOSCPawnBotStateValuesStruct.yaw;
 		OSCRoll = localOSCPawnBotStateValuesStruct.roll;
@@ -125,7 +139,7 @@ auto state OSCPawnMove
 */			
 			NewAccel = OSCVector.X*X + OSCVector.Y*Y;
 			NewAccel = Pawn.AccelRate * Normal(NewAccel);
-			
+/*			
 			if(OSCStop > 0.0)
 			{
 	//			`log("OSCStop: "$OSCStop$" - id: "$pawnUID);
@@ -133,7 +147,7 @@ auto state OSCPawnMove
 				NewAccel.Y = 0;
 				NewAccel.Z = 0;
 			}		
-		
+*/		
 			//DesiredRotation = Rotator(NewAccel);
 			OldRotation = Rotation;
 			UpdateRotation(DeltaTime);
@@ -142,7 +156,8 @@ auto state OSCPawnMove
 			//`log("PROCESSING MOVE.........NewAccel: "$NewAccel.X$", "$NewAccel.Y$", "$NewAccel.Z);
 			
 			Pawn.GroundSpeed = OSCGroundSpeed;   	// Add OSC speed control
-
+			Pawn.AirSpeed = OSCGroundSpeed;  // for now share speed
+			
 			//DoubleClickMove = PlayerInput.CheckForDoubleClickMove( DeltaTime/WorldInfo.TimeDilation );
 			
 			//OldRotation = Rotation;
@@ -197,23 +212,6 @@ auto state OSCPawnMove
 	
 	function UpdateRotation( float DeltaTime )
 	{
-/*
-		local float deltaRotation;
-		local Rotator newRotation;
-   
-		deltaRotation = velRotation * DeltaTime; 
-   
-		newRotation = Rotation;
-		newRotation.Pitch = localOSCPawnBotStateValuesStruct.pitch;
-		newRotation.Yaw  = localOSCPawnBotStateValuesStruct.yaw;
-		newRotation.Roll = localOSCPawnBotStateValuesStruct.roll;
-		
-		newRotation.Pitch += deltaRotation;
-		newRotation.Yaw  += deltaRotation;   
-		newRotation.Roll  += deltaRotation;   
-
-		SetRotation( newRotation );   	
-*/
 		local Rotator DeltaRot, newRotation, ViewRotation;
 		local float OSCPitch, OSCYaw, OSCRoll;
 		
@@ -247,12 +245,6 @@ auto state OSCPawnMove
 
 		NewRotation = ViewRotation;
 		NewRotation.Roll = Rotation.Roll;
-
-//		// Testing follow functions
-//		if ( OSCPawnBot(Pawn).follow==true )
-//		{
-//			NewRotation = OSCPawnBot(Pawn).targetRotation;
-//		}
 		
 		if ( Pawn != None )
 		{

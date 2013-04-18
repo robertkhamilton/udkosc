@@ -1,4 +1,4 @@
-﻿Build started 12/22/2012 10:10:31 PM.
+﻿Build started 4/17/2013 2:05:47 PM.
      1>Project "C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\oscpack_1_0_2.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
          Creating "Release\oscpack_1_0_2.unsuccessfulbuild" because "AlwaysCreate" was specified.
@@ -21,15 +21,20 @@
          NetworkingUtils.cpp
          UdpSocket.cpp
          osc.cpp
-     1>oscpack\osc.cpp(71): warning C4305: 'initializing' : truncation from 'double' to 'float'
-     1>oscpack\osc.cpp(77): warning C4305: 'initializing' : truncation from 'double' to 'float'
-     1>oscpack\osc.cpp(299): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
-     1>oscpack\osc.cpp(307): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
-     1>oscpack\osc.cpp(316): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>oscpack\osc.cpp(370): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
-     1>oscpack\osc.cpp(607): warning C4101: 'tempStruct' : unreferenced local variable
-     1>oscpack\osc.cpp(1024): warning C4800: 'const wchar_t *' : forcing value to bool 'true' or 'false' (performance warning)
-     1>oscpack\osc.cpp(1134): warning C4172: returning address of local variable or temporary
+     1>oscpack\osc.cpp(76): warning C4305: 'initializing' : truncation from 'double' to 'float'
+     1>oscpack\osc.cpp(82): warning C4305: 'initializing' : truncation from 'double' to 'float'
+     1>oscpack\osc.cpp(227): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
+     1>oscpack\osc.cpp(235): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
+     1>oscpack\osc.cpp(244): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>oscpack\osc.cpp(293): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
+     1>oscpack\osc.cpp(339): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
+     1>oscpack\osc.cpp(347): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
+     1>oscpack\osc.cpp(356): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>oscpack\osc.cpp(405): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
+     1>oscpack\osc.cpp(623): warning C4101: 'tempStruct' : unreferenced local variable
+     1>oscpack\osc.cpp(647): warning C4101: 'tempStruct' : unreferenced local variable
+     1>oscpack\osc.cpp(1123): warning C4800: 'const wchar_t *' : forcing value to bool 'true' or 'false' (performance warning)
+     1>oscpack\osc.cpp(1233): warning C4172: returning address of local variable or temporary
          OscOutboundPacketStream.cpp
      1>oscpack\osc\OscOutboundPacketStream.cpp(339): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  C:\Program Files\Microsoft Visual Studio 10.0\VC\include\string.h(105) : see declaration of 'strcpy'
@@ -45,6 +50,11 @@
          OscReceivedElements.cpp
          OscTypes.cpp
          Generating Code...
+     1>c:\users\rob\data\github\udkosc\oscpack_1_0_2\oscpack\osc.cpp(416): warning C4700: uninitialized local variable 'a3' used
+     1>c:\users\rob\data\github\udkosc\oscpack_1_0_2\oscpack\osc.cpp(417): warning C4700: uninitialized local variable 'a4' used
+     1>c:\users\rob\data\github\udkosc\oscpack_1_0_2\oscpack\osc.cpp(418): warning C4700: uninitialized local variable 'a5' used
+     1>c:\users\rob\data\github\udkosc\oscpack_1_0_2\oscpack\osc.cpp(419): warning C4700: uninitialized local variable 'a6' used
+     1>c:\users\rob\data\github\udkosc\oscpack_1_0_2\oscpack\osc.cpp(420): warning C4700: uninitialized local variable 'a7' used
        ManifestResourceCompile:
          C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\rc.exe /nologo /fo"Release\oscpack_1_0_2.dll.embed.manifest.res" Release\oscpack_1_0_2_manifest.rc 
        Link:
@@ -84,4 +94,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:08.72
+Time Elapsed 00:00:07.09
