@@ -26,6 +26,7 @@ PLAYERROLL = "roll"
 PLAYERSETPITCH = "setpitch"
 PLAYERSETYAW = "setyaw"
 PLAYERSETROLL = "setroll"
+PLAYERMODE = "mode"
 PLAYERSTOP = "stop"
 PLAYERTELEPORT = "teleport"
 CAMERAX = "x"
@@ -46,12 +47,27 @@ OSCMESSAGE = "oscmessage"
 OSCBUNDLE = "oscbundle"
 ROTATIONCONSTANT = 182.044403
 COMMENT = "#"
-CONSOLE = "console"
-BEHINDVIEW = "behindview"
 BLANK = ""
 DEFAULTSPEED = 300.0
+
+# Console Commands/Mode hash
+CONSOLE = "console"
+CONSOLEOSCSTARTOUTPUT = "oscstartoutput"	
+CONSOLEBEHINDVIEW = "behindview"
+CONSOLEOSCMOVE = "oscmove"
+CONSOLEFREECAMERAON = "freecameraon"
+CONSOLEFREECAMERAOFF = "freecameraoff"
+CONSOLEATTACHEDCAMERAON = "attachedcameraon"
+CONSOLEATTACHEDCAMERAOFF = "attachedcameraoff"
 $commands = Hash.new
-$commands[BEHINDVIEW] = 1
+$commands[CONSOLEOSCSTARTOUTPUT] = 1.0
+$commands[CONSOLEOSCMOVE] = 2.0
+$commands[CONSOLEBEHINDVIEW] = 3.0
+$commands[CONSOLEFREECAMERAON] = 4.0
+$commands[CONSOLEFREECAMERAOFF] = 5.0
+$commands[CONSOLEATTACHEDCAMERAON] = 6.0
+$commands[CONSOLEATTACHEDCAMERAOFF] = 7.0
+
 
 module CMD
   BEHINDVIEW = 1
