@@ -25,9 +25,15 @@ var int camoffsetx, camoffsety, camoffsetz;
 var bool pawnDowntrace;
 var bool pawnSidetrace;
 var int gtracelength;
+var int gdowntracelength;
 var float gLeftTrace;
 var float gRightTrace;
 var float gDownTrace;
+var int gtesttrace;
+
+/**/
+// OSC Mode value for toggling pawn and controller modes
+var int gOSCMode;
 
 // Pawn's unique ID
 var int uid;
@@ -62,11 +68,11 @@ var bool isCrouching;
 var float seekingTurnRate;
 
 var vector	OSCCamera;
-var bool OSCFreeCamera;
+var bool OSCFreeCamera;				// OSC Controlled Free-moving camera, not attached to Pawn
+var bool OSCAttachedCamera;			// OSC Controlled rotating camera attached to Pawn
 
 // testing
 var Rotator OSCRotation;
-
 
 struct MyPlayerStruct
 {
@@ -183,6 +189,21 @@ struct OSCScriptPlayerRotationStruct
 	var float roll;
 };
 
+// OSC Camera data from Playercontroller
+struct OSCScriptCameramoveStruct
+{
+	var float x;
+	var float y;
+	var float z;
+	var float speed;
+	var float pitch;
+	var float yaw;
+	var float roll;
+};
+
+// OSC Camera data from Playercontroller
+var OSCScriptCameramoveStruct localOSCScriptCameramoveStruct;
+
 //Global vars for this class
 var OSCScriptPlayerRotationStruct localOSCScriptPlayerRotationStruct;
 var OSCMessageStruct localOSCMessageStruct;
@@ -190,6 +211,7 @@ var OSCGameParams localOSCGameParamsStruct;
 var OSCFingerController localOSCFingerControllerStruct;
 var float lastGameGravity;
 var float lastGameSpeed;
+
 
 var OSCParams OSCParameters;
 var string OSCHostname;
@@ -231,8 +253,6 @@ simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 	
 	// For Trumbruticus trunk moving demo
 	//TrunkMover = SkelControl_CCD_IK(Mesh.FindSkelControl('TrunkMover'));
-	
-	 
 }
 
 simulated exec function ChangePlayerMesh(float a)
@@ -246,11 +266,6 @@ simulated exec function ChangePlayerMesh(float a)
 		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims';
 		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree_spawntest');
 
-//		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01');
-//		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics');
-//		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
-//		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01');	
-		
 		//self.Mesh.GlobalAnimRateScale=self.GroundSpeed/440.0;
 		//`log("Groundspeed = "$self.GroundSpeed);
 		
@@ -294,11 +309,6 @@ simulated exec function ChangePlayerMesh(float a)
 		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.Test.test_trumbruticus_skel_01_Anims';
 		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.Test.test_trumbruticus_AnimTree_spawntest');
 
-//		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01');
-//		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Physics');
-//		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims';
-//		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree_spawntest');
-		
 		isValkordia=false;
 		isTrumbruticus=false;		
 	}
@@ -307,7 +317,6 @@ simulated exec function ChangePlayerMesh(float a)
 simulated exec function setEyeHeight(float X)
 {
   BaseEyeheight=X;
-  
 }
 
 simulated exec function setOSCFingerOffsets(float X, float Y, float Z)
@@ -491,9 +500,16 @@ simulated function FaceRotation(rotator NewRotation, float DeltaTime)
 	{
 		//NewRotation.Pitch = 0;
 	}
-	NewRotation.Roll = Rotation.Roll;
-    NewRotation.Pitch = Rotation.Pitch;
-	SetRotation(NewRotation);
+
+	if(OSCFreeCamera || OSCAttachedCamera)
+	{
+			SetRotation(NewRotation);	
+	} else {
+		//NewRotation.Roll = Rotation.Roll;
+		//NewRotation.Pitch = Rotation.Pitch;
+		
+		SetRotation(NewRotation);	
+	}
 }
 
 simulated function sendPlayerState()
@@ -884,22 +900,46 @@ function testInputData()
 	
 }
 
-function setOSCCamera(vector val)
-{
+function setOSCCamera(vector val) {
 	OSCCamera = val;
 }
 
-simulated exec function OSCSetFreeCamera()
-{
-	if(OSCFreeCamera){
+simulated exec function OSCSetAttachedCamera() {
+	if(OSCAttachedCamera) {
+		setOSCAttachedCamera(0);
+	} else {
+		setOSCAttachedCamera(1);
+	}
+}
+
+
+simulated exec function setOSCAttachedCamera(int val) {
+	if(val == 0) {
+		OSCAttachedCamera=false;
+	} else {
+		OSCAttachedCamera=true;
+		OSCFreeCamera=false;
+	}
+}
+
+simulated exec function OSCSetFreeCamera() {
+	if(OSCFreeCamera) {
+		setOSCFreeCamera(0);
+	} else {
+		setOSCFreeCamera(1);
+	}
+}
+
+
+simulated exec function setOSCFreeCamera(int val) {
+	if(val == 0) {
 		OSCFreeCamera=false;
 	} else {
 		OSCFreeCamera=true;
 	}
 }
 
-state OSCPlayerMoving
-{
+state OSCPlayerMoving {
 
 	exec function oscplayermoveTEST2()
 	{
@@ -907,18 +947,7 @@ state OSCPlayerMoving
 		`log("PAWN: IN OSCPLAYERMOVING");
 	
 	}
-	/*
-	exec function movetop()
-	{
-	local vector locat;
-	locat.X = 500.0;
-	locat.Y = 0;
-	locat.Z = 0;
-	
-	MoveTo(locat);
-	
-	}
-	*/
+
 	exec function oscRotate(float xval, float yval, float zval)
 	{
 		local vector locVect;
@@ -938,20 +967,62 @@ state OSCPlayerMoving
 	
 	simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot, out float out_FOV )
 	{
+	/**/
+//		`log("IN OSCPAWN::CalcCamera");
+	
 		if(OSCFreeCamera) 
 		{
-			//out_CamLoc = Location;
-			out_CamLoc.X = OSCCamera.X;
-			out_CamLoc.Y = OSCCamera.Y;  //1800;
-			out_CamLoc.Z = OSCCamera.Z;  //128;
-		} else {
-
-			out_CamLoc = Location;
-			out_CamLoc.X += OSCCamera.X;
-			out_CamLoc.Y += OSCCamera.Y;  //1800;		
-			out_CamLoc.Z += OSCCamera.Z;  //128;
-		}
 		
+		out_CamLoc.X = localOSCScriptCameramoveStruct.x;
+		out_CamLoc.Y = localOSCScriptCameramoveStruct.y;
+		out_CamLoc.Z = localOSCScriptCameramoveStruct.z;
+
+		out_CamRot.Pitch = localOSCScriptCameramoveStruct.pitch;
+		out_CamRot.Yaw = localOSCScriptCameramoveStruct.yaw;
+		out_CamRot.Roll = localOSCScriptCameramoveStruct.roll;		
+		
+		//out_CamLoc = Location;
+//			out_CamLoc.X = OSCCamera.X;
+//			out_CamLoc.Y = OSCCamera.Y;  //1800;
+//			out_CamLoc.Z = OSCCamera.Z;  //128;
+		} else {
+	
+			if(OSCAttachedCamera)
+			{
+			// relative camera motion (relative to pawn)
+			out_CamLoc = Location;
+			out_CamLoc.X += localOSCScriptCameramoveStruct.x;
+			out_CamLoc.Y += localOSCScriptCameramoveStruct.y;
+			out_CamLoc.Z += localOSCScriptCameramoveStruct.z;	
+				
+			out_CamRot = Rotation;
+			out_CamRot.Pitch += localOSCScriptCameramoveStruct.pitch;
+			out_CamRot.Yaw += localOSCScriptCameramoveStruct.yaw;
+			out_CamRot.Roll += localOSCScriptCameramoveStruct.roll;
+			} else {
+				Super.CalcCamera(fDeltaTime, out_CamLoc, out_CamRot, out_FOV);
+			}
+//			out_CamLoc = Location;
+//			out_CamLoc.X += OSCCamera.X;
+//			out_CamLoc.Y += OSCCamera.Y;  //1800;		
+//			out_CamLoc.Z += OSCCamera.Z;  //128;
+		}
+/*
+		`log("IN OSCPAWN::CalcCamera::OSCFreeCamera = "$OSCFreeCamera);
+		
+		`log("CalcCamera::out_CamLoc.X = "$out_CamLoc.X);
+		`log("CalcCamera::localOSCScriptCameramoveStruct.x = "$localOSCScriptCameramoveStruct.x);
+		`log("CalcCamera::out_CamLoc.Y = "$out_CamLoc.Y);
+		`log("CalcCamera::localOSCScriptCameramoveStruct.y = "$localOSCScriptCameramoveStruct.y);
+		`log("CalcCamera::out_CamLoc.Z = "$out_CamLoc.Z);		
+		`log("CalcCamera::localOSCScriptCameramoveStruct.z = "$localOSCScriptCameramoveStruct.z);
+		
+		`log("CalcCamera::out_CamRot.Pitch = "$out_CamRot.Pitch);
+		`log("CalcCamera::out_CamRot.Yaw = "$out_CamRot.Yaw);
+		`log("CalcCamera::out_CamRot.Roll = "$out_CamRot.Roll);
+*/		
+		// Testing camera rotation fixes
+//		out_CamRot = Rot(0,0,0);
 		
 //		out_CamRot.Pitch = 0;
 //		out_CamRot.Yaw = -16384;
@@ -960,7 +1031,8 @@ state OSCPlayerMoving
 		return true;
 
 	}	
-	
+
+/*	
 	simulated function setOSCScriptPlayerRotationData(OSCScriptPlayerRotationStruct fstruct)
 	{
 		localOSCScriptPlayerRotationStruct = fstruct;
@@ -970,31 +1042,40 @@ state OSCPlayerMoving
 	{
 		local vector localPawnRotation;
 		
-		//`log("localPawnRotation.X: "$localOSCScriptPlayerRotationStruct.Pitch );
-		//`log("localPawnRotation.Y: "$localOSCScriptPlayerRotationStruct.Yaw );
-		//`log("localPawnRotation.Z: "$localOSCScriptPlayerRotationStruct.Roll );
 				
-		localPawnRotation.X = localOSCScriptPlayerRotationStruct.Pitch;
-		localPawnRotation.Y = localOSCScriptPlayerRotationStruct.Yaw;
-		localPawnRotation.Z = localOSCScriptPlayerRotationStruct.Roll;
+	//	localPawnRotation.X = localOSCScriptPlayerRotationStruct.Pitch;
+	//	localPawnRotation.Y = localOSCScriptPlayerRotationStruct.Yaw;
+	//	localPawnRotation.Z = localOSCScriptPlayerRotationStruct.Roll;
+		
+		// Causes problems with PawnBots using OSCPawn
+		localPawnRotation.X = OSCPlayerControllerDLL(Controller).localOSCPlayerStateValuesStruct.Pitch;
+		localPawnRotation.Y = OSCPlayerControllerDLL(Controller).localOSCPlayerStateValuesStruct.Yaw;
+		localPawnRotation.Z = OSCPlayerControllerDLL(Controller).localOSCPlayerStateValuesStruct.Roll;
+
+		`log("localPawnRotation.X: "$localPawnRotation.X );
+		`log("localPawnRotation.Y: "$localPawnRotation.Y );
+		`log("localPawnRotation.Z: "$localPawnRotation.Z );
 		
 		UpdatePawnRotation(Rotator(localPawnRotation));
 		
 	}
-	
+	*/
 	simulated function Tick(float DeltaTime)
 	{
-		setOSCScriptPlayerRotationData(getOSCScriptPlayerRotation());
+//		THESE AREN'T VALID ANYMORE: don't do anything right now
+
+		//setOSCScriptPlayerRotationData(getOSCScriptPlayerRotation());
 		
-		setOSCRotation();
+		//setOSCRotation();
 	}
 	
 }
 
 simulated function setPawnAnimSpeed()
 {
-	if(isTrumbruticus)
-	{
+	if(isTrumbruticus) {
+		self.Mesh.GlobalAnimRateScale=self.GroundSpeed/440.0;
+	} else  if(isValkordia) {
 		self.Mesh.GlobalAnimRateScale=self.GroundSpeed/440.0;
 	}
 	
@@ -1004,11 +1085,8 @@ simulated function setPawnAnimSpeed()
 
 simulated function Tick(float DeltaTime)
 {
-
 	//SetMeshVisibility(true);
-	
 	//local OSCMessageStruct localOSCMessageStruct;
-	
 	
 	localOSCMessageStruct.test = getOSCTestfloat();
 	testInputData(); // rkh testing input data
@@ -1036,24 +1114,7 @@ simulated function Tick(float DeltaTime)
 	lastGameGravity = localOSCGameParamsStruct.gameGravity;
 	lastGameSpeed = localOSCGameParamsStruct.gameSpeed;
 
-	
-	
-	
-	//localOSCGameParamsStruct = getOSCGameParams();
-	//setGameSpeed(localOSCGameParamsStruct.gameSpeed);
-	
-	//setFingerTouches(localOscMessageStruct.test);
-	
-	//showTargetInfo();
-	//setGameSpeed(localOSCMessageStruct.test);
-	// try to set gravity
-	//setGrav(localOSCMessageStruct.test);
-	
-	// This shows incoming osc values from test function
-	//`log("getOSCTest: "$localOSCMessageStruct.test$"");
-	
 	Super.Tick(DeltaTIme);
-	//showTargetInfo();
 
 	if(sendingOSC)
 		sendPlayerState();
@@ -1061,20 +1122,17 @@ simulated function Tick(float DeltaTime)
 	// Scale player animation speed by pawn speed
 	setPawnAnimSpeed();
 	
-	if(pawnDowntrace)
-	{
+	if(pawnDowntrace) {
 		downTrace();
 	}
 	
-	if(pawnSidetrace)
-	{
+	if(pawnSidetrace) {
 		psideTrace();	
 	}
 }
 
 exec function sidetrace(int val)
 {
-
 	gtracelength = val;
 	
 	if(pawnSidetrace)
@@ -1088,7 +1146,7 @@ exec function sidetrace(int val)
 
 exec function pawntrace(int val)
 {
-	gtracelength = val;
+	gdowntracelength = val;
 	
 	if(pawnDowntrace)
 	{
@@ -1098,11 +1156,20 @@ exec function pawntrace(int val)
 	}
 }
 
+exec function testtrace(int val)
+{
+	gtesttrace = val;
+}
+
 simulated function psideTrace()
 {
 	// Left and Right traces
-	sideTracer(16384);
-	sideTracer(-16384);
+//	sideTracer(16384);
+//	sideTracer(-16384);
+
+	sideTracer(1);
+	sideTracer(-1);
+	
 }
 
 simulated function sideTracer(int rval)
@@ -1118,38 +1185,62 @@ simulated function sideTracer(int rval)
 	local vector startTrace;
 	local vector viewVector;
 	
-	local Rotator leftRot;
+	local Rotator currRot;
 	local bool left;
 	local string msg;
 	
+	local vector lVector, localLeft;
 	local float trace_distance;
 	
     startTrace = Location;
     startTrace.Z +=BaseEyeHeight;
 	
 //	viewVector .X+= 90*DegToUnrRot;
-	
-	leftRot = Rotation;
-	leftRot.Yaw += rval;    //+=16384 for L or R, or +-90*DegToUnrRot;
-	end = startTrace + normal(vector(leftRot))*gtracelength;
-	traceHit = trace(loc, norm, end, startTrace, true,, hitInfo);
-	DrawDebugLine(startTrace, end, 255,0,0,false);
-	
-	if (traceHit != none)
+	//"
+/*
+	if(gtesttrace==0)
 	{
-//		ClientMessage("Trace Left failed.");
-//		return;
+		currRot = Rotation;
+		currRot.Yaw += rval;    //+=16384 for L or R, or +-90*DegToUnrRot;
+		end = startTrace + normal(vector(currRot))*gtracelength;
+		traceHit = trace(loc, norm, end, startTrace, true,, hitInfo);
+		DrawDebugLine(startTrace, end, 255,0,0,false);
+		
+	} else if (gtesttrace==1) { */
+		localLeft.X = 0;
+		localLeft.Y = rval;
+		localLeft.Z = 0;
+//		localLeft = vect(0, rval, 0);
+		end = Location + (localLeft*gtracelength >> Rotation);		
+		traceHit = trace(loc, norm, end, startTrace, true,, hitInfo);
+		//cb,,    DrawDebugLine(startTrace, end, 255, 0, 0, false);
 //	}
-//	else
-//	{
+	
+	/*
+	if (traceHit == none)
+	{
+		gRightTrace = 0;
+		gLeftTrace = 0;
+		return;
+	}
+	else
+	{
+*/	
 		trace_distance = VSize(Location - loc);
 		
-		if(rval==16384)	// Right
+		if(trace_distance > gtracelength)
+		{
+			trace_distance = 0;
+		}
+		
+//		if(rval==16384)	// Right
+		if(rval==1)	
 		{
 			left=false;
 			msg = "Right";
 			gRightTrace = trace_distance;
-		} else if(rval==-16384)  // Left 
+//		} else if(rval==-16384)  // Left 
+		} else if(rval==-1)  // Left 
 		{
 			left=true;
 			msg="Left";
@@ -1158,13 +1249,15 @@ simulated function sideTracer(int rval)
 		
 		// float distance between Pawn (Location) and object (loc)
 		ClientMessage(msg$": "$trace_distance);//VSize(Location - loc));
+		
 // 		ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
 // 		ClientMessage("Location: "$loc.X$","$loc.Y$","$loc.Z);
 // 		ClientMessage("Material: "$hitInfo.Material$"  PhysMaterial: "$hitInfo.PhysMaterial);
 //		ClientMessage("Component: "$hitInfo.HitComponent);
-	}
+//	}
 	
 }
+
 
 
 simulated function downTrace()
@@ -1174,55 +1267,42 @@ simulated function downTrace()
 	local TraceHitInfo hitInfo;
 	local Actor traceHit;
     local vector tempRotation;
-	
+	local float trace_distance;
 	
 	//end = Location + normal(vector(Rotation))*gtracelength; // trace to "infinity"
-	end = Location + vect(0, 0, -1)*gtracelength;
+	end = Location + vect(0, 0, -1)*gdowntracelength;
 	traceHit = trace(loc, norm, end, Location, true,, hitInfo);
-
-	DrawDebugLine(Location, end, 255,0,0,false);
+	trace_distance = VSize(Location - loc);
 	
-	ClientMessage("");
-
+	if(trace_distance > gdowntracelength)
+	{
+		trace_distance = 0;
+	}
+	
+	//DrawDebugLine(Location, end, 255,0,0,false);
+	
+	/*
 	if (traceHit == none)
 	{
 		ClientMessage("Trace failed.");
-		return;
+		gDownTrace = 0;
+		return;		
 	}
 	else
 	{
+*/	
+		gDownTrace = trace_distance;
+
+		//ClientMessage("Down: "$trace_distance);
+
 		// Play a sound to confirm the information
 //		ClientPlaySound(SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_TargetLock');
 
 		// By default only 4 console messages are shown at the time
- 		ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
- 		ClientMessage("Location: "$loc.X$","$loc.Y$","$loc.Z);
- 		ClientMessage("Material: "$hitInfo.Material$"  PhysMaterial: "$hitInfo.PhysMaterial);
-		ClientMessage("Component: "$hitInfo.HitComponent);
-	}
-
-/*
-   //local Actor traceHit;
-   local vector HitLocation, HitNormal;
-   local vector Start;
-   local vector End;
-   local vector ViewRotation;
-   local int StrafeDistance, TraceLength;
-
-   if(Rand(2) == 1)
-   {
-//     ViewRotation = Vector(Pawn.GetViewRotation());
-	  ViewRotation.X = 90 * DegToUnrRot;
-	  ViewRotation.Y = 90 * DegToUnrRot;
-      Start = GetPawnViewLocation();
-      End = GetPawnViewLocation() + (ViewRotation * 2000);
-
-      //traceHit = Trace(HitLocation, HitNormal, End, Start, true);
-      StrafeDistance = TraceLength + 500;
-
-      DrawDebugLine(Start, End, 255,0,0,false);
-   }
-*/
+ //		ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
+ //		ClientMessage("Location: "$loc.X$","$loc.Y$","$loc.Z);
+ //		ClientMessage("Material: "$hitInfo.Material$"  PhysMaterial: "$hitInfo.PhysMaterial);
+//		ClientMessage("Component: "$hitInfo.HitComponent);
 }
 
 simulated exec function setProjectileTargets(float X, float Y, float Z)
@@ -1236,9 +1316,7 @@ simulated exec function setProjectileTargets(float X, float Y, float Z)
 	currentTarget.Y = Y;
 	currentTarget.Z = Z;
 	
-	
-	ForEach AllActors(class'OSCProj_SeekingShockBall', pSSB)
-	{
+	ForEach AllActors(class'OSCProj_SeekingShockBall', pSSB) {
 		pSSB.setSeekLocation(currentTarget);
 	}
 }
@@ -1290,6 +1368,21 @@ simulated exec function behindviewset(int _x, int _y, int _z)
 	CamOffset.Y = _y;
 	CamOffset.Z = _z;//= (X=camoffsetx, Y=camoffsety, Z=camoffsetz)
 }
+
+
+
+
+/*
+// CUSTOM CAMERA CODE
+simulated function name GetDefaultCameraMode( PlayerController RequestedBy )
+{
+	return 'default';
+}
+*/
+
+
+
+
 
 defaultproperties
 {

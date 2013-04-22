@@ -54,8 +54,8 @@ defaultproperties
 {
 	BaseTrackingStrength=10000000.0
 	HomingTrackingStrength=10000000.0
-	LifeSpan=1000.0
-	speed=620.0
+	LifeSpan=10.0 //was 1000
+	speed=0.0 //was 620.0
 	MaxSpeed=620.0
 	Damage=0.0
 	bSuperSeekAirTargets=false

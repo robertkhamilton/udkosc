@@ -277,10 +277,17 @@ struct OSCPlayerStateValues
 	float pitch;
 	float yaw;
 	float roll;
+	float setx;
+	float sety;
+	float setz;
+	float setpitch;
+	float setyaw;
+	float setroll;
 	float fly;
 	float airspeed;
 	float crouch;
-	OSCPlayerStateValues():id(-1), x(0), y(0), z(0), speed(0), pitch(0), yaw(0), roll(0), fly(0), airspeed(0), crouch(0){}
+	int mode;
+	OSCPlayerStateValues():id(-1), x(0), y(0), z(0), speed(0), pitch(0), yaw(0), roll(0), setx(0), sety(0), setz(0), setpitch(0), setyaw(0), setroll(0.), fly(0), airspeed(0), crouch(0), mode(-1){}
 };
 
 struct OSCSinglePawnBotStateValues

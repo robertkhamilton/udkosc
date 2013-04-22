@@ -62,5 +62,8 @@ defaultproperties
 // PlayerReplicationInfoClass=class'UT3OSC.OSCPlayerReplicationInfo'
 	
  BotClass=class'UT3OSC.OSCBot'
+ 
+ TimeLimit=0
+ 
 
  }

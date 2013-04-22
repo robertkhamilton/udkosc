@@ -71,6 +71,8 @@ auto state Follow
 		local Vector currentVelocity;
 		local float minRot;
 		local Vector triVector;
+		local int flightOffset;
+		
 //		local Vector currentTarget;
     	
 //		local int OffsetX;
@@ -93,21 +95,32 @@ auto state Follow
 
 			ChaseDistance = 10000;
 		
+		flightOffset = 300;
+		
 		if(Target!=None)
 		{
+		/*
 			`log("SETTING TARGET *************************************");
-
-			if(OSCBot(Pawn).uid == 0)
+			`log("0 % 5 = "$(0%5));
+			`log("1 % 5 = "$(1%5));
+			`log("2 % 5 = "$(2%5));
+			`log("3 % 5 = "$(3%5));
+			`log("4 % 5 = "$(4%5));
+			`log("5 % 5 = "$(5%5));
+			`log("6 % 5 = "$(6%5));
+			`log("7 % 5 = "$(7%5));
+			*/
+			if(OSCBot(Pawn).uid % 5 == 0)
 			{
 				triVector = vect(-300,0,0);
-			} else if(OSCBot(Pawn).uid == 1) {
+			} else if(OSCBot(Pawn).uid % 5 == 1) {
 				triVector = vect(-300,300,0);			
-			} else if(OSCBot(Pawn).uid == 2) {
+			} else if(OSCBot(Pawn).uid % 5 == 2) {
 				triVector = vect(-300,-300,0);	
-			} else if(OSCBot(Pawn).uid == 3) {
-				triVector = vect(-300,0,300);	
-			} else if(OSCBot(Pawn).uid == 4) {
-				triVector = vect(-300,0,-300);
+			} else if(OSCBot(Pawn).uid % 5 == 3) {
+				triVector = vect(-300,0,150);	
+			} else if(OSCBot(Pawn).uid % 5 == 4) {
+				triVector = vect(-300,0,-150);
 			}			
 			
 			// Make Targets offset from PawnBot target

@@ -266,6 +266,48 @@ protected:
                 args >> a1 >> a2 >> osc::EndMessage;
 				statePlayerParams[(int)a2].id = (int)a2;
 				statePlayerParams[(int)a2].roll = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/setx" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				statePlayerParams[(int)a2].x = a1;
+				statePlayerParams[(int)a2].id = (int)a2;
+				statePlayerParams[(int)a2].setx = 1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/sety" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				statePlayerParams[(int)a2].y = a1;
+				statePlayerParams[(int)a2].id = (int)a2;
+				statePlayerParams[(int)a2].sety = 1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/setz" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				statePlayerParams[(int)a2].z = a1;
+				statePlayerParams[(int)a2].id = (int)a2;
+				statePlayerParams[(int)a2].setz = 1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/setpitch" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				statePlayerParams[(int)a2].pitch = a1;
+				statePlayerParams[(int)a2].id = (int)a2;
+				statePlayerParams[(int)a2].setpitch = 1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/setyaw" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				statePlayerParams[(int)a2].yaw = a1;
+				statePlayerParams[(int)a2].id = (int)a2;
+				statePlayerParams[(int)a2].setyaw = 1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/setroll" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				statePlayerParams[(int)a2].roll = a1;
+				statePlayerParams[(int)a2].id = (int)a2;
+				statePlayerParams[(int)a2].setroll = 1;
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/teleportx" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
                 float a1;
@@ -295,6 +337,12 @@ protected:
 				teleportPlayerParams[(int)a4].teleporty = a2;
 				teleportPlayerParams[(int)a4].teleportz = a3;
 				teleportPlayerParams[(int)a4].teleport = 1.0;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/playermove/mode" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2;
+                args >> a1 >> a2 >> osc::EndMessage;
+				statePlayerParams[(int)a2].mode = a1;
+				statePlayerParams[(int)a2].id = a2;
 			}else if( strcmp( m.AddressPattern(), "/udkosc/script/pawnmove" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
                 float a1, a2, a3, a4, a5, a6, a7, a8, a9;
@@ -595,6 +643,7 @@ _declspec(dllexport)OSCPawnBotStateValues* getOSCPawnBotStateValues(int* id)
 
 _declspec(dllexport)OSCPlayerStateValues* getOSCPlayerStateValues(int* id)
 {
+
 	static OSCPlayerStateValues localStruct;
 	localStruct = statePlayerParams[(int)id];
 
@@ -614,6 +663,40 @@ _declspec(dllexport)OSCPlayerStateValues* getOSCPlayerStateValues(int* id)
 		statePlayerParams[(int)id].roll = 0.0;
 	}
 
+	if(localStruct.setx != 0.0)
+	{
+		statePlayerParams[(int)id].setx = 0.0;
+	}
+
+	if(localStruct.sety != 0.0)
+	{
+		statePlayerParams[(int)id].sety = 0.0;
+	}
+
+	if(localStruct.setz != 0.0)
+	{
+		statePlayerParams[(int)id].setz = 0.0;
+	}
+
+	if(localStruct.setpitch != 0.0)
+	{
+		statePlayerParams[(int)id].setpitch = 0.0;
+	}
+
+	if(localStruct.setyaw != 0.0)
+	{
+		statePlayerParams[(int)id].setyaw = 0.0;
+	}
+
+	if(localStruct.setroll != 0.0)
+	{
+		statePlayerParams[(int)id].setroll = 0.0;
+	}
+
+	if(localStruct.mode != -1)
+	{
+		statePlayerParams[(int)id].mode = -1;
+	}
 	return &localStruct;
 }
 
@@ -720,7 +803,14 @@ _declspec(dllexport)OSCScriptPawnMoveStop getOSCScriptPawnMoveStop()
 */
 _declspec(dllexport)float getOSCConsoleCommand()
 {
-	return OSCConsoleCommandStruct.command;
+	OSCConsoleCommand localstruct;
+	localstruct = OSCConsoleCommandStruct;
+
+	if(localstruct.command > 0) {
+		OSCConsoleCommandStruct.command = 0;
+	}
+
+	return localstruct.command;
 }
 
 __declspec(dllexport)double returnDouble(double a)

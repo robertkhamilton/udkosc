@@ -74,20 +74,7 @@ auto state OSCPawnMove
 		local rotator			OldRotation;
 		local Vector Direction;
 		local Rotator NewRotation, DesiredRotation;
-		
-		`log("pawnUID: "$pawnUID);
-		`log("localOSCPawnBotDiscreteValuesStruct.jump: "$localOSCPawnBotDiscreteValuesStruct.jump);
-		`log("localOSCPawnBotDiscreteValuesStruct.stop: "$localOSCPawnBotDiscreteValuesStruct.stop);
-		`log("localOSCPawnBotStateValuesStruct.x: "$localOSCPawnBotStateValuesStruct.x);
-		`log("localOSCPawnBotStateValuesStruct.y: "$localOSCPawnBotStateValuesStruct.y);
-		`log("localOSCPawnBotStateValuesStruct.z: "$localOSCPawnBotStateValuesStruct.z);
-		`log("localOSCPawnBotStateValuesStruct.speed: "$localOSCPawnBotStateValuesStruct.speed);	
-		`log("localOSCPawnBotStateValuesStruct.pitch: "$localOSCPawnBotStateValuesStruct.pitch);	
-		`log("localOSCPawnBotStateValuesStruct.yaw: "$localOSCPawnBotStateValuesStruct.yaw);	
-		`log("localOSCPawnBotStateValuesStruct.roll: "$localOSCPawnBotStateValuesStruct.roll);
-		
-//		`log("Teleport id="$localOSCPawnBotTeleportStruct.id$", "$localOSCPawnBotTeleportStruct.teleportx$", "$localOSCPawnBotTeleportStruct.teleporty$", "$localOSCPawnBotTeleportStruct.teleportz);
-		
+
 		if (localOSCPawnBotTeleportStruct.teleport > 0)
 		{		
 			OSCPawnBot(Pawn).teleport(localOSCPawnBotTeleportStruct.teleportx, localOSCPawnBotTeleportStruct.teleporty, localOSCPawnBotTeleportStruct.teleportz);					
@@ -224,7 +211,7 @@ auto state OSCPawnMove
 		{
 			Pawn.SetDesiredRotation(ViewRotation);
 		}
-
+	
 		// Calculate Delta to be applied on ViewRotation
 		DeltaRot.Yaw = OSCYaw;
 		DeltaRot.Pitch = OSCPitch;
@@ -327,7 +314,7 @@ auto state OSCPawnMove
 	Begin:
 		pawnUID = OSCPawnBot(Pawn).getUID();
 		
-		`log("IN OSCPawnController state OSCPawnMove::Pawn.uid"$OSCPawnBot(Pawn).getUID());
+		`log("IN OSCPawnController state OSCPawnMove::Pawn.uid = "$OSCPawnBot(Pawn).getUID());
 		
 }
 
