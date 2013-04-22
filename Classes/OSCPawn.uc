@@ -10,11 +10,33 @@ class OSCPawn extends UTPawn
  notplaceable
  DLLBind(oscpack_1_0_2);
 
+ // vars for moving trumbruticus trunk in code
+var(NPC) SkeletalMeshComponent CurrentMesh;
+var SkelControl_CCD_IK TrunkMover;
+
+// state bools for skeletal mesh changing
+var bool isValkordia;
+var bool isTrumbruticus;
+
+// test vars for camera offsets
+var int camoffsetx, camoffsety, camoffsetz;
+
+// toggles and vars for side and down traces
+var bool pawnDowntrace;
+var bool pawnSidetrace;
+var int gtracelength;
+var float gLeftTrace;
+var float gRightTrace;
+var float gDownTrace;
+
+// Pawn's unique ID
 var int uid;
 
 var bool sendingOSC;	// toggle to send OSC for this pawn
 var bool receivingOSC; 	// receiving OSC flag to prevent multiple calls to oscpack to instantiate listener threads
 var bool sendDeltaOSC; // whether OSC messages are sent continuously or only on vector deltas
+
+// Old iPad finger-touch code
 var array<vector> fingerTouchArray;
 var vector object1;
 var vector object2;
@@ -22,23 +44,20 @@ var vector object3;
 var vector object4;
 var vector object5;
 
-var bool isCrouching;
+// vals for setting offsets and min/max for incoming XYZ co-ords
+var vector OSCFingerOffsets;
+var vector OSCFingerWorldMin;
+var vector OSCFIngerWorldMax;
+var vector OSCFingerSourceMax;
+var vector OSCFingerSourceMin;
+var bool OSCUseFingerTouches;
+var int currentFingerTouches[5];
 		
 var float lastX;
 var float lastY;
 var float lastZ;
 var bool lastCrouch;
-
-var bool OSCUseFingerTouches;
-var int currentFingerTouches[5];
-
-// vals for setting offsets and min/max for incoming XYZ co-ords
-var vector OSCFingerOffsets;
-var vector OSCFingerWorldMin;
-var vector OSCFIngerWorldMax;
-
-var vector OSCFingerSourceMax;
-var vector OSCFingerSourceMin;
+var bool isCrouching;
 
 var float seekingTurnRate;
 
@@ -48,42 +67,6 @@ var bool OSCFreeCamera;
 // testing
 var Rotator OSCRotation;
 
-defaultproperties
-{
-	//groundspeed=10000.0
-	seekingTurnRate=20.00000
-	
-	bHidden=false;
-	
-	
-	// for iPad
-	// x range = 0 to 320
-	// y range = 0 to 420
-	// finger touch ~ 7 to 20
-	/*
-	OSCFingerSourceMax.X=320.00000
-	OSCFingerSourceMin.X=0.00000
-	OSCFingerSourceMax.Y=420.00000
-	OSCFingerSourceMin.Y=0.00000
-	OSCFingerSourceMax.Z=20.00000
-	OSCFingerSourceMin.Z=7.00000
-	OSCFingerOffsets.X = -160.00000
-	OSCFingerOffset.Y = -210.0000
-	OSCFingerOffset.Z = 0.00000
-	OSCFingerWorldMax.X = 3000.00000
-	OSCFingerWorldMin.X = -3000.00000
-	OSCFingerWorldMax.Y = 3000.00000
-	OSCFingerWorldMin.Y = -3000.00000
-	OSCFingerWorldMax.Z = 3000.00000
-	OSCFingerWorldMin.Z = 0.00001
-*/
-}
-/*
-event PostBeginPlay()
-{
-	super.PostBeginPlay();
-}
-*/
 
 struct MyPlayerStruct
 {
@@ -94,7 +77,7 @@ struct MyPlayerStruct
 	var string testval;
 };
 
-struct PlayerStateStruct
+struct PlayerStateStruct_works
 {
 	var string Hostname;
 	var int Port;
@@ -105,6 +88,23 @@ struct PlayerStateStruct
 	var bool crouch;
 };
 
+// Adding LookPitch... etc to track pawn view to pass for binaural testing
+struct PlayerStateStruct
+{
+	var string Hostname;
+	var int Port;
+	var string PlayerName;
+	var float LocX;
+	var float LocY;
+	var float LocZ;
+	var bool crouch;
+	var float Pitch;
+	var float Yaw;
+	var float Roll;
+	var float leftTrace;
+	var float rightTrace;
+	var float downTrace;
+};
 
 struct PlayerStateStructTEST
 {
@@ -208,8 +208,107 @@ dllimport final function initOSCReceiver();
 dllimport final function OSCScriptPlayerRotationStruct getOSCScriptPlayerRotation();
 
 //dllimport final function sendOSCPlayerStateTEST(PlayerStateStructTEST a);
-
 //dllimport final function sendMotionState(string currState, vector loc);
+//override to do nothing
+//simulated function SetCharacterClassFromInfo(class<UTFamilyInfo> Info)
+//{
+//}
+
+//var AnimNodeBlend ThrottleBlendNode;
+//simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
+//{
+//    super.PostInitAnimTree(SkelComp);
+// 
+//    if (SkelComp == Mesh)
+//    {
+//        ThrottleBlendNode = AnimNodeBlend(Mesh.FindAnimNode('Throttle Blend'));
+//    }
+//}
+
+simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
+{
+	super.PostInitAnimTree(SkelComp);
+	
+	// For Trumbruticus trunk moving demo
+	//TrunkMover = SkelControl_CCD_IK(Mesh.FindSkelControl('TrunkMover'));
+	
+	 
+}
+
+simulated exec function ChangePlayerMesh(float a)
+{
+	local AnimNode temp;
+
+	if(a==1)
+	{
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree_spawntest');
+
+//		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01');
+//		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics');
+//		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
+//		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01');	
+		
+		//self.Mesh.GlobalAnimRateScale=self.GroundSpeed/440.0;
+		//`log("Groundspeed = "$self.GroundSpeed);
+		
+		//Pawn.GroundSpeed
+		isValkordia=false;
+		isTrumbruticus=true;
+		
+		} else if(a==2) {
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01');	
+		
+		 // Search for the animation node blend list by name.
+		//temp = self.Mesh.FindAnimNode('UDKAnimBlendByFlying');
+		
+		isValkordia=true;
+		isTrumbruticus=false;
+		
+	} else if(a==3) {	
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_LIAM_Cathode.Mesh.SK_CH_LIAM_Cathode');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'CH_AnimHuman.Anims.K_AnimHuman_BaseMale';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
+		
+		isValkordia=false;
+		isTrumbruticus=false;
+		
+	} else if(a==4) {
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_IronGuard_Male.Mesh.SK_CH_IronGuard_MaleA');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'CH_AnimHuman.Anims.K_AnimHuman_BaseMale';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
+		
+		isValkordia=false;
+		isTrumbruticus=false;
+	} else if(a==5) {
+	
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.Test.test_trumbruticus_skel_01');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.Test.test_trumbruticus_skel_01_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.Test.test_trumbruticus_skel_01_Anims';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.Test.test_trumbruticus_AnimTree_spawntest');
+
+//		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01');
+//		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Physics');
+//		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims';
+//		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree_spawntest');
+		
+		isValkordia=false;
+		isTrumbruticus=false;		
+	}
+}
+
+simulated exec function setEyeHeight(float X)
+{
+  BaseEyeheight=X;
+  
+}
 
 simulated exec function setOSCFingerOffsets(float X, float Y, float Z)
 {
@@ -381,6 +480,22 @@ simulated event PreBeginPlay()
 	OSCFingerOffsets = vect(-160.00000, -210.00000, 0.00001);	
 }
 
+// Overloading FaceRotation from UTPawn to let pawn pitch follow camera
+simulated function FaceRotation(rotator NewRotation, float DeltaTime)
+{
+	if ( Physics == PHYS_Ladder )
+	{
+		NewRotation = OnLadder.Walldir;
+	}
+	else if ( (Physics == PHYS_Walking) || (Physics == PHYS_Falling) )
+	{
+		//NewRotation.Pitch = 0;
+	}
+	NewRotation.Roll = Rotation.Roll;
+    NewRotation.Pitch = Rotation.Pitch;
+	SetRotation(NewRotation);
+}
+
 simulated function sendPlayerState()
 {
 	
@@ -389,24 +504,11 @@ simulated function sendPlayerState()
 	Local Actor traceHit;
 	local MyPlayerStruct tempVals;
 	local PlayerStateStruct psStruct;
-	//local OSCParams OSCParameters;
-	//local string OSCHostname;
-	//local int OSCPort;
 	local bool sendOSC;
-	
-	//OSCWI = GetWorldInfo(); 
-	
-//WorldInfo.WorldGravityZ = current gravity being used
+	local Rotator viewrotator;
 
 	end = Location + normal(vector(Rotation))*32768; // trace to "infinity"
 	traceHit = trace(loc, norm, end, Location, true,, hitInfo);
-
-	// By default only 4 console messages are shown at the time
- 	//ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
-	//ClientMessage("ActorTag: "$self.Tag$"");
- 	//ClientMessage("Location: "$Location.X$","$Location.Y$","$Location.Z);
- 	//ClientMessage("Material: "$hitInfo.Material$"  PhysMaterial: "$hitInfo.PhysMaterial);
-	//ClientMessage("Component: "$hitInfo.HitComponent);
 	
 	// Populate pcStruct with tracehit info using rkh String format hack
 	psStruct.PlayerName ="bob";
@@ -414,43 +516,42 @@ simulated function sendPlayerState()
 	psStruct.LocY = Location.Y;
 	psStruct.LocZ = Location.Z;
 	psStruct.Crouch = isCrouching;
+    
+	psStruct.leftTrace = gLeftTrace;
+	psStruct.rightTrace = gRightTrace;
+	psStruct.downTrace = gDownTrace;
 	
+	// adding rotation to the player output call
+	psStruct.Yaw = Rotation.Yaw%65535;
 
-//ClientMessage("hostname="$OSCHostname$"");
-//ClientMessage("hostname="$OSCWI.OSCHostname$"");
+    // get view rotation for Pitch for osc output
+	viewrotator = GetViewRotation();	
+	psStruct.Pitch = viewrotator.Pitch%65535;
+	psStruct.Roll = Rotation.Roll%65535;
 
-	//OSCParameters = spawn(class'OSCParams');
 	OSCHostname = OSCParameters.getOSCHostname();
 	OSCPort = OSCParameters.getOSCPort();
-	
-	//ClientMessage("OSCParameters.getOSCHostname="$OSCHostname$"");
-	
-//	psStruct.Hostname = OSCHostname;
+
 	psStruct.Hostname = OSCParameters.getOSCHostname();
 	psStruct.Port = OSCParameters.getOSCPort();
-	//psStruct.Port = OSCPort;	
 
-//	psStruct.Hostname = OSCWI.OSCHostname;
-//	psStruct.Port = OSCWI.OSCPort;	
+	sendOSC=true;
 
+	// only send OSC if nothing has changed (XYZ or crouch)
+	if(sendDeltaOSC) {
+		if( (Location.X == lastX) && (Location.Y == lastY) && (Location.Z == lastZ) && (isCrouching==lastCrouch))
+			sendOSC=false;
+	}
 
-sendOSC=true;
+	if(sendOSC)
+		sendOSCPlayerState(psStruct);
 
-// only send OSC if nothing has changed (XYZ or crouch)
-if(sendDeltaOSC) {
-	if( (Location.X == lastX) && (Location.Y == lastY) && (Location.Z == lastZ) && (isCrouching==lastCrouch))
-		sendOSC=false;
-}
-
-if(sendOSC)
-	sendOSCPlayerState(psStruct);
-
-// update last xyz coordinates
-lastX = Location.X;
-lastY = Location.Y;
-lastZ = Location.Z;
-lastCrouch = isCrouching;
-
+	// update last xyz coordinates
+	lastX = Location.X;
+	lastY = Location.Y;
+	lastZ = Location.Z;
+	lastCrouch = isCrouching;
+	
 }
 
 function showTargetInfo()
@@ -478,7 +579,7 @@ function showTargetInfo()
 	//ClientPlaySound(SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_TargetLock');
 
 	// By default only 4 console messages are shown at the time
- 	ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
+ 	ClientMessage("Hit: "$traceHit$"  class: "$traceHit$"."$traceHit.class);
  	ClientMessage("Location: "$loc.X$","$loc.Y$","$loc.Z);
  	ClientMessage("Material: "$hitInfo.Material$"  PhysMaterial: "$hitInfo.PhysMaterial);
 	ClientMessage("Component: "$hitInfo.HitComponent);
@@ -890,7 +991,16 @@ state OSCPlayerMoving
 	
 }
 
-
+simulated function setPawnAnimSpeed()
+{
+	if(isTrumbruticus)
+	{
+		self.Mesh.GlobalAnimRateScale=self.GroundSpeed/440.0;
+	}
+	
+	//`log("GlobalAnimRateScale = "$self.Mesh.GlobalAnimRateScale);
+	//`log("Groundspeed = "$self.GroundSpeed);
+}
 
 simulated function Tick(float DeltaTime)
 {
@@ -948,9 +1058,172 @@ simulated function Tick(float DeltaTime)
 	if(sendingOSC)
 		sendPlayerState();
 
+	// Scale player animation speed by pawn speed
+	setPawnAnimSpeed();
+	
+	if(pawnDowntrace)
+	{
+		downTrace();
+	}
+	
+	if(pawnSidetrace)
+	{
+		psideTrace();	
+	}
+}
+
+exec function sidetrace(int val)
+{
+
+	gtracelength = val;
+	
+	if(pawnSidetrace)
+	{
+		pawnSidetrace = false;
+	} else {
+		pawnSidetrace = true;
+	}
+}
+
+
+exec function pawntrace(int val)
+{
+	gtracelength = val;
+	
+	if(pawnDowntrace)
+	{
+		pawnDowntrace = false;
+	} else {
+		pawnDowntrace = true;
+	}
+}
+
+simulated function psideTrace()
+{
+	// Left and Right traces
+	sideTracer(16384);
+	sideTracer(-16384);
+}
+
+simulated function sideTracer(int rval)
+{
+
+	local vector loc, norm, end;
+	local TraceHitInfo hitInfo;
+	local Actor traceHit;
+    local vector tempRotation;
+	
+	local vector out_Location;
+	local rotator out_Rotation;
+	local vector startTrace;
+	local vector viewVector;
+	
+	local Rotator leftRot;
+	local bool left;
+	local string msg;
+	
+	local float trace_distance;
+	
+    startTrace = Location;
+    startTrace.Z +=BaseEyeHeight;
+	
+//	viewVector .X+= 90*DegToUnrRot;
+	
+	leftRot = Rotation;
+	leftRot.Yaw += rval;    //+=16384 for L or R, or +-90*DegToUnrRot;
+	end = startTrace + normal(vector(leftRot))*gtracelength;
+	traceHit = trace(loc, norm, end, startTrace, true,, hitInfo);
+	DrawDebugLine(startTrace, end, 255,0,0,false);
+	
+	if (traceHit != none)
+	{
+//		ClientMessage("Trace Left failed.");
+//		return;
+//	}
+//	else
+//	{
+		trace_distance = VSize(Location - loc);
+		
+		if(rval==16384)	// Right
+		{
+			left=false;
+			msg = "Right";
+			gRightTrace = trace_distance;
+		} else if(rval==-16384)  // Left 
+		{
+			left=true;
+			msg="Left";
+			gLeftTrace = trace_distance;
+		}
+		
+		// float distance between Pawn (Location) and object (loc)
+		ClientMessage(msg$": "$trace_distance);//VSize(Location - loc));
+// 		ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
+// 		ClientMessage("Location: "$loc.X$","$loc.Y$","$loc.Z);
+// 		ClientMessage("Material: "$hitInfo.Material$"  PhysMaterial: "$hitInfo.PhysMaterial);
+//		ClientMessage("Component: "$hitInfo.HitComponent);
+	}
 	
 }
 
+
+simulated function downTrace()
+{
+
+	local vector loc, norm, end;
+	local TraceHitInfo hitInfo;
+	local Actor traceHit;
+    local vector tempRotation;
+	
+	
+	//end = Location + normal(vector(Rotation))*gtracelength; // trace to "infinity"
+	end = Location + vect(0, 0, -1)*gtracelength;
+	traceHit = trace(loc, norm, end, Location, true,, hitInfo);
+
+	DrawDebugLine(Location, end, 255,0,0,false);
+	
+	ClientMessage("");
+
+	if (traceHit == none)
+	{
+		ClientMessage("Trace failed.");
+		return;
+	}
+	else
+	{
+		// Play a sound to confirm the information
+//		ClientPlaySound(SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_TargetLock');
+
+		// By default only 4 console messages are shown at the time
+ 		ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
+ 		ClientMessage("Location: "$loc.X$","$loc.Y$","$loc.Z);
+ 		ClientMessage("Material: "$hitInfo.Material$"  PhysMaterial: "$hitInfo.PhysMaterial);
+		ClientMessage("Component: "$hitInfo.HitComponent);
+	}
+
+/*
+   //local Actor traceHit;
+   local vector HitLocation, HitNormal;
+   local vector Start;
+   local vector End;
+   local vector ViewRotation;
+   local int StrafeDistance, TraceLength;
+
+   if(Rand(2) == 1)
+   {
+//     ViewRotation = Vector(Pawn.GetViewRotation());
+	  ViewRotation.X = 90 * DegToUnrRot;
+	  ViewRotation.Y = 90 * DegToUnrRot;
+      Start = GetPawnViewLocation();
+      End = GetPawnViewLocation() + (ViewRotation * 2000);
+
+      //traceHit = Trace(HitLocation, HitNormal, End, Start, true);
+      StrafeDistance = TraceLength + 500;
+
+      DrawDebugLine(Start, End, 255,0,0,false);
+   }
+*/
+}
 
 simulated exec function setProjectileTargets(float X, float Y, float Z)
 {
@@ -986,6 +1259,11 @@ event Possess(Pawn inPawn, bool bVehicleTransition)
 
 }
 
+exec function getPawnUid()
+{
+	ClientMessage("Pawn UID = "$getUID());
+}
+
 simulated function int getUID()
 {
 	return uid;
@@ -1000,4 +1278,57 @@ simulated function setUID(int val)
 		`log("UID IS NONE");
 		uid = val;
 	}
+}
+
+simulated exec function behindviewset(int _x, int _y, int _z)
+{
+//  CamOffset = (X=60, Y=0, Z= 0);
+	camoffsetx = _x;
+	camoffsety = _y;
+	camoffsetz = _z;
+	CamOffset.X = _x;
+	CamOffset.Y = _y;
+	CamOffset.Z = _z;//= (X=camoffsetx, Y=camoffsety, Z=camoffsetz)
+}
+
+defaultproperties
+{
+	//groundspeed=10000.0
+	seekingTurnRate=20.00000
+	
+	bHidden=false;
+	
+	
+	// for iPad
+	// x range = 0 to 320
+	// y range = 0 to 420
+	// finger touch ~ 7 to 20
+	/*
+	OSCFingerSourceMax.X=320.00000
+	OSCFingerSourceMin.X=0.00000
+	OSCFingerSourceMax.Y=420.00000
+	OSCFingerSourceMin.Y=0.00000
+	OSCFingerSourceMax.Z=20.00000
+	OSCFingerSourceMin.Z=7.00000
+	OSCFingerOffsets.X = -160.00000
+	OSCFingerOffset.Y = -210.0000
+	OSCFingerOffset.Z = 0.00000
+	OSCFingerWorldMax.X = 3000.00000
+	OSCFingerWorldMin.X = -3000.00000
+	OSCFingerWorldMax.Y = 3000.00000
+	OSCFingerWorldMin.Y = -3000.00000
+	OSCFingerWorldMax.Z = 3000.00000
+	OSCFingerWorldMin.Z = 0.00001
+*/
+
+
+Begin Object Name=WPawnSkeletalMeshComponent
+AnimTreeTemplate=AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree'
+End Object
+
+
+
+ CamOffset = (X=60, Y=0, Z= 0)
+ // CamOffset = (X=camoffsetx, Y=camoffsety, Z=camoffsetz)
+  
 }

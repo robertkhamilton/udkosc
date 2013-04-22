@@ -63,18 +63,20 @@ struct PawnStateStruct
 var OSCScriptPlayermoveStruct localOSCScriptPlayermoveStruct;
 var OSCScriptPlayerTeleportStruct localOSCScriptPlayerTeleportStruct;
 
+// vars for pawnbot follow behaviors
+var Pawn followTargetPawn;
+var OSCPawnBot followTargetPawnBot;
+var rotator targetRotation;
+var int targetX, targetY, targetZ;
+var vector targetAccel;
+var bool follow;
+
 dllimport final function OSCScriptPlayermoveStruct getOSCScriptPlayermove();
 dllimport final function OSCScriptPlayerTeleportStruct getOSCScriptPlayerTeleport();
 dllimport final function sendOSCPawnState(PawnStateStruct a);
 dllimport final function testt(float thisx);
 // ************************************************************************************************
 
-DefaultProperties
-{
-	uid=-1;
-	bRollToDesired=true;
-	RemoteRole=ROLE_SimulatedProxy; // just for testing crashing bug
-}
 
 simulated event PreBeginPlay()
 {
@@ -83,6 +85,63 @@ simulated event PreBeginPlay()
 	OSCHostname = OSCParameters.getOSCHostname();
 	OSCPort = OSCParameters.getOSCPort();	
 }
+
+//override to do nothing
+simulated function SetCharacterClassFromInfo(class<UTFamilyInfo> Info)
+{
+}
+
+
+simulated function followPawnBot()
+{
+	// Set each PawnBot to be sending OSC	
+	local OSCPawnBot P;
+	local OSCPawn Pwn;
+	local float targetGroundSpeed;
+	local float targetAirSpeed;
+	
+	`log("IN FOLLOWPAWNBOT ********************************************** MY UID = "$uid);
+	
+	foreach WorldInfo.AllActors(class 'OSCPawnBot', P)
+	{
+		if(uid > 0) {
+
+	`log("IN FOLLOWPAWNBOT ******************************** UID > 0 *******************");
+			if(P.uid==uid-1) //followTargetPawnBot)
+			{
+	`log("IN FOLLOWPAWNBOT ******************************** P.UID = uid-1 *******************");
+
+			// set this pawn's rotation and speed to match target
+				GroundSpeed = P.GroundSpeed;
+				targetRotation = rotator( P.Location - Self.Location); //P.Rotation
+				
+				AirSpeed = P.AirSpeed;		
+				targetAccel = P.Acceleration;
+				//Self.SetRotation(targetRotation);
+				}
+		} else {
+
+			`log("IN FOLLOWPAWNBOT ******************************** UID = 0 *******************");
+
+		foreach WorldInfo.AllActors(class 'OSCPawn', Pwn)
+			{
+				if(Pwn.uid==0)
+				{
+			`log("IN FOLLOWPAWNBOT ******************************** Pwn.uid ==0 *******************");
+
+					GroundSpeed = Pwn.GroundSpeed;
+//					targetRotation = Pwn.Rotation;
+				targetRotation = rotator( Pwn.Location - Self.Location); //P.Rotation
+					//Self.SetRotation(targetRotation);
+					AirSpeed = Pwn.AirSpeed;
+					targetAccel = Pwn.Acceleration;
+				}
+			}
+		}
+	}
+}
+
+
 
 simulated reliable client function teleport(float x, float y, float z)
 {
@@ -127,16 +186,31 @@ auto state OSCMove
 
 simulated function Tick(float DeltaTime)
 {
+	// ONLY CALL IF Controller is OSCPawnController
+//	if(Self.Controller
+	
+	//`log("OSCPawnBot Controller Outername: "$Controller.class.outer.name);
+	//`log("OSCPawnBot Controller Outername: "$Controller.class);
+	/* */
+	if(string(Controller.class)== "OSCPawnController") 
+	{
 	// Call this Pawn's Controller's playertick method
 	OSCPawnController(Controller).PlayerTick(DeltaTime);
-
+	}
+	
 	Super.Tick(DeltaTIme);
 
 	if(sendingOSC)
 	{
-		`log("Sending OSC from PawnBot #"$uid);
+		//`log("Sending OSC from PawnBot #"$uid);
 		sendPawnState();
 	}	
+	
+	// Chained follow call
+	if(follow)
+	{
+		followPawnBot();
+	}
 }
 
 simulated function sendPawnState()
@@ -199,4 +273,36 @@ simulated function sendPawnState()
 	lastY = Location.Y;
 	lastZ = Location.Z;
 	//lastCrouch = isCrouching;
+}
+
+defaultproperties
+{
+  uid=-1;
+  bRollToDesired=true;
+  RemoteRole=ROLE_SimulatedProxy; // just for testing crashing bug
+
+  Begin Object Class=SkeletalMeshComponent Name=OSCMesh_valkordia
+//    SkeletalMesh=SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01'
+ //   PhysicsAsset=PhysicsAsset'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Physics'
+  //  AnimSets(0)=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims'
+  //  AnimTreeTemplate=AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree_spawntest'
+		SkeletalMesh=SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01'
+		PhysicsAsset=PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics'
+		AnimSets(0)=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims'
+		AnimTreeTemplate=AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01'	
+			
+//AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree'
+  End Object
+  Mesh=OSCMesh_valkordia
+  Components.Add(OSCMesh_valkordia)	
+  
+  Begin Object Name=CollisionCylinder
+      CollisionRadius=+0021.000000
+      CollisionHeight=+0044.000000
+	  bDrawBoundingBox=True
+  End Object
+  
+  CylinderComponent=CollisionCylinder
+  CylinderComponent.bDrawBoundingBox = True
+  
 }
