@@ -14,6 +14,10 @@ var float lastY;
 var float lastZ;
 var bool lastCrouch;
 
+var bool isLeader;		// IS this bot a leader or not
+var int leader;			//OSCBot uid of this OSCBot's "leader"
+
+
 /**/
 // ************************************************************************************************
 // Structs to hold OSC parameter data
@@ -50,7 +54,7 @@ struct OSCScriptPlayerRotationStruct
 	var float roll;
 };
 
-struct PawnStateStruct
+struct BotStateStruct
 {
 	var string Hostname;
 	var int Port;
@@ -74,7 +78,7 @@ var bool follow;
 
 dllimport final function OSCScriptPlayermoveStruct getOSCScriptPlayermove();
 dllimport final function OSCScriptPlayerTeleportStruct getOSCScriptPlayerTeleport();
-dllimport final function sendOSCPawnState(PawnStateStruct a);
+dllimport final function sendOSCBotState(BotStateStruct a);
 dllimport final function testt(float thisx);
 // ************************************************************************************************
 
@@ -239,12 +243,12 @@ simulated function Tick(float DeltaTime)
 //		selfToPlayer =  OSCAIController(Controller).Target.Location - self.Pawn.Location;
 //		DistanceToPlayer = VSize(selfToPlayer);
 //		DeltaRot = rotator(selfToPlayer);
-		
+//		
 //		if (DistanceToPlayer < ChaseDistance || hasBeenShot)
 //		{
 //			self.Pawn.Velocity = Normal(selfToPlayer) * 45;
 //			self.Pawn.FaceRotation(RInterpTo(DeltaRot, rotator(selfToPlayer), deltaTime, 60000, true), deltaTime);
-			
+//			
 //		SetRotation(RInterpTo(Rotation,Rotator(OSCAIController(Controller).Target.Location),DeltaTime,90000,true));
 //	}
 	
@@ -263,8 +267,8 @@ simulated function sendPawnState()
 	Local TraceHitInfo hitInfo;
 	Local Actor traceHit;
 //	local MyPlayerStruct tempVals;
-	local PawnStateStruct pStruct;
-	local PawnStateStruct testStruct;
+	local BotStateStruct pStruct;
+	local BotStateStruct testStruct;
 	//local OSCParams OSCParameters;
 	//local string OSCHostname;
 	//local int OSCPort;
@@ -308,7 +312,7 @@ simulated function sendPawnState()
 		testStruct.Port = 1000;
 		//testt(9999.99);
 		//sendOSCPawnState(testStruct);
-		sendOSCPawnState(pStruct);
+		sendOSCBotState(pStruct);
 	}
 	
 	// update last xyz coordinates
@@ -339,10 +343,7 @@ defaultproperties
 	bSimulateGravity=true
 	bShouldBaseAtStartup=true
 	//bCanStrafe=true
-	
-	// Locomotion
-	WalkingPhysics=PHYS_Flying
-	LandMovementState=PlayerFlying
+	//bCollidesPawns=false;
 	
   uid=-1;
   bRollToDesired=true;
@@ -371,5 +372,8 @@ defaultproperties
   
   CylinderComponent=CollisionCylinder
   CylinderComponent.bDrawBoundingBox = True
+  
+    WalkingPhysics=PHYS_Flying
+  LandMovementState=PlayerFlying
   
 }

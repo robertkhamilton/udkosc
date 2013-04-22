@@ -100,16 +100,16 @@ simulated function followPawnBot()
 	local float targetGroundSpeed;
 	local float targetAirSpeed;
 	
-	`log("IN FOLLOWPAWNBOT ********************************************** MY UID = "$uid);
+//	`log("IN FOLLOWPAWNBOT ********************************************** MY UID = "$uid);
 	
 	foreach WorldInfo.AllActors(class 'OSCPawnBot', P)
 	{
 		if(uid > 0) {
 
-	`log("IN FOLLOWPAWNBOT ******************************** UID > 0 *******************");
+//	`log("IN FOLLOWPAWNBOT ******************************** UID > 0 *******************");
 			if(P.uid==uid-1) //followTargetPawnBot)
 			{
-	`log("IN FOLLOWPAWNBOT ******************************** P.UID = uid-1 *******************");
+//	`log("IN FOLLOWPAWNBOT ******************************** P.UID = uid-1 *******************");
 
 			// set this pawn's rotation and speed to match target
 				GroundSpeed = P.GroundSpeed;
@@ -121,13 +121,13 @@ simulated function followPawnBot()
 				}
 		} else {
 
-			`log("IN FOLLOWPAWNBOT ******************************** UID = 0 *******************");
+//			`log("IN FOLLOWPAWNBOT ******************************** UID = 0 *******************");
 
 		foreach WorldInfo.AllActors(class 'OSCPawn', Pwn)
 			{
 				if(Pwn.uid==0)
 				{
-			`log("IN FOLLOWPAWNBOT ******************************** Pwn.uid ==0 *******************");
+//			`log("IN FOLLOWPAWNBOT ******************************** Pwn.uid ==0 *******************");
 
 					GroundSpeed = Pwn.GroundSpeed;
 //					targetRotation = Pwn.Rotation;
@@ -256,15 +256,15 @@ simulated function sendPawnState()
 
 	if(sendOSC)
 	{
-		`log("Vals - id: "$pStruct.id$", x: "$pStruct.LocX$", y: "$pStruct.LocY$", z: "$pStruct.LocZ$", hostname: "$pStruct.Hostname$", port: "$pStruct.Port);
+/*
+ 	`log("Vals - id: "$pStruct.id$", x: "$pStruct.LocX$", y: "$pStruct.LocY$", z: "$pStruct.LocZ$", hostname: "$pStruct.Hostname$", port: "$pStruct.Port);
 		testStruct.id = 0;
 		testStruct.LocX = 10.0;
 		testStruct.LocY = 10.0;
 		testStruct.LocZ = 10.0;
 		testStruct.Hostname = "10.0.1.100";
 		testStruct.Port = 1000;
-		//testt(9999.99);
-		//sendOSCPawnState(testStruct);
+*/		
 		sendOSCPawnState(pStruct);
 	}
 	
@@ -304,5 +304,9 @@ defaultproperties
   
   CylinderComponent=CollisionCylinder
   CylinderComponent.bDrawBoundingBox = True
+  
+  WalkingPhysics=PHYS_Flying
+  LandMovementState=PlayerFlying
+	
   
 }

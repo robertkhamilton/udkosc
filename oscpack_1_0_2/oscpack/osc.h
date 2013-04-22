@@ -178,6 +178,17 @@ struct PawnStateStruct
 	bool crouch;
 };
 
+struct BotStateStruct
+{
+	FString Hostname;
+	int Port;
+	int id;
+	float LocX;
+	float LocY;
+	float LocZ;
+	bool crouch;
+};
+
 struct PlayerStateStructTEST
 {
 	FString Hostname;
@@ -226,43 +237,7 @@ struct OSCGameParams
 	float gameGravity;
 	float gameSpeed;
 };
-/*
-struct OSCScriptPawnMoveX
-{
-	float x;
-	float id;
-};
 
-struct OSCScriptPawnMoveY
-{
-	float y;
-	float id;
-};
-
-struct OSCScriptPawnMoveZ
-{
-	float z;
-	float id;
-};
-
-struct OSCScriptPawnMoveSpeed
-{
-	float speed;
-	float id;
-};
-
-struct OSCScriptPawnMoveJump
-{
-	float jump;
-	float id;
-};
-
-struct OSCScriptPawnMoveStop
-{
-	float stop;
-	float id;
-};
-*/
 struct OSCPawnBotState
 {
 	int id;
@@ -292,6 +267,21 @@ struct OSCPawnBotStateValues
 	OSCPawnBotStateValues():id(-1), x(0), y(0), z(0), speed(0), pitch(0), yaw(0), roll(0), fly(0), airspeed(0), crouch(0){}
 };
 
+struct OSCPlayerStateValues
+{
+	int id;
+	float x;
+	float y;
+	float z;
+	float speed;
+	float pitch;
+	float yaw;
+	float roll;
+	float fly;
+	float airspeed;
+	float crouch;
+	OSCPlayerStateValues():id(-1), x(0), y(0), z(0), speed(0), pitch(0), yaw(0), roll(0), fly(0), airspeed(0), crouch(0){}
+};
 
 struct OSCSinglePawnBotStateValues
 {
@@ -312,6 +302,14 @@ struct OSCPawnBotDiscreteValues
 	float jump;
 	float stop;
 	OSCPawnBotDiscreteValues():id(-1), jump(0), stop(0){}
+};
+
+struct OSCPlayerDiscreteValues
+{
+	float id;
+	float jump;
+	float stop;
+	OSCPlayerDiscreteValues():id(-1), jump(0), stop(0){}
 };
 
 struct OSCScriptPlayermove
@@ -335,6 +333,16 @@ struct OSCPawnBotTeleportValues
 	float teleporty;
 	float teleportz;
 	OSCPawnBotTeleportValues():id(-1), teleport(0), teleportx(0), teleporty(0), teleportz(0){}
+};
+
+struct OSCPlayerTeleportValues
+{
+	float id;
+	float teleport;
+	float teleportx;
+	float teleporty;
+	float teleportz;
+	OSCPlayerTeleportValues():id(-1), teleport(0), teleportx(0), teleporty(0), teleportz(0){}
 };
 
 struct OSCScriptPlayerTeleport
@@ -406,6 +414,7 @@ __declspec(dllexport) void sendOSCmessageTest4(MyPlayerStruct* a);
 __declspec(dllexport) void sendOSCpointClick(PointClickStruct* a);
 __declspec(dllexport) void sendOSCPlayerState(PlayerStateStruct* pState);
 __declspec(dllexport) void sendOSCPawnState(PawnStateStruct* pState);
+__declspec(dllexport) void sendOSCBotState(BotStateStruct* pState);
 __declspec(dllexport) void sendOSCProjectileState(ProjectileStateStruct* pState);
 __declspec(dllexport) void sendOSCMeshState(MeshStateStruct* mState);
 __declspec(dllexport) void sendOSCPlayerTrace(DownTraceStruct* a);
@@ -428,6 +437,7 @@ __declspec(dllexport)FVector* getOSCFinger1();
 
 // OSC Script calls
 __declspec(dllexport) OSCScriptPlayermove getOSCScriptPlayermove();
+__declspec(dllexport) OSCScriptPlayermove getOSCScriptPawnmove();
 __declspec(dllexport) OSCScriptCameramove getOSCScriptCameramove();
 __declspec(dllexport) OSCScriptPlayerTeleport getOSCScriptPlayerTeleport();
 
@@ -435,6 +445,11 @@ __declspec(dllexport) OSCScriptPlayerTeleport getOSCScriptPlayerTeleport();
 __declspec(dllexport) OSCPawnBotStateValues* getOSCPawnBotStateValues(int* id);
 __declspec(dllexport) OSCPawnBotTeleportValues* getOSCPawnBotTeleportValues(int* id);
 __declspec(dllexport) OSCPawnBotDiscreteValues* getOSCPawnBotDiscreteValues(int* id);
+
+// OSC Player calls
+__declspec(dllexport) OSCPlayerStateValues* getOSCPlayerStateValues(int* id);
+__declspec(dllexport) OSCPlayerTeleportValues* getOSCPlayerTeleportValues(int* id);
+__declspec(dllexport) OSCPlayerDiscreteValues* getOSCPlayerDiscreteValues(int* id);
 
 __declspec(dllexport) OSCSinglePawnBotStateValues getOSCSinglePawnBotStateValues();
 __declspec(dllexport) OSCPawnBotState getOSCPawnBotState();
