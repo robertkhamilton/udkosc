@@ -969,8 +969,9 @@ __declspec(dllexport)void sendOSCPlayerState(PlayerStateStruct* pState)
    p.Clear();
 
 	p << osc::BeginMessage( "/player" )
-		<< WcharToChar(1, pState->PlayerName.Data)
-	    << (float)pState->LocX
+//		<< WcharToChar(1, pState->PlayerName.Data)
+        << (int)pState->id
+        << (float)pState->LocX
 		<< (float)pState->LocY
 		<< (float)pState->LocZ
 		<< (bool)pState->crouch

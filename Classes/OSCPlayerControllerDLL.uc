@@ -314,8 +314,8 @@ simulated exec function initPiece()
 	`log("Spawning leader OSCPawnBots...");
 //	self.ConsoleCommand("spawnPawnBotAt 0 0 2000");
 //	self.ConsoleCommand("spawnPawnBotAt 100 100 2000");
-	self.ConsoleCommand("spawnPawnBotAt 3000 500 13000");
-	self.ConsoleCommand("spawnPawnBotAt 3000 1000 13000");
+	self.ConsoleCommand("spawnPawnBotAt 3000 2500 6200");
+	self.ConsoleCommand("spawnPawnBotAt 3000 2400 6000");
 
 	SetTimer(1);
 	self.ConsoleCommand("OSCCheckPawnBots");
@@ -343,21 +343,13 @@ function SpawnOSCBots()
 		ClearTimer('SpawnOSCBots');
 
 	// Spawn lead and 5 followers
-	self.ConsoleCommand("SpawnOSCBotAt "$3000+(OSCBots.length * 100)$" 1500 15000"); 
+	self.ConsoleCommand("SpawnOSCBotAt "$3000+(OSCBots.length * 100)$" 2500 6700"); 
 	self.ConsoleCommand("followOSCBots");
 }
 
 function callConsoleCommand(int cmd)
 {
 	local string command;
-	/*
-	if (cmd == 1) 
-	{
-		`log("ConsoleCommand: "$cmd$"::BehindView");
-	  Self.ConsoleCommand("behindview");
-	}
-*/
-	`log("ConsoleCommand: "$cmd);
 	
 	if(cmd > 0)
 	{
@@ -372,7 +364,7 @@ function callConsoleCommand(int cmd)
 				command = "OSCMove";			
 				break;
 			case 3:					
-				command = "BehindView";
+				command = "BehindView	";
 				break;
 			case 4:
 				command = "setOSCFreeCamera 1";
@@ -386,17 +378,21 @@ function callConsoleCommand(int cmd)
 			case 7:
 				command = "setOSCAttachedCamera 0";
 				break;
+			case 8:
+				command = "OSCSetFly 0";
+				break;				
+			case 9:
+				command = "OSCSetFly 1";
+				break;				
 			default:
 				`log("***> INVALID Console Command: "$cmd);
 				break;
 		}
 	
-		`log("ConsoleCommand: "$cmd$"::"$command);
+//			`log("ConsoleCommand: "$cmd$"::"$command);
 		Self.ConsoleCommand(command);
 	}	
 }
-
-
 
 /** Set player's character info class & perform any other initialization */
 function SetupPlayerCharacter()
@@ -697,7 +693,11 @@ simulated exec function OSCMove()
 	if(oscmoving)
 	{
 		// Changed from Walking for Echo::Canyon
-		GotoState('PlayerFlying');								//		GotoState('PlayerWalking');
+		if(flying) {
+			GotoState('PlayerFlying');					//		GotoState('PlayerWalking');
+		} else {
+			GotoState('PlayerWalking');
+		}
 		//Pawn.GotoState('PlayerFlying');						//		Pawn.GotoState('PlayerWalking');
 		oscmoving=false;
 	}
@@ -708,19 +708,36 @@ simulated exec function OSCMove()
 		oscmoving=true;	
 	}
 }
+simulated exec function OSCSetFly(int val)
+{
+	if(val==0) {
+		GotoState('PlayerWalking');
+		//bCheatFlying=false;
+		flying=false;	
+	} else {
+	  GotoState('PlayerFlying');
+	  //bCheatFlying=true;
+	  flying=true;	
+	}
+
+		if(oscmoving) {
+			GotoState('OSCPlayerMoving');
+			Pawn.GotoState('OSCPlayerMoving');
+		}	
+}
 
 simulated exec function FlyWalk()
 {
 	if(flying)
 	{
 		GotoState('PlayerWalking');
-		bCheatFlying=false;
+		//bCheatFlying=false;
 		flying=false;
 	}
 	else
 	{
 	  GotoState('PlayerFlying');
-	  bCheatFlying=true;
+	 // bCheatFlying=true;
 	  flying=true;
 	}
 }

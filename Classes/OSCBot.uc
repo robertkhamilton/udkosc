@@ -292,6 +292,9 @@ simulated function sendPawnState()
 	pStruct.Hostname = OSCParameters.getOSCHostname();
 	pStruct.Port = OSCParameters.getOSCPort();
 
+	// HACK TO QUICK FIX OSCParameters going haywire!!!?!?!??!
+	pStruct.Hostname = "10.0.1.20";
+	pStruct.Port = 57120;
 
 	sendOSC=true;
 
@@ -303,7 +306,7 @@ simulated function sendPawnState()
 
 	if(sendOSC)
 	{
-		`log("Vals - id: "$pStruct.id$", x: "$pStruct.LocX$", y: "$pStruct.LocY$", z: "$pStruct.LocZ$", hostname: "$pStruct.Hostname$", port: "$pStruct.Port);
+//		`log("Vals - id: "$pStruct.id$", x: "$pStruct.LocX$", y: "$pStruct.LocY$", z: "$pStruct.LocZ$", hostname: "$pStruct.Hostname$", port: "$pStruct.Port);
 		testStruct.id = 0;
 		testStruct.LocX = 10.0;
 		testStruct.LocY = 10.0;

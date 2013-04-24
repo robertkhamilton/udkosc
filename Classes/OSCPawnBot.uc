@@ -227,7 +227,7 @@ simulated function sendPawnState()
 	//local int OSCPort;
 	local bool sendOSC;
 	
-	//end = Location + normal(vector(Rotation))*32768; // trace to "infinity"
+	//end = Location + normal(vector(Rotfation))*32768; // trace to "infinity"
 	//traceHit = trace(loc, norm, end, Location, true,, hitInfo);
 
 	// Populate pcStruct with tracehit info using rkh String format hack
@@ -245,6 +245,9 @@ simulated function sendPawnState()
 	pStruct.Hostname = OSCParameters.getOSCHostname();
 	pStruct.Port = OSCParameters.getOSCPort();
 
+	// HACK TO QUICK FIX OSCParameters going haywire!!!?!?!??!
+	pStruct.Hostname = "10.0.1.20";
+	pStruct.Port = 57120;	
 
 	sendOSC=true;
 

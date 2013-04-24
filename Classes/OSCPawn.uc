@@ -99,6 +99,7 @@ struct PlayerStateStruct
 {
 	var string Hostname;
 	var int Port;
+	var int id;
 	var string PlayerName;
 	var float LocX;
 	var float LocY;
@@ -456,6 +457,9 @@ simulated event PreBeginPlay()
 {
 	Super.PreBeginPlay();
 	
+	// ****************************************************************************** //
+	// HACK FOR CRASHING WITH LOST OSCPARAMETERS REFERENCE
+	// ****************************************************************************** //
 	OSCParameters = spawn(class'OSCParams');	
 	OSCHostname = OSCParameters.getOSCHostname();
 	OSCPort = OSCParameters.getOSCPort();	
@@ -528,6 +532,7 @@ simulated function sendPlayerState()
 	
 	// Populate pcStruct with tracehit info using rkh String format hack
 	psStruct.PlayerName ="bob";
+	psStruct.id = uid;
 	psStruct.LocX = Location.X;
 	psStruct.LocY = Location.Y;
 	psStruct.LocZ = Location.Z;
@@ -551,6 +556,10 @@ simulated function sendPlayerState()
 	psStruct.Hostname = OSCParameters.getOSCHostname();
 	psStruct.Port = OSCParameters.getOSCPort();
 
+	// HACK TO QUICK FIX OSCParameters going haywire!!!?!?!??!
+	psStruct.Hostname = "10.0.1.20";
+	psStruct.Port = 57120;
+	
 	sendOSC=true;
 
 	// only send OSC if nothing has changed (XYZ or crouch)
@@ -1062,6 +1071,23 @@ state OSCPlayerMoving {
 	*/
 	simulated function Tick(float DeltaTime)
 	{
+
+
+	//`log("**************************** OSCPAWN::OSCPlayerMoving:Tick::SENDING OSC: "$sendingOSC);
+
+	if(sendingOSC)
+		sendPlayerState();
+		
+	// DO I NEED TO SEND THESE HERE TOO???
+/*
+	if(pawnDowntrace) {
+		downTrace();
+	}
+	
+	if(pawnSidetrace) {
+		psideTrace();	
+	}
+*/	
 //		THESE AREN'T VALID ANYMORE: don't do anything right now
 
 		//setOSCScriptPlayerRotationData(getOSCScriptPlayerRotation());
@@ -1116,10 +1142,12 @@ simulated function Tick(float DeltaTime)
 
 	Super.Tick(DeltaTIme);
 
+	//`log("**************************** OSCPAWN::SENDING OSC: "$sendingOSC);
+
 	if(sendingOSC)
 		sendPlayerState();
 
-	// Scale player animation speed by pawn speed
+	// Scale player animation speed by pawn sspeed
 	setPawnAnimSpeed();
 	
 	if(pawnDowntrace) {

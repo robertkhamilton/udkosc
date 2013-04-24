@@ -154,6 +154,7 @@ struct PlayerStateStruct
 {
 	FString Hostname;
 	int Port;
+	int id;
 	FString PlayerName;
 	float LocX;
 	float LocY;
