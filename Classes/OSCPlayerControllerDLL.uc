@@ -11,7 +11,38 @@ class OSCPlayerControllerDLL extends OSCPlayerController
  
 var class<UTFamilyInfo> CharacterClass;
 
+var array< float > averagedTurn; // Array for averaging mouse move values for smoothing
+var array< float > averagedLookup; // Array for averaging mouse move values for smoothing
+var float totalTurn, totalLookup; // Total values aggregating turn and lookup input for smoothing
+var int smootherCount;
+var float interpUpAmount;
+var float interpUpTime;
+var float interpUpCurrent;
+var float interpUpTarget;
+var float interpRollAmount;
+var float interpRollTime;
+var float interpRollCurrent;
+var float interpRollTarget;
+var float interpYawAmount;
+var float interpYawTime;
+var float interpYawCurrent;
+var float interpYawTarget; 
+var float keyTurnScaler;
+var float pawnTurnThreshold;
+
+var array< float > distanceHistory;			// Array for tracking position history for speed tracking
+var vector LastPosition;
+var float currentSpeed;
+var float maxAirSpeed;
+var float minAirSpeed;
+var array < float > airSpeedHistory;
+var int speedArraySizeMax;
+var float airSpeedIncrement;
+var float currentAirSpeedIncrement;
+var bool bChangingPlayerSpeed;
+
 var bool testPawnStruct;
+
 
 var bool flying;
 var bool oscmoving;
@@ -218,6 +249,10 @@ var OSCPlayerStateValuesStruct 		localOSCPlayerStateValuesStruct;
 var OSCPlayerDiscreteValuesStruct 	localOSCPlayerDiscreteValuesStruct;
 var OSCPlayerTeleportStruct 				localOSCPlayerTeleportStruct;
 
+// Control over whether gravity affects flying pawns
+var bool bIgnoreGravity;
+
+
 dllimport final function sendOSCpointClick(PointClickStruct a);	
 dllimport final function OSCFingerController getOSCFingerController(); //borrowing this for multiparameter testing
 dllimport final function OSCScriptPlayermoveStruct getOSCScriptPlayermove();
@@ -260,6 +295,11 @@ simulated event PreBeginPlay()
 	fingerTouchArray[2]=object3;
 	fingerTouchArray[3]=object4;
 	fingerTouchArray[4]=object5;
+	
+//	`log("Setting UDKOSC Key Binds (in PlayerController.PreBeginPlay...)");
+	
+//	PlayerInput.SetBind("K" "decreasePlayerSpeed");
+//	PlayerInput.SetBind("L", "increasePlayerSpeed");
 
 }
 
@@ -280,36 +320,81 @@ simulated event PostBeginPlay()
   super.PostBeginPlay();
    
 	SetupPlayerCharacter();
+	
+	smootherCount = 20; // default array size
+	
+	// Interpolation defaults for Look Up pawn angling
+	interpUpAmount = 90 * DegToUnrRot;
+	interpUpTime = 20000;
+	interpUpTarget = 25;   // go higher for loops 
+	interpRollAmount = 90 * DegToUnrRot;
+	interpRollTime = 20000;
+	interpRollTarget = 25;    
+	interpYawAmount = 90 * DegToUnrRot;
+	interpYawTime = 20000;
+	interpYawTarget = 18;  
+	keyTurnScaler = 100.0;//0.06;
+	
+	// Hide weapon, came up again
+//	SkeletalMeshComponent(Pawn.Weapon.Mesh).SetOwnerNoSee(True);
+	
+	// REMOVE ALL WEAPONS
+//	Pawn.InvManager.DiscardInventory();
+	
+//	Pawn.Weapon.SetHidden(True);
+
+//	OSCPawn(Pawn).Weapon.SetHidden(True);
+	
 }
 
+simulated exec function hideWeapon()
+{
+	// REMOVE ALL WEAPONS
+	Pawn.InvManager.DiscardInventory();
+
+		// Hide weapon, came up again
+	SkeletalMeshComponent(Pawn.Weapon.Mesh).SetOwnerNoSee(True);
+}
 /* */
 simulated exec function testing(int val)
 {
 	if(val==0) {
 		self.ConsoleCommand("ToggleHUD");	
+		self.ConsoleCommand("HideWeapon");		
 		self.ConsoleCommand("ChangePlayerMesh 2");
-		self.ConsoleCommand("BehindView");
+		self.ConsoleCommand("BehindViewSet 28 0 -40");
 		self.ConsoleCommand("FlyWalk");
-		self.ConsoleCommand("TeleportPawn -1900 1200 10000");
+//		self.ConsoleCommand("TeleportPawn -1900 1200 10000");
 //		self.ConsoleCommand("OSCMove");
 		self.ConsoleCommand("setOSCFreeCamera 0");
 		self.ConsoleCommand("setOSCAttachedCamera 0");
 		self.ConsoleCommand("OSCStartInput");			
 		self.ConsoleCommand("OSCStartOutput");					
-		self.ConsoleCommand("SideTrace 1500");
+		self.ConsoleCommand("SideTrace 2500");
 //		self.ConsoleCommand("testtrace 1");
-		self.ConsoleCommand("PawnTrace 1500");
+		self.ConsoleCommand("PawnTrace 1200");
 	}
 }
 
 simulated exec function initPiece()
-{
+{/* */
+
+	`log("Starting OSC Output...");
+	self.ConsoleCommand("OSCStartInput");	
+	self.ConsoleCommand("OSCStartOutput");
+	self.ConsoleCommand("OSCStartPawnBotOutput");
+	self.ConsoleCommand("OSCStartBotOutput");
+	
 	`log("Initializing 'Echo::Canyon' environment...");
 	self.ConsoleCommand("ToggleHUD");	
+	self.ConsoleCommand("HideWeapon");
 	self.ConsoleCommand("ChangePlayerMesh 2");
-	self.ConsoleCommand("BehindView");
+	self.ConsoleCommand("BehindView"); 
+	self.ConsoleCommand("BehindViewSet 28 0 -40"); 
 	self.ConsoleCommand("FlyWalk");
-	self.ConsoleCommand("TeleportPawn -3500 1200 9000");
+	self.ConsoleCommand("OSCMove");	
+
+			//	self.ConsoleCommand("TeleportPawn -3500 1200 9000");
 
 	`log("Spawning leader OSCPawnBots...");
 //	self.ConsoleCommand("spawnPawnBotAt 0 0 2000");
@@ -317,21 +402,22 @@ simulated exec function initPiece()
 	self.ConsoleCommand("spawnPawnBotAt 3000 2500 6200");
 	self.ConsoleCommand("spawnPawnBotAt 3000 2400 6000");
 
-	SetTimer(1);
+	//SetTimer(1);	
 	self.ConsoleCommand("OSCCheckPawnBots");
 	self.ConsoleCommand("OSCPawnMove");
 	
-	`log("Starting OSC Output...");
-	self.ConsoleCommand("OSCStartInput");	
-	self.ConsoleCommand("OSCStartOutput");
-	self.ConsoleCommand("OSCStartPawnBotOutput");
-	self.ConsoleCommand("OSCStartBotOutput");
-	
 	`log("Enabling tracers...");		
-	self.ConsoleCommand("SideTrace 2000");
-	self.ConsoleCommand("PawnTrace 2000");	
+	self.ConsoleCommand("SideTrace 2500");
+	self.ConsoleCommand("PawnTrace 2500");	
 	`log("Spawning follower OSCBots...");
 	SetTimer(1,true,'SpawnOSCBots');	
+}
+
+// From UTPlayerController
+exec function BehindView()
+{
+	if ( WorldInfo.NetMode == NM_Standalone )
+		SetBehindView(!bBehindView);
 }
 
 function SpawnOSCBots()
@@ -339,7 +425,7 @@ function SpawnOSCBots()
 	// GROUPING CURRENTLY IS SET IN OSCAICONTROLLER Follow state
 	`log("OSCBots length: "$OSCBots.length);
 	
-	if(OSCBots.length==7)
+	if(OSCBots.length==12)
 		ClearTimer('SpawnOSCBots');
 
 	// Spawn lead and 5 followers
@@ -384,6 +470,12 @@ function callConsoleCommand(int cmd)
 			case 9:
 				command = "OSCSetFly 1";
 				break;				
+			case 10:
+				command = "OSCSetBehindCamera 1";
+				break;
+			case 11:
+				command = "OSCSetBehindCamera 2";
+				break;
 			default:
 				`log("***> INVALID Console Command: "$cmd);
 				break;
@@ -449,7 +541,7 @@ simulated exec function spawnOSCBot()
 	spawnOSCBotAt(0, 0, 1000);
 }
 
-simulated exec function spawnOSCBotAt(int x, int y, int z)
+simulated exec function spawnOSCBotAt(int x, int y, int z, int mesh=2)
 {
 
 	local OSCBot bot;
@@ -462,14 +554,14 @@ simulated exec function spawnOSCBotAt(int x, int y, int z)
 	local class <actor> PNewClass; 
 	local class <actor> CNewClass;
 	
-	PClassName = "UT3OSC.OSCBot";
-	CClassName = "UT3OSC.OSCAIController";	
+	PClassName = "UDKOSC.OSCBot";
+	CClassName = "UDKOSC.OSCAIController";	
 
 	PawnLocation.X = x;		
 	PawnLocation.Y = y;
 	PawnLocation.Z = z;
 	
-	PawnRotation = Pawn.Rotation; 
+	//PawnRotation = Pawn.Rotation; 
 	PNewClass = class<actor>(DynamicLoadObject(PClassName, class'Class'));
 	CNewClass = class<Controller>(DynamicLoadObject(CClassName, class'Class'));
 
@@ -485,6 +577,9 @@ simulated exec function spawnOSCBotAt(int x, int y, int z)
 
 	P.setPhysics(PHYS_Falling);
 	P.SetMovementPhysics();
+	
+	P.selectedPlayerMesh = mesh;
+	P.setPawnMesh(mesh);	
 	
 	if(P!=None)
 	{
@@ -503,7 +598,7 @@ simulated exec function spawnPawnBot()
 	spawnOSCBotAt(0, 0, 2000);
 }
 
-simulated exec function spawnPawnBotAt(int x, int y, int z)
+simulated exec function _spawnPawnBotAt(int x, int y, int z)
 {
 	local string PClassName;
 	local string CClassName;
@@ -515,8 +610,8 @@ simulated exec function spawnPawnBotAt(int x, int y, int z)
 	local class <actor> PNewClass;
 	local class <actor> CNewClass;
 	
-	PClassName = "UT3OSC.OSCPawnBot";
-	CClassName = "UT3OSC.OSCPawnController";	
+	PClassName = "UDKOSC.OSCPawnBot";
+	CClassName = "UDKOSC.OSCPawnController";	
 	
 	PawnLocation.X = x;		
 	PawnLocation.Y = y;
@@ -542,6 +637,7 @@ simulated exec function spawnPawnBotAt(int x, int y, int z)
 		C.PostControllerIdChange(); //TEST Trying to fix OSC Output bug
 		OSCPawnBots.addItem(P);
 		`log("Added OSCPawnBot with uid: "$P.getUID());
+//				C.Pawn.setPawnMesh(mesh);	// set pawn mesh
 	}
 	else
 	{
@@ -554,6 +650,123 @@ self.ConsoleCommand("OSCCheckPawnBots");
 self.ConsoleCommand("OSCPawnMove");
 	
 }
+
+
+// Exec function to spawn a new OSCPawnBot at a given location. An optional parameter to assign a specific Mesh to that OSCPawnBot defaults to "2" (Valkordia) for now
+simulated exec function spawnPawnBotAt(int x, int y, int z, int mesh=2)
+{
+	local string PClassName;
+	local string CClassName;
+	local OSCPawnBot P;
+	local OSCPawnController C;
+	
+	local Vector PawnLocation;
+	local Rotator PawnRotation;
+	local class <actor> PNewClass;
+	local class <actor> CNewClass;
+	
+	PClassName = "UDKOSC.OSCPawnBot";
+	CClassName = "UDKOSC.OSCPawnController";	
+	
+	PawnLocation.X = x;		
+	PawnLocation.Y = y;
+	PawnLocation.Z = z;
+	
+	//PawnRotation = Pawn.Rotation; 
+	PNewClass = class<actor>(DynamicLoadObject(PClassName, class'Class'));
+	CNewClass = class<actor>(DynamicLoadObject(CClassName, class'Class'));
+
+	//spawn a new pawn and attach this controller
+	P = OSCPawnBot(Spawn(PNewClass, , ,PawnLocation,PawnRotation));	
+	
+
+	
+	P.setUID(OSCPawnBotCount);	
+	OSCPawnBotCount++;
+	P.SetOwner(C);
+	P.SetHidden(false);
+	
+	P.selectedPlayerMesh = mesh;
+	P.setPawnMesh(mesh);		
+	
+	C = OSCPawnController(Spawn(CNewClass));
+
+	if(P!=None)
+	{
+		C.Possess(P, false);
+		C.PostControllerIdChange(); //TEST Trying to fix OSC Output bug
+		OSCPawnBots.addItem(P);
+		`log("Added OSCPawnBot with uid: "$P.getUID());
+		
+
+	}
+	else
+	{
+		`log("P WAS NONE***********");
+	}	
+
+SetTimer(2);
+// Initialize PawnBots after being created
+self.ConsoleCommand("OSCCheckPawnBots");
+self.ConsoleCommand("OSCPawnMove");
+	
+}
+
+/*
+simulated exec function spawnPawnBotMesh(int mesh)
+{
+	local string PClassName;
+	local string CClassName;
+	local OSCPawnBot P;
+	local OSCPawnController C;
+	
+	local Vector PawnLocation;
+	local Rotator PawnRotation;
+	local class <actor> PNewClass;
+	local class <actor> CNewClass;
+	
+	PClassName = "UDKOSC.OSCPawnBot";
+	CClassName = "UDKOSC.OSCPawnController";	
+	
+	PawnLocation.X = x;		
+	PawnLocation.Y = y;
+	PawnLocation.Z = z;
+	
+	//PawnRotation = Pawn.Rotation; 
+	PNewClass = class<actor>(DynamicLoadObject(PClassName, class'Class'));
+	CNewClass = class<actor>(DynamicLoadObject(CClassName, class'Class'));
+
+	//spawn a new pawn and attach this controller
+	P = OSCPawnBot(Spawn(PNewClass, , ,PawnLocation,PawnRotation));	
+	
+	P.setUID(OSCPawnBotCount);	
+	OSCPawnBotCount++;
+	P.SetOwner(C);
+	P.SetHidden(false);
+
+	C = OSCPawnController(Spawn(CNewClass));
+
+	if(P!=None)
+	{
+		C.Possess(P, false);
+		C.PostControllerIdChange(); //TEST Trying to fix OSC Output bug
+		OSCPawnBots.addItem(P);
+		`log("Added OSCPawnBot with uid: "$P.getUID());
+		
+		C.Pawn.setPawnMesh(mesh);	// set pawn mesh
+	}
+	else
+	{
+		`log("P WAS NONE***********");
+	}	
+
+SetTimer(2);
+// Initialize PawnBots after being created
+self.ConsoleCommand("OSCCheckPawnBots");
+self.ConsoleCommand("OSCPawnMove");
+	
+}
+*/
 
 simulated exec function OSCCheckBots()
 {
@@ -1053,6 +1266,622 @@ simulated  function setMode(int modeValue)
 }
 
 
+function calculateSpeed()
+{
+		local vector currentPosition;
+		local float currentDistance;
+		local int arrayLength;
+		local int i;
+		local float totalDistance;
+		
+		currentPosition = Pawn.Location;
+		
+//		`log("currentPosition: "$currentPosition);
+		
+		arrayLength = distanceHistory.Length;
+		
+		if(arrayLength >= 10)
+		{
+			// remove val
+			distanceHistory.Remove(0, 1);
+		} 
+
+		// debug
+//		`log("VSIZE: "$VSize(LastPosition - Location));
+//		LastPosition = Location;
+
+		
+		// Calculate distance moved and add to array
+		currentDistance = VSize(LastPosition - currentPosition);
+//		currentDistance = LastPosition dot Location;
+		distanceHistory.additem(currentDistance);
+		
+		LastPosition = currentPosition;
+		
+		totalDistance = 0.0;
+		
+		for(i=0;i<distanceHistory.Length; i++)
+		{
+			totalDistance += distanceHistory[i];			
+		}
+		
+		currentSpeed = totalDistance / 10.0;
+		
+//		`log("CurrentDistance: "$currentDistance);
+//		`log("CurrentSpeed = "$currentSpeed);
+
+}
+	
+/*
+DeltaRot.Yaw	= PlayerInput.aTurn;
+		DeltaRot.Pitch	= PlayerInput.aLookUp;
+*/
+//"
+
+// Look in PlayerInput for params
+/* 
+var input			float		aBaseX;
+var input			float		aBaseY;
+var input			float		aBaseZ;
+var input			float		aMouseX;
+var input			float		aMouseY;
+var input			float		aForward;
+var input			float		aTurn;
+var input			float		aStrafe;
+var input			float		aUp;
+var input			float		aLookUp;
+*/
+
+exec function increasePlayerSpeed()
+{
+//	`log("In increasePlayerSpeed exec function...");
+	changePlayerSpeed(1.0);
+}
+	
+exec function decreasePlayerSpeed()
+{
+	changePlayerSpeed(-1.0);
+}
+
+simulated function changePlayerSpeed(float value) {
+	// Stub for PlayerFlying state function
+}
+
+simulated function setPlayerSpeed() {
+	// Stub for PlayerFlying state function
+}
+
+state PlayerFlying
+{
+
+	// Called by Tick; data is populated by key presses
+	simulated function setPlayerSpeed()
+	{
+		local int i;
+		local int arrayLength;
+		local float totalValue;
+		
+		totalValue = 0;
+
+		arrayLength = 0;
+		arrayLength = airSpeedHistory.Length;
+	
+//		`log("arrayLength: "$arrayLength);
+//		`log("speedArraySizeMax: "$speedArraySizeMax);
+		
+		// bChangingPlayerSpeed
+		
+		if(arrayLength > speedArraySizeMax)
+		{
+//			`log("Removing...");
+			airSpeedHistory.Remove(0, 1);
+		}
+		
+		if(bChangingPlayerSpeed)
+		{
+			airSpeedHistory.addItem(currentAirSpeedIncrement);
+		} else {
+			airSpeedHistory.addItem(0);			
+		}
+
+//		`log("Just Added: airSpeedHistory.Length: "$airSpeedHistory.Length);
+				
+		// Flush last key-bind -added value
+//		if(Pawn!=None)
+//			currentAirSpeedIncrement = 0;
+		
+		for(i=0; i< arrayLength; i++)
+		{
+				//`log("airSpeedHistory["$i$"]: "$airSpeedHistory[i]);
+
+				totalValue += airSpeedHistory[i];
+		}
+		
+//		`log("arrayLength: "$arrayLength);
+		totalValue = totalValue / arrayLength; //speedArraySizeMax;
+		
+		if( totalValue + OSCPawn(Pawn).baseAirSpeed > maxAirSpeed)  {
+			totalValue = maxAirSpeed;
+		} else if(totalValue + OSCPawn(Pawn).baseAirSpeed < minAirSpeed) {
+			totalValue = minAirSpeed;
+		} 
+		
+		// average out 
+		OSCPawn(Pawn).AirSpeed = OSCPawn(Pawn).baseAirSpeed + totalValue; // / speedArraySizeMax;
+		
+//		`log("totalValue: "$totalValue);
+//		`log("Changing AirSpeed: "$OSCPawn(Pawn).AirSpeed);
+		
+	}
+		
+	simulated function changePlayerSpeed(float value)
+	{
+		currentAirSpeedIncrement =  airSpeedIncrement * value;	
+		bChangingPlayerSpeed = TRUE;
+	}
+	
+	exec function playerSpeedOff()
+	{
+		bChangingPlayerSpeed = FALSE;
+	}
+	exec function setSmootherCount(int val)
+	{
+		if(val<1)
+		    val=1;
+		
+		smootherCount = val;
+	}
+	
+	exec function setInterpUpAmount(int val)
+	{
+		interpUpAmount = val  * DegToUnrRot;
+	}
+	
+	exec function setInterpUpTime(int val)
+	{
+		interpUpTime = val;
+	}
+
+	exec function setInterpUpTarget(int val)
+	{
+		interpUpTarget = val;
+	}
+	
+	exec function setKeyTurnScaler(float val)
+	{
+		keyTurnScaler= val;
+	}
+	
+	exec function ignoreGravity()
+	{
+		if(bIgnoreGravity) {
+			bIgnoreGravity = FALSE;
+		} else {
+			bIgnoreGravity = TRUE;
+		}
+	}
+	
+	// From PlayerController.uc
+	function PlayerMove(float DeltaTime)
+	{
+		local vector X,Y,Z;
+		local float flyingGravity;
+		
+		GetAxes(Rotation,X,Y,Z);
+		
+		Pawn.Acceleration = PlayerInput.aForward*X + PlayerInput.aStrafe*Y + PlayerInput.aUp*vect(0,0,1);;
+
+		if(!bIgnoreGravity) {
+		
+			// add some gravity back in?
+			flyingGravity = getGravityZ();// vect(0,0,-1);
+			Pawn.Acceleration.Z = (Pawn.Acceleration.Z + flyingGravity) * 1.00001;
+		}
+		
+		Pawn.Acceleration = Pawn.AccelRate * Normal(Pawn.Acceleration);
+
+
+		// Not using bCheatFlying anymore, so not called...
+		if ( bCheatFlying && (Pawn.Acceleration == vect(0,0,0)) )
+			Pawn.Velocity = vect(0,0,0);
+			
+		// Update rotation.
+		UpdateRotation( DeltaTime );
+
+		if ( Role < ROLE_Authority ) // then save this move and replicate it
+			ReplicateMove(DeltaTime, Pawn.Acceleration, DCLICK_None, rot(0,0,0));
+		else 
+			ProcessMove(DeltaTime, Pawn.Acceleration, DCLICK_None, rot(0,0,0));
+	}
+	
+	function SmootherTurn(float value, float strafe, out float averagedValue)
+	{
+		local int arrayLength;
+		local int i;
+		
+		arrayLength = averagedTurn.Length;
+		
+		if(arrayLength > smootherCount) { 	// If we changed smootherCount in exec function, truncate last n array vals
+
+			// remove vals from total
+			for( i=smootherCount+1; i < arrayLength; i++ )
+			{
+				totalTurn -= averagedTurn[i];
+			}
+			
+			averagedTurn.Remove(smootherCount, arrayLength-smootherCount);
+		}
+		else if(arrayLength == smootherCount) {
+			totalTurn -= averagedTurn[0];
+			averagedTurn.Remove(0, 1); // remove 1st item in array
+		}
+
+//		totalTurn+=value;
+//		averagedTurn.addItem(value);
+
+		// Add strafe value into turning sequence
+		totalTurn+=value + (strafe * keyTurnScaler);
+		averagedTurn.addItem(value + (strafe * keyTurnScaler));
+		
+		//`log("TotalTurn: "$totalTurn);
+		//`log("strafe: "$strafe);
+		//`log("keyTurnScaler: "$keyTurnScaler);
+		
+		averagedValue = totalTurn / arrayLength;
+	}
+	
+	function SmootherLookUp(float value, out float averagedValue)
+	{
+		local int arrayLength;
+		local int i;
+		
+		arrayLength = averagedLookUp.Length;
+		
+		if(arrayLength > smootherCount) { 	// If we changed smootherCount in exec function, truncate last n array vals
+		
+			// remove vals from total
+			for( i=smootherCount+1; i < arrayLength; i++ )
+			{
+				totalLookUp -= averagedLookUp[i];
+			}
+			
+			averagedLookUp.Remove(smootherCount, arrayLength-smootherCount);
+		}
+		else if(arrayLength == smootherCount) {
+			totalLookUp -= averagedLookUp[0];
+			averagedLookUp.Remove(0, 1); // remove 1st item in array
+		} 
+
+		totalLookUp+=value;
+		averagedLookUp.addItem(value);
+
+		averagedValue = totalLookUp / arrayLength;
+	}
+
+	function float SmoothPawnUp()
+	{
+		local float pitchVal;
+	
+		pitchVal = 1;
+		
+		if(PlayerInput.aUp < 0)
+		{
+			pitchVal = -1;
+		}
+		
+		//`log("interpUpCurrent * UnrRotToDeg)%360: "$(interpUpCurrent * UnrRotToDeg)%360);
+		
+		if(PlayerInput.aUp != 0)
+		{
+		
+			if( (pitchVal > 0) && (interpUpCurrent * UnrRotToDeg)%360 <= interpUpTarget) 
+			{
+				interpUpCurrent = interpUpCurrent + (((interpUpAmount * DegToUnrRot  * pitchVal) -interpUpCurrent) / interpUpTime);
+			} else if ((pitchVal < 0) && (interpUpCurrent * UnrRotToDeg)%360 >= interpUpTarget * pitchVal) {
+				interpUpCurrent = interpUpCurrent - (((interpUpAmount * DegToUnrRot ) -interpUpCurrent) / interpUpTime);		
+			}
+			
+		} else {
+			if((InterpUpCurrent * UnrRotToDeg )%360 != 90)
+			{
+				interpUpCurrent = interpUpCurrent + ((0 -interpUpCurrent) / 10.0);
+			}
+		}
+		
+		return interpUpCurrent;
+		
+	}
+
+	
+	function float SmoothPawnRoll()
+	{
+		local float rollVal;
+	
+		rollVal = 1;
+		
+		//if(PlayerInput.aStrafe < 0)
+		if((PlayerInput.aTurn + (getDirection(PlayerInput.aStrafe) * keyTurnScaler)) < 0)			
+		{
+			rollVal = -1;
+		}
+		
+		rollVal = getDirection(PlayerInput.aTurn + (getDirection(PlayerInput.aStrafe) * keyTurnScaler));
+		
+		//`log("interpUpCurrent * UnrRotToDeg)%360: "$(interpUpCurrent * UnrRotToDeg)%360);
+		//if((PlayerInput.aTurn + (getDirection(PlayerInput.aStrafe) * keyTurnScaler)) < 0)	
+		if(PlayerInput.aStrafe != 0 || PlayerInput.aTurn != 0)
+		{
+		
+			if( (rollVal > 0) && (interpRollCurrent * UnrRotToDeg)%360 <= interpRollTarget) 
+			{
+				interpRollCurrent = interpRollCurrent + (((interpRollAmount * DegToUnrRot  * rollVal) -interpRollCurrent) / interpRollTime);
+			} else if ((rollVal < 0) && (interpRollCurrent * UnrRotToDeg)%360 >= interpRollTarget * rollVal) {
+				interpRollCurrent = interpRollCurrent - (((interpRollAmount * DegToUnrRot ) -interpRollCurrent) / interpRollTime);		
+			}
+			
+		} else {
+			if((interpRollCurrent * UnrRotToDeg )%360 != 90)
+			{
+				interpRollCurrent = interpRollCurrent + ((0 -interpRollCurrent) / 10.0);
+			}
+		}
+		
+		return interpRollCurrent;
+		
+	}
+	
+	function int getDirection(int val)
+	{
+		local int returnVal;
+		
+		returnVal = 0;
+		
+		if(val > 0) 
+		{
+			returnVal = 1;
+		} else if (val < 0) 
+		{
+			returnVal = -1;
+		}
+		
+		return returnVal;
+	}
+	
+	exec function setPawnTurnThreshold(float val)
+	{
+		pawnTurnThreshold = val;
+	}
+	
+	function float scaledTurnX()
+	{
+		local float maxTurnX, retValue, turnXValue;
+		
+		maxTurnX = 800.0;
+		
+		if(pawnTurnThreshold > 0)
+			maxTurnX = pawnTurnThreshold;
+		
+		if(abs(PlayerInput.aTurn + PlayerInput.aStrafe) > maxTurnX)
+		{
+			turnXValue = maxTurnX * getDirection(PlayerInput.aTurn + PlayerInput.aStrafe);
+		} else {			
+			turnXValue = PlayerInput.aTurn + PlayerInput.aStrafe;
+		}
+		
+		// PlayerInput.aTurn and aStrafe are inputs
+		//    - want to scale amout of turning, e.g. interpYawTarget by % of mouse value (of max mouse value)
+		retValue = turnXValue / maxTurnX;
+		
+		return retValue;
+	}
+	
+	function float SmoothPawnYaw()
+	{
+		local float yawVal;
+		local float localInterpYawTarget;
+		
+		// Scale yaw amount by amount of mouse/strafe movement
+		localInterpYawTarget = interpYawTarget * scaledTurnX();
+		
+		yawVal = 1;
+		
+
+//		if(PlayerInput.aStrafe < 0)		
+//		if((getDirection(PlayerInput.aStrafe + PlayerInput.aTurn) * keyTurnScaler) < 0)				
+//		{
+//			yawVal = -1;
+//		}
+				
+		if( ((PlayerInput.aStrafe != 0) && (PlayerInput.aForward > 0)) || (PlayerInput.aTurn != 0) && (PlayerInput.aForward > 0))
+		{		
+			if( (interpYawCurrent * UnrRotToDeg)%360 <= localInterpYawTarget) 
+			{
+				interpYawCurrent = interpYawCurrent + (((interpYawAmount * DegToUnrRot  * yawVal) -interpYawCurrent) / interpYawTime);
+			} else if ( (interpYawCurrent * UnrRotToDeg)%360 >= localInterpYawTarget ) {
+				interpYawCurrent = interpYawCurrent - (((interpRollAmount * DegToUnrRot ) -interpYawCurrent) / interpYawTime);		
+			}
+			
+		} else {
+			if((interpYawCurrent * UnrRotToDeg )%360 != 90)
+			{
+				interpYawCurrent = interpYawCurrent + ((0 -interpYawCurrent) / 10.0);
+			}
+		}
+		
+//		`log("interpYawCurrent: "$interpYawCurrent);
+		
+		return interpYawCurrent;
+		
+	}
+	
+/*
+	function float SmoothPawnYaw()
+	{
+		local float yawVal;
+		
+		yawVal = 1;
+		
+
+//		if(PlayerInput.aStrafe < 0)		
+		if((PlayerInput.aTurn + (getDirection(PlayerInput.aStrafe) * keyTurnScaler)) < 0)				
+		{
+			yawVal = -1;
+		}
+				
+		if(((PlayerInput.aStrafe != 0) && (PlayerInput.aForward > 0)) || (PlayerInput.aTurn != 0) && (PlayerInput.aForward > 0))
+		{
+		
+			if( (yawVal > 0) && (interpYawCurrent * UnrRotToDeg)%360 <= interpYawTarget) 
+			{
+				interpYawCurrent = interpYawCurrent + (((interpYawAmount * DegToUnrRot  * yawVal) -interpYawCurrent) / interpYawTime);
+			} else if ((yawVal < 0) && (interpYawCurrent * UnrRotToDeg)%360 >= interpYawTarget * yawVal) {
+				interpYawCurrent = interpYawCurrent - (((interpRollAmount * DegToUnrRot ) -interpYawCurrent) / interpYawTime);		
+			}
+			
+		} else {
+			if((interpYawCurrent * UnrRotToDeg )%360 != 90)
+			{
+				interpYawCurrent = interpYawCurrent + ((0 -interpYawCurrent) / 10.0);
+			}
+		}
+		
+		return interpYawCurrent;
+		
+	}
+	*/	
+	
+	// From PlayerController.uc
+	function UpdateRotation( float DeltaTime )
+	{
+		local Rotator	DeltaRot, newRotation, ViewRotation;
+		local float smoothTurn, smoothLookUp, strafedRoll;		
+		local float strafe;
+		
+		ViewRotation = Rotation;
+		if (Pawn!=none)
+		{
+//			Pawn.SetDesiredRotation(ViewRotation, FALSE, FALSE, 100.f);
+		}
+		
+		// Smooth aTurn and aLookup Values
+		SmootherLookUp(PlayerInput.aLookUp, smoothLookUp);
+
+		if(PlayerInput.aStrafe > 0) {
+			strafe = 1;
+		}  else if(PlayerInput.aStrafe < 0) {
+			strafe = -1;
+		} else {
+			strafe = 0;
+		}
+		
+//		`log("PlayerInput.aTurn: "$PlayerInput.aTurn);
+//		`log("PlayerInput.aMouseX: "$PlayerInput.aMouseX);
+		
+		SmootherTurn(PlayerInput.aTurn, strafe, smoothTurn);
+
+		// Override mouse yaw if forward and strafe pressed; bBehindView from UTPlayerController, so only do this in "BehindView" modes
+//		if(PlayerInput.aTurn !=0 && PlayerInput.aStrafe !=0 && bBehindView)
+//		{
+			// do nothing
+//		} else {
+			DeltaRot.Yaw	= smoothTurn;
+//		}
+		
+		DeltaRot.Pitch = smoothLookUp;
+
+		// Calculate Delta to be applied on ViewRotation
+//		DeltaRot.Yaw	= PlayerInput.aTurn;
+//		DeltaRot.Pitch	= PlayerInput.aLookUp;
+
+		ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
+		SetRotation(ViewRotation);
+
+		ViewShake( deltaTime );
+
+		NewRotation = ViewRotation;
+		//NewRotation.Roll = Rotation.Roll;
+		
+		// Add Strafe as an input towards Pawn roll
+		NewRotation = pawnRotate(NewRotation, DeltaTime);
+		
+		if ( Pawn != None )
+			OSCPawn(Pawn).FaceRotation(NewRotation, deltatime);
+	}
+	
+	function rotator pawnRotate(rotator currentRotation, float DeltaTime)
+	{	
+		local rotator targetRotation, viewRotation;
+		
+		targetRotation = currentRotation; 
+
+		targetRotation.Yaw = targetRotation.Yaw + SmoothPawnYaw();	
+		targetRotation.Roll = targetRotation.Roll + SmoothPawnRoll();
+		targetRotation.Pitch = targetRotation.Pitch + SmoothPawnUp();
+		
+		return targetRotation;
+	}
+	
+/*
+	function PlayerMove( float DeltaTime )
+	{
+	local rotator targetRotation;
+	local rotator cameraRotation;
+	local rotator currentRotation;
+	local rotator interpRotation;
+	local float forwardDirection;
+	
+	
+		Super.PlayerMove( DeltaTime);
+
+		// Add in pawn roll with strafe
+        currentRotation = Pawn.Rotation;
+
+		`log("CurrentRoll = "$currentRotation.Roll);
+		
+		If(PlayerInput.aForward > 0)
+		{
+			forwardDirection = 1.0;
+		} else {
+			forwardDirection = 0.0;
+		}
+		
+		targetRotation = currentRotation; 
+		//targetRotation.Yaw = targetRotation.Yaw +( 1.1 * 0.01 * PlayerInput.aStrafe) * forwardDirection;
+		cameraRotation = currentRotation;
+		cameraRotation.Yaw = targetRotation.Yaw +( 1.1 * 0.01 * PlayerInput.aStrafe) * forwardDirection;
+		 
+		// Rotate Camera with Yaw from Strafe value
+		SetRotation(RInterpTo(Rotation, cameraRotation, DeltaTime, 90000));
+	
+		targetRotation.Yaw = targetRotation.Yaw +( 1.1 * PlayerInput.aStrafe) * forwardDirection;	
+		targetRotation.Roll = targetRotation.Roll + 2.0 * PlayerInput.aStrafe;
+
+		// Set Pawn's visible rotation with roll and yaw based on Strafe values
+        currentRotation = RInterpTo(currentRotation, targetRotation, DeltaTime, 90000);
+	    
+		
+		`log("Tweaked Roll= "$currentRotation.Roll);
+		
+		//SetRotation(currentRotation);			
+		//UpdateRotation( DeltaTime );
+			
+		// Add OSC Rotation	
+		//OSCPawn(Pawn).FaceRotation(currentRotation, DeltaTime);		
+		//Pawn.SetRotation(currentRotation);
+		OSCPawn(Pawn).UpdatePawnRotation(currentRotation);
+		
+		
+		`log("aForward: "$PlayerInput.aForward);
+		`log("aStrafe: "$PlayerInput.aStrafe);
+		//`log("aMouseY: "$PlayerInput.aMouseY);
+		//`log("aMouseX: "$PlayerInput.aMouseX);
+		//`log("aLookUp:  "$PlayerInput.aLookUp);
+		
+		
+	}
+*/	
+}
+
 state OSCPlayerMoving
 {
 
@@ -1063,7 +1892,7 @@ state OSCPlayerMoving
 
 	function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, Rotator DeltaRot)
 	{
-	
+	/**/
 		if (Pawn == none)
 		{
 			return;
@@ -1547,21 +2376,23 @@ simulated function setOSCScriptPlayerTeleportData(OSCScriptPlayerTeleportStruct 
 
 simulated function callTeleport()
 {
-	`log("IN TELEPORT **************************************************************");
+//	`log("IN TELEPORT **************************************************************");
 
 	
 	if(localOSCScriptPlayerTeleportStruct.teleport == 1.0)
 	{
-		`log("TELEPORT == 1.0");
+//		`log("TELEPORT == 1.0");
 		teleportPawn_(localOSCScriptPlayerTeleportStruct.teleportx, localOSCScriptPlayerTeleportStruct.teleporty, localOSCScriptPlayerTeleportStruct.teleportz);
 	}
 }
 
 simulated function setOSCPlayerData()
 {
-	localOSCPlayerStateValuesStruct = getOSCPlayerStateValues(OSCPawn(Pawn).getUID());
-	localOSCPlayerDiscreteValuesStruct = getOSCPlayerDiscreteValues(OSCPawn(Pawn).getUID());
-	localOSCPlayerTeleportStruct = getOSCPlayerTeleportValues(OSCPawn(Pawn).getUID());
+	if(Pawn !=None) {
+  	  localOSCPlayerStateValuesStruct = getOSCPlayerStateValues(OSCPawn(Pawn).getUID());
+	  localOSCPlayerDiscreteValuesStruct = getOSCPlayerDiscreteValues(OSCPawn(Pawn).getUID());
+	  localOSCPlayerTeleportStruct = getOSCPlayerTeleportValues(OSCPawn(Pawn).getUID());
+	}
 	//localOSCConsoleCommandStruct.command = getOSCConsoleCommand();
 	
 	/*
@@ -1581,7 +2412,11 @@ event PlayerTick( float DeltaTime )
 	setOSCPlayerData();
 	callConsoleCommand(getOSCConsoleCommand());
 
+	//debug
+calculateSpeed();
 
+// update speed with + or - key modifiers
+setPlayerSpeed();
 	
 //	`log("Pawn 1 Speed: "$OSCScriptPawnBotStructs[1].speed);
 //	`log("Pawn 2 Speed: "$OSCScriptPawnBotStructs[2].speed);
@@ -1625,8 +2460,14 @@ defaultproperties
 {
 	OSCBotCount=0;
 	OSCPawnBotCount=0;
-	//CharacterClass=class'UT3OSC.OSCFamilyInfo_OSCPawnBot'
+	//CharacterClass=class'UDKOSC.OSCFamilyInfo_OSCPawnBot'
 	BehindView=true;
+	pawnTurnThreshold = 800.0		;
+	
+	maxAirSpeed = 4000.0;					// total speed (increment +- base air speed)
+	minAirSpeed = 0.0;							
+	speedArraySizeMax = 40;				// size of averaging array for AirSpeed
+	airSpeedIncrement = 2000.0;
 	
 	// CUSTOM CAMERA TESTING
 //	CameraClass=class'OSCCamera'

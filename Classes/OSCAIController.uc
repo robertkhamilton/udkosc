@@ -67,11 +67,11 @@ auto state Follow
 	{
 		local Rotator DeltaRot;
 		local Vector selfToPlayer;
-		local float DistanceToPlayer, ChaseDistance;
-		local Vector currentVelocity;
-		local float minRot;
+		local float DistanceToPlayer; //, ChaseDistance;
+		//local Vector currentVelocity;
+		//local float minRot;
 		local Vector triVector;
-		local int flightOffset;
+//		local int flightOffset;
 		
 //		local Vector currentTarget;
     	
@@ -93,9 +93,9 @@ auto state Follow
 //			currentTarget.Y = Target.Location.Y + OffsetY;
 //			currentTarget.Z = Target.Location.Z + OffsetZ;
 
-			ChaseDistance = 10000;
+			//ChaseDistance = 10000;
 		
-		flightOffset = 300;
+//		flightOffset = 300;
 		
 		if(Target!=None)
 		{
@@ -403,7 +403,7 @@ state PlayerFlying
 
 DefaultProperties
 {
-	InputClass=class'UT3OSC.OSCPawnInput';
+	InputClass=class'UDKOSC.OSCPawnInput';
 }
 
 */

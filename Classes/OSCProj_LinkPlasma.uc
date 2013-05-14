@@ -2,7 +2,7 @@
  * Copyright 1998-2010 Epic Games, Inc. All Rights Reserved.
  */
 class OSCProj_LinkPlasma extends UTProj_LinkPlasma
-	config(UT3OSC)
+	config(UDKOSC)
 	DLLBind(oscpack_1_0_2); // extends UTProjectile;
 	
 var int id;

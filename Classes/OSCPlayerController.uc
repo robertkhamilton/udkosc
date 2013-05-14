@@ -8,7 +8,7 @@
 
 //class OSCPlayerController extends PlayerController 
 class OSCPlayerController extends UTPlayerController 
- config(UT3OSC);
+ config(UDKOSC);
  
 defaultproperties
 {

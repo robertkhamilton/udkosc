@@ -67,12 +67,22 @@ var bool isCrouching;
 
 var float seekingTurnRate;
 
-var vector	OSCCamera;
+var vector OSCCamera;
 var bool OSCFreeCamera;				// OSC Controlled Free-moving camera, not attached to Pawn
 var bool OSCAttachedCamera;			// OSC Controlled rotating camera attached to Pawn
+var bool OSCBehindCamera;
+
 
 // testing
 var Rotator OSCRotation;
+
+// Animation speed
+var float valkordiaAnimSpeed;
+
+// Air Speed
+var float baseAirSpeed;
+
+var int selectedPlayerMesh;
 
 struct MyPlayerStruct
 {
@@ -218,6 +228,14 @@ var OSCParams OSCParameters;
 var string OSCHostname;
 var int OSCPort;
 
+// Bone Coords struct /* */
+struct Coords
+{
+   var() config vector Origin, XAxis, YAxis, ZAxis;
+};
+
+
+
 dllimport final function sendOSCpointClick(PointClickStruct a);	
 dllimport final function sendOSCPlayerState(PlayerStateStruct a);
 dllimport final function OSCMessageStruct getOSCTest();
@@ -256,10 +274,18 @@ simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 	//TrunkMover = SkelControl_CCD_IK(Mesh.FindSkelControl('TrunkMover'));
 }
 
-simulated exec function ChangePlayerMesh(float a)
+simulated exec function ChangePlayerMesh(int a)
+{
+//	selectedPlayerMesh = a;
+	SetPawnMesh(a);
+}
+
+simulated function setPawnMesh(int a)
 {
 	local AnimNode temp;
 
+	selectedPlayerMesh = a;
+	
 	if(a==1)
 	{
 		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01');
@@ -270,6 +296,8 @@ simulated exec function ChangePlayerMesh(float a)
 		//self.Mesh.GlobalAnimRateScale=self.GroundSpeed/440.0;
 		//`log("Groundspeed = "$self.GroundSpeed);
 		
+//		Weapon.SetHidden(True);
+		
 		//Pawn.GroundSpeed
 		isValkordia=false;
 		isTrumbruticus=true;
@@ -279,6 +307,8 @@ simulated exec function ChangePlayerMesh(float a)
 		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics');
 		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
 		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01');	
+		
+//		Weapon.SetHidden(True);
 		
 		 // Search for the animation node blend list by name.
 		//temp = self.Mesh.FindAnimNode('UDKAnimBlendByFlying');
@@ -303,16 +333,13 @@ simulated exec function ChangePlayerMesh(float a)
 		
 		isValkordia=false;
 		isTrumbruticus=false;
-	} else if(a==5) {
-	
-		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.Test.test_trumbruticus_skel_01');
-		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.Test.test_trumbruticus_skel_01_Physics');
-		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.Test.test_trumbruticus_skel_01_Anims';
-		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.Test.test_trumbruticus_AnimTree_spawntest');
-
-		isValkordia=false;
-		isTrumbruticus=false;		
 	}
+}
+
+// Disable FeignDeath (from UTPawn)
+exec simulated function FeignDeath()
+{
+//	ServerFeignDeath();
 }
 
 simulated exec function setEyeHeight(float X)
@@ -379,90 +406,73 @@ simulated function float scaleRange(float in, float oldMin, float oldMax, float 
 	return ( in / ((oldMax - oldMin) / (newMax - newMin))) + newMin;
 }
 
-simulated exec function setSeekingTurnRate(float val)
-{
-	//`log("seekingTurnRate was now "$seekingTurnRate);
+simulated exec function setSeekingTurnRate(float val) {
 	seekingTurnRate=val;
-	//`log("seekingTurnRate is now "$seekingTurnRate);
 }
 
-simulated function float getSeekingTurnRate()
-{
-	//ClientMessage("seekingTurnRate value: "$seekingTurnRate);
+simulated function float getSeekingTurnRate() {
 	return seekingTurnRate;
 }
 
-simulated exec function initOSCFingerTouches(bool val)
-{
+simulated exec function initOSCFingerTouches(bool val) {
 	OSCUseFingerTouches=val;
 }
 
-simulated exec function getOSCFingerTouches()
-{
+simulated exec function getOSCFingerTouches() {
 	ClientMessage("Current OSC FingerTouches value: "$OSCUseFingerTouches);
 }
 
-simulated exec function getOSCHostname()
-{
-	ClientMessage("Current OSC Hostname value: "$OSCParameters.getOSCHostname());
+simulated exec function getOSCHostname() {
+ClientMessage("Current OSC Hostname value: "$OSCParameters.getOSCHostname());
 }
 
-simulated exec function getOSCPort()
-{
-	ClientMessage("Current OSC Port value: "$OSCParameters.getOSCPort());
+simulated exec function getOSCPort() {
+ClientMessage("Current OSC Port value: "$OSCParameters.getOSCPort());
 }
 
-simulated exec function getOSC()
-{
-	ClientMessage("Current OSC Hostname::Port values: "$OSCParameters.getOSCHostname()$"::"$OSCParameters.getOSCPort());
+simulated exec function getOSC() {
+ClientMessage("Current OSC Hostname::Port values: "$OSCParameters.getOSCHostname()$"::"$OSCParameters.getOSCPort());
 }
 
-simulated exec function setOSCHostname(string hostname)
-{
-	OSCParameters.setOSCHostname(hostname);
+simulated exec function setOSCHostname(string hostname) {
+OSCParameters.setOSCHostname(hostname);
 }
 
-simulated exec function setOSCPort(int port)
-{
-	OSCParameters.setOSCPort(port);
+simulated exec function setOSCPort(int port) {
+OSCParameters.setOSCPort(port);
 }
 
-simulated exec function setOSC(string hostname, int port)
-{
-	OSCParameters.setOSCHostname(hostname);
-	OSCParameters.setOSCPort(port);
+simulated exec function setOSC(string hostname, int port) {
+OSCParameters.setOSCHostname(hostname);
+OSCParameters.setOSCPort(port);
 }
 
-simulated exec function getAirSpeed()
-{
+simulated exec function getAirSpeed() {
 	ClientMessage("AirSpeed: "$AirSpeed);
 }
 
-simulated exec function setAirSPeed(float as)
-{
+simulated exec function setAirSpeed(float as) {
 	AirSpeed=as;
+	baseAirSpeed = as;	// set for slewed airspeed in OSCPlayerControllerDLL.uc
 }
 
-simulated exec function getGroundSpeed()
-{
+simulated exec function getGroundSpeed() {
 	ClientMessage("GroundSpeed: "$groundspeed);
 }
 
-simulated exec function setGroundSpeed(float gs)
-{
+simulated exec function setGroundSpeed(float gs) {
 	groundspeed=gs;
 }
 
-simulated event PreBeginPlay()
-{
+simulated event PreBeginPlay() {
 	Super.PreBeginPlay();
 	
 	// ****************************************************************************** //
 	// HACK FOR CRASHING WITH LOST OSCPARAMETERS REFERENCE
 	// ****************************************************************************** //
-	OSCParameters = spawn(class'OSCParams');	
-	OSCHostname = OSCParameters.getOSCHostname();
-	OSCPort = OSCParameters.getOSCPort();	
+OSCParameters = spawn(class'OSCParams');	
+OSCHostname = OSCParameters.getOSCHostname();
+OSCPort = OSCParameters.getOSCPort();	
 
 	object1.X=0;
 	object1.Y=0;
@@ -491,6 +501,7 @@ simulated event PreBeginPlay()
 	OSCFingerWorldMax = vect(2000.00000, 2000.00000, 2300.00000);
 	OSCFingerWorldMin = vect(-2000.00000, -2000.00000, 0.00001);
 	OSCFingerOffsets = vect(-160.00000, -210.00000, 0.00001);	
+		
 }
 
 // Overloading FaceRotation from UTPawn to let pawn pitch follow camera
@@ -499,21 +510,26 @@ simulated function FaceRotation(rotator NewRotation, float DeltaTime)
 	if ( Physics == PHYS_Ladder )
 	{
 		NewRotation = OnLadder.Walldir;
-	}
-	else if ( (Physics == PHYS_Walking) || (Physics == PHYS_Falling) )
+	}	
+	else if ( (Physics == PHYS_Walking) )//|| (Physics == PHYS_Falling) )
 	{
-		//NewRotation.Pitch = 0;
-	}
-
+		NewRotation.Pitch = 0;
+	} 
+	
+	SetRotation(NewRotation);
+	
+/*
 	if(OSCFreeCamera || OSCAttachedCamera)
 	{
 			SetRotation(NewRotation);	
-	} else {
+	} else 
+	{
 		//NewRotation.Roll = Rotation.Roll;
 		//NewRotation.Pitch = Rotation.Pitch;
 		
 		SetRotation(NewRotation);	
 	}
+*/	
 }
 
 simulated function sendPlayerState()
@@ -550,15 +566,14 @@ simulated function sendPlayerState()
 	psStruct.Pitch = viewrotator.Pitch%65535;
 	psStruct.Roll = Rotation.Roll%65535;
 
-	OSCHostname = OSCParameters.getOSCHostname();
-	OSCPort = OSCParameters.getOSCPort();
-
-	psStruct.Hostname = OSCParameters.getOSCHostname();
-	psStruct.Port = OSCParameters.getOSCPort();
+OSCHostname = OSCParameters.getOSCHostname();
+OSCPort = OSCParameters.getOSCPort();
+psStruct.Hostname = OSCParameters.getOSCHostname();
+psStruct.Port = OSCParameters.getOSCPort();
 
 	// HACK TO QUICK FIX OSCParameters going haywire!!!?!?!??!
-	psStruct.Hostname = "10.0.1.20";
-	psStruct.Port = 57120;
+//	psStruct.Hostname = "10.0.1.20";
+//	psStruct.Port = 57120;
 	
 	sendOSC=true;
 
@@ -824,37 +839,37 @@ simulated function setOSCFingerTouches(OSCFingerController fstruct)
 	`log("in setOSCFingerTouches");
 	`log("fstruct = "$fstruct.f1X);
 	
-		UT3OSC(WorldInfo.Game).fingerTouchArray[0].X=fstruct.f1X;	
-		UT3OSC(WorldInfo.Game).fingerTouchArray[0].Y=fstruct.f1Y;
-		UT3OSC(WorldInfo.Game).fingerTouchArray[0].Z=fstruct.f1Z;
+		UDKOSC(WorldInfo.Game).fingerTouchArray[0].X=fstruct.f1X;	
+		UDKOSC(WorldInfo.Game).fingerTouchArray[0].Y=fstruct.f1Y;
+		UDKOSC(WorldInfo.Game).fingerTouchArray[0].Z=fstruct.f1Z;
 	}
 
 	if(fstruct.f2on>0)
 	{
-		UT3OSC(WorldInfo.Game).fingerTouchArray[1].X=fstruct.f2X;	
-		UT3OSC(WorldInfo.Game).fingerTouchArray[1].Y=fstruct.f2Y;
-		UT3OSC(WorldInfo.Game).fingerTouchArray[1].Z=fstruct.f2Z;
+		UDKOSC(WorldInfo.Game).fingerTouchArray[1].X=fstruct.f2X;	
+		UDKOSC(WorldInfo.Game).fingerTouchArray[1].Y=fstruct.f2Y;
+		UDKOSC(WorldInfo.Game).fingerTouchArray[1].Z=fstruct.f2Z;
 	}
 	
 	if(fstruct.f3on>0)
 	{
-		UT3OSC(WorldInfo.Game).fingerTouchArray[2].X=fstruct.f3X;	
-		UT3OSC(WorldInfo.Game).fingerTouchArray[2].Y=fstruct.f3Y;
-		UT3OSC(WorldInfo.Game).fingerTouchArray[2].Z=fstruct.f3Z;
+		UDKOSC(WorldInfo.Game).fingerTouchArray[2].X=fstruct.f3X;	
+		UDKOSC(WorldInfo.Game).fingerTouchArray[2].Y=fstruct.f3Y;
+		UDKOSC(WorldInfo.Game).fingerTouchArray[2].Z=fstruct.f3Z;
 	}
 	
 	if(fstruct.f4on>0)
 	{
-		UT3OSC(WorldInfo.Game).fingerTouchArray[3].X=fstruct.f4X;	
-		UT3OSC(WorldInfo.Game).fingerTouchArray[3].Y=fstruct.f4Y;
-		UT3OSC(WorldInfo.Game).fingerTouchArray[3].Z=fstruct.f4Z;
+		UDKOSC(WorldInfo.Game).fingerTouchArray[3].X=fstruct.f4X;	
+		UDKOSC(WorldInfo.Game).fingerTouchArray[3].Y=fstruct.f4Y;
+		UDKOSC(WorldInfo.Game).fingerTouchArray[3].Z=fstruct.f4Z;
 	}
 	
 	if(fstruct.f5on>0)
 	{
-		UT3OSC(WorldInfo.Game).fingerTouchArray[4].X=fstruct.f5X;	
-		UT3OSC(WorldInfo.Game).fingerTouchArray[4].Y=fstruct.f5Y;
-		UT3OSC(WorldInfo.Game).fingerTouchArray[4].Z=fstruct.f5Z;
+		UDKOSC(WorldInfo.Game).fingerTouchArray[4].X=fstruct.f5X;	
+		UDKOSC(WorldInfo.Game).fingerTouchArray[4].Y=fstruct.f5Y;
+		UDKOSC(WorldInfo.Game).fingerTouchArray[4].Z=fstruct.f5Z;
 	}
 */	
 }
@@ -862,8 +877,8 @@ simulated function setOSCFingerTouches(OSCFingerController fstruct)
 
 function setFingerTouchesTest(float val)
 {
-	//UT3OSC(WorldInfo.Game).fingerTouchArray[0].X = val;
-	//`log("TESTING"$UT3OSC(WorldInfo.Game).fingerTouchArray[0].X);
+	//UDKOSC(WorldInfo.Game).fingerTouchArray[0].X = val;
+	//`log("TESTING"$UDKOSC(WorldInfo.Game).fingerTouchArray[0].X);
 }
 
 /*
@@ -911,8 +926,19 @@ function testInputData()
 
 function setOSCCamera(vector val) {
 	OSCCamera = val;
+	
 }
 
+simulated exec function OSCSetBehindCamera(int val) {
+
+	if(val == 0) {
+		OSCBehindCamera=false;
+	} else {
+		OSCAttachedCamera=false;
+		OSCFreeCamera=false;
+		OSCBehindCamera = true;
+	}
+}
 simulated exec function OSCSetAttachedCamera() {
 	if(OSCAttachedCamera) {
 		setOSCAttachedCamera(0);
@@ -948,6 +974,7 @@ simulated exec function setOSCFreeCamera(int val) {
 	}
 }
 
+
 state OSCPlayerMoving {
 
 	exec function oscplayermoveTEST2()
@@ -976,6 +1003,7 @@ state OSCPlayerMoving {
 	
 	simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot, out float out_FOV )
 	{
+		local string command;
 	/**/
 //		`log("IN OSCPAWN::CalcCamera");
 	
@@ -998,8 +1026,9 @@ state OSCPlayerMoving {
 	
 			if(OSCAttachedCamera)
 			{
-			// relative camera motion (relative to pawn)
-			out_CamLoc = Location;
+//			`log("IN HERE");
+			
+			out_CamLoc = Location;						
 			out_CamLoc.X += localOSCScriptCameramoveStruct.x;
 			out_CamLoc.Y += localOSCScriptCameramoveStruct.y;
 			out_CamLoc.Z += localOSCScriptCameramoveStruct.z;	
@@ -1009,7 +1038,18 @@ state OSCPlayerMoving {
 			out_CamRot.Yaw += localOSCScriptCameramoveStruct.yaw;
 			out_CamRot.Roll += localOSCScriptCameramoveStruct.roll;
 			} else {
+/*				if(OSCBehindCamera )
+				{
+							camoffsetx = localOSCScriptCameramoveStruct.x;
+	camoffsety = localOSCScriptCameramoveStruct.y;
+	camoffsetz = localOSCScriptCameramoveStruct.z;
+	CamOffset.X = localOSCScriptCameramoveStruct.x;
+	CamOffset.Y = localOSCScriptCameramoveStruct.y;
+	CamOffset.Z = localOSCScriptCameramoveStruct.z;
+				}
+*/				
 				Super.CalcCamera(fDeltaTime, out_CamLoc, out_CamRot, out_FOV);
+				
 			}
 //			out_CamLoc = Location;
 //			out_CamLoc.X += OSCCamera.X;
@@ -1071,13 +1111,30 @@ state OSCPlayerMoving {
 	*/
 	simulated function Tick(float DeltaTime)
 	{
-
+		local string command;
 
 	//`log("**************************** OSCPAWN::OSCPlayerMoving:Tick::SENDING OSC: "$sendingOSC);
 
 	if(sendingOSC)
 		sendPlayerState();
-		
+	
+
+
+	
+/*	
+ if(OSCBehindCamera) {
+			camoffsetx = localOSCScriptCameramoveStruct.x;
+	camoffsety = localOSCScriptCameramoveStruct.y;
+	camoffsetz = localOSCScriptCameramoveStruct.z;
+	CamOffset.X = localOSCScriptCameramoveStruct.x;
+	CamOffset.Y = localOSCScriptCameramoveStruct.y;
+	CamOffset.Z = localOSCScriptCameramoveStruct.z;
+*/	
+//				command = "BehindViewSet "$localOSCScriptCameramoveStruct.x$" "$localOSCScriptCameramoveStruct.y$" "$localOSCScriptCameramoveStruct.z;
+				// relative camera motion (relative to pawn)
+//				OSCPlayerControllerDLL(Controller).ConsoleCommand(command); //$localOSCScriptCameramoveStruct.x" "$localOSCScriptCameramoveStruct.y" "$localOSCScriptCameramoveStruct.z);
+//				`log("Calling Command: "$command);
+//	}
 	// DO I NEED TO SEND THESE HERE TOO???
 /*
 	if(pawnDowntrace) {
@@ -1097,16 +1154,52 @@ state OSCPlayerMoving {
 	
 }
 
+exec function setAnimScale(int val, float speed)
+{
+	if(val==2)
+	{
+		valkordiaAnimSpeed = speed;
+	}
+}
+
 simulated function setPawnAnimSpeed()
 {
+	local float currentRate;
+	
 	if(isTrumbruticus) {
-		self.Mesh.GlobalAnimRateScale=self.GroundSpeed/440.0;
-	} else  if(isValkordia) {
-		self.Mesh.GlobalAnimRateScale=self.GroundSpeed/440.0;
+		self.Mesh.GlobalAnimRateScale=self.GroundSpeed / 440.0;
+	} else if(isValkordia) {
+		if(OSCPlayerControllerDLL(Controller).flying)
+		{
+//		if(self.AirSpeed < 440.0) {
+//			self.Mesh.GlobalAnimRateScale=OSCPlayerControllerDLL(Controller).currentSpeed / 7.0;
+//		} else {
+			//self.Mesh.GlobalAnimRateScale=self.AirSpeed / valkordiaAnimSpeed;// 440.0;
+			currentRate = loge(OSCPlayerControllerDLL(Controller).currentSpeed) -1.0;
+			if(currentRate > 1.8) {
+				currentRate = 1.8;
+			} else if(currentRate < 0.70) {
+				currentRate = 0.70;
+			}
+			
+			self.Mesh.GlobalAnimRateScale= currentRate;
+//			`log("GlobalAnimRateScale = "$self.Mesh.GlobalAnimRateScale);
+			//		}
+		}
 	}
 	
-	//`log("GlobalAnimRateScale = "$self.Mesh.GlobalAnimRateScale);
-	//`log("Groundspeed = "$self.GroundSpeed);
+
+//	`log("Groundspeed = "$self.GroundSpeed);
+}
+
+simulated event BecomeViewTarget( PlayerController PC )
+{
+	Super.BecomeViewTarget(PC);
+	
+//	if (Weapon.Mesh != None )
+//	{
+//		Weapon.Mesh.SetOwnerNoSee(True);
+//	}
 }
 
 simulated function Tick(float DeltaTime)
@@ -1129,7 +1222,7 @@ simulated function Tick(float DeltaTime)
 	if( localOSCGameParamsStruct.gameGravity != lastGameGravity ) 
 	{
 		setGrav(localOSCGameParamsStruct.gameGravity);
-		`log("set Gravity to "$localOSCGameParamsStruct.gameGravity$"");
+//		`log("set Gravity to "$localOSCGameParamsStruct.gameGravity$"");
 	}
 
 	if( localOSCGameParamsStruct.gameSpeed != lastGameSpeed ) 
@@ -1151,12 +1244,26 @@ simulated function Tick(float DeltaTime)
 	setPawnAnimSpeed();
 	
 	if(pawnDowntrace) {
+//			`log("********************************************: IN TICK *************** PAWNTRACE ");
+
 		downTrace();
 	}
 	
 	if(pawnSidetrace) {
 		psideTrace();	
 	}
+	
+	if(selectedPlayerMesh==0)
+	{
+		selectedPlayerMesh = 2;
+		// set playermesh by default to Valkordia
+		SetPawnMesh(selectedPlayerMesh);		
+//		`log("selectedPlayerMesh: "$selectedPlayerMesh);	
+	}
+	
+	// Testing bone location
+	GetBoneLocations();
+	
 }
 
 exec function sidetrace(int val)
@@ -1165,7 +1272,7 @@ exec function sidetrace(int val)
 	
 	if(pawnSidetrace)
 	{
-		pawnSidetrace = false;
+		pawnSidetrace = true;
 	} else {
 		pawnSidetrace = true;
 	}
@@ -1176,9 +1283,11 @@ exec function pawntrace(int val)
 {
 	gdowntracelength = val;
 	
+//	`log("********************************************: PAWNTRACE "$val);
+	
 	if(pawnDowntrace)
 	{
-		pawnDowntrace = false;
+		pawnDowntrace = true;
 	} else {
 		pawnDowntrace = true;
 	}
@@ -1241,7 +1350,7 @@ simulated function sideTracer(int rval)
 //		localLeft = vect(0, rval, 0);
 		end = Location + (localLeft*gtracelength >> Rotation);		
 		traceHit = trace(loc, norm, end, startTrace, true,, hitInfo);
-		//cb,,    DrawDebugLine(startTrace, end, 255, 0, 0, false);
+		//DrawDebugLine(startTrace, end, 255, 0, 0, false);
 //	}
 	
 	/*
@@ -1276,7 +1385,7 @@ simulated function sideTracer(int rval)
 		}
 		
 		// float distance between Pawn (Location) and object (loc)
-		ClientMessage(msg$": "$trace_distance);//VSize(Location - loc));
+		//ClientMessage(msg$": "$trace_distance);//VSize(Location - loc));
 		
 // 		ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
 // 		ClientMessage("Location: "$loc.X$","$loc.Y$","$loc.Z);
@@ -1302,12 +1411,17 @@ simulated function downTrace()
 	traceHit = trace(loc, norm, end, Location, true,, hitInfo);
 	trace_distance = VSize(Location - loc);
 	
+//	`log("********************************************:  IN PAWNTRACE *************** trace_distance "$trace_distance);
+
 	if(trace_distance > gdowntracelength)
 	{
 		trace_distance = 0;
 	}
+
+//	`log("********************************************:  IN PAWNTRACE *************** AFTER CHECK: trace_distance "$trace_distance);
+//	`log("********************************************:  IN PAWNTRACE *************** AFTER CHECK: gdowntracelength "$gdowntracelength);
 	
-	//DrawDebugLine(Location, end, 255,0,0,false);
+	//sDrawDebugLine(Location, end, 255,0,0,false);
 	
 	/*
 	if (traceHit == none)
@@ -1361,7 +1475,7 @@ event Possess(Pawn inPawn, bool bVehicleTransition)
 {
 	//super.Possess(inPawn, bVehicleTransition);
 	SetMovementPhysics();
-	`log("******************DONE POSSESSING OSCPawn");
+//	`log("******************DONE POSSESSING OSCPawn");
 
 }
 
@@ -1377,11 +1491,12 @@ simulated function int getUID()
 
 simulated function setUID(int val)
 {
-	if (uid >= 0)
-		`log("UID IS:"$uid);
+	if (uid >= 0) {
+//		`log("UID IS:"$uid);
+	}
 	else
 	{
-		`log("UID IS NONE");
+//		`log("UID IS NONE");
 		uid = val;
 	}
 }
@@ -1409,16 +1524,87 @@ simulated function name GetDefaultCameraMode( PlayerController RequestedBy )
 */
 
 
+// BONE COORDINATE TESTING
+/*
+GetBoneCoords
 
+native final function coords GetBoneCoords( name BoneName )
+GetBoneCoords returns the global coordinates of the bone specified by _BoneName. The results are returned as a Coords struct (definition shown below). Origin is the location of the bone and axes are the orientation of the bone (XAxis is forward).
 
+struct Coords
+{
+   var() config vector Origin, XAxis, YAxis, ZAxis;
+};
+*/
 
+exec function GetBoneLocations()
+{
+	getBoneLocation();
+}
+
+function getBoneLocation()
+{
+	local 	int 			Idx;
+	local 	vector		BoneLoc;
+	local 	vector		offset;
+	//array<Name>			Bones;
+	
+//	for( Idx = 0; Idx < Bones.Length; Idx++ )
+//	{
+//		HitInfo.BoneName	 = Bones[Idx];
+//		HitInfo.HitComponent = Mesh;
+
+//		BoneLoc = Mesh.GetBoneLocation(Bones[Idx]);
+		BoneLoc = Mesh.GetBoneLocation('valkordia_01Rwing_front_4');
+	
+		// global coordinate
+//		`log("Bone Location [valkordia_01Rwing_front_4]: "$BoneLoc);
+		
+		offset = BoneLoc - Location;
+		
+		// local coordinate (? need to transform from global to local space?)
+//		`log("Bone Offset [valkordia_01Rwing_front_4]: "$offset);
+		
+//	}
+
+}
+/*
+exec function GetBone()
+{
+	local Coords C;
+
+	local Vector Loc;
+	Local SkeletalMeshSocket SMS;
+	
+	SMS = SkeletalMeshComponent(Mesh).GetSocketByName('valkordia_01Lwing_front_4' );
+
+	if( SMS != none )
+	{
+		Loc = SkeletalMeshComponent(Mesh).GetBoneLocation(SMS.BoneName);
+		return Loc;	
+
+	
+//	`log("GBC: "$Mesh.GetBoneCoords( 'valkordia_01Lwing_front_4' ).Origin);
+	
+//	`log("Get Bone: "$C.Origin);
+//	`log("Get Bone: "$GetBoneCoords( 'valkordia_01Rwing_front_4' ));	
+}
+*/
 defaultproperties
 {
 	//groundspeed=10000.0
 	seekingTurnRate=20.00000
-	
+
 	bHidden=false;
 	
+	bWeaponAttachmentVisible = false;
+
+	// From UTPawn.uc
+	RotationRate=(Pitch=20000, Yaw=20000, Roll=200000)//(Pitch=20000,Yaw=20000,Roll=20000)
+	MaxLeanRoll=20480//2048	
+	
+	valkordiaAnimSpeed = 440.0
+	baseAirSpeed = 440.0
 	
 	// for iPad
 	// x range = 0 to 320

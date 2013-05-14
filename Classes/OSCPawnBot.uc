@@ -14,6 +14,8 @@ var float lastY;
 var float lastZ;
 var bool lastCrouch;
 
+var int selectedPlayerMesh;
+
 // ************************************************************************************************
 // Structs to hold OSC parameter data
 // ************************************************************************************************
@@ -81,9 +83,9 @@ dllimport final function testt(float thisx);
 simulated event PreBeginPlay()
 {
 	Super.PreBeginPlay();
-	OSCParameters = spawn(class'OSCParams');	
-	OSCHostname = OSCParameters.getOSCHostname();
-	OSCPort = OSCParameters.getOSCPort();	
+OSCParameters = spawn(class'OSCParams');	
+OSCHostname = OSCParameters.getOSCHostname();
+OSCPort = OSCParameters.getOSCPort();	
 }
 
 //override to do nothing
@@ -92,13 +94,47 @@ simulated function SetCharacterClassFromInfo(class<UTFamilyInfo> Info)
 }
 
 
+simulated function setPawnMesh(int a)
+{
+	local AnimNode temp;
+
+	selectedPlayerMesh = a;
+	
+	if(a==1)
+	{
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree_spawntest');
+
+		} else if(a==2) {
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01');	
+		
+	} else if(a==3) {	
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_LIAM_Cathode.Mesh.SK_CH_LIAM_Cathode');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'CH_AnimHuman.Anims.K_AnimHuman_BaseMale';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
+		
+	} else if(a==4) {
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_IronGuard_Male.Mesh.SK_CH_IronGuard_MaleA');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'CH_AnimHuman.Anims.K_AnimHuman_BaseMale';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
+	}
+}
+
+
 simulated function followPawnBot()
 {
 	// Set each PawnBot to be sending OSC	
 	local OSCPawnBot P;
 	local OSCPawn Pwn;
-	local float targetGroundSpeed;
-	local float targetAirSpeed;
+	//local float targetGroundSpeed;
+	//local float targetAirSpeed;
 	
 //	`log("IN FOLLOWPAWNBOT ********************************************** MY UID = "$uid);
 	
@@ -183,7 +219,6 @@ auto state OSCMove
 
 }
 
-
 simulated function Tick(float DeltaTime)
 {
 	// ONLY CALL IF Controller is OSCPawnController
@@ -216,12 +251,12 @@ simulated function Tick(float DeltaTime)
 simulated function sendPawnState()
 {
 	
-	Local vector loc, norm, end;
-	Local TraceHitInfo hitInfo;
-	Local Actor traceHit;
-	local MyPlayerStruct tempVals;
+	//Local vector loc, norm, end;
+//	Local TraceHitInfo hitInfo;
+	//Local Actor traceHit;
+	//local MyPlayerStruct tempVals;
 	local PawnStateStruct pStruct;
-	local PawnStateStruct testStruct;
+	//local PawnStateStruct testStruct;
 	//local OSCParams OSCParameters;
 	//local string OSCHostname;
 	//local int OSCPort;
@@ -237,17 +272,17 @@ simulated function sendPawnState()
 	pStruct.LocZ = Location.Z;
 	//pStruct.Crouch = isCrouching;
 	
-	OSCHostname = OSCParameters.getOSCHostname();
-	OSCPort = OSCParameters.getOSCPort();
+OSCHostname = OSCParameters.getOSCHostname();
+OSCPort = OSCParameters.getOSCPort();
 	
 	//ClientMessage("OSCParameters.getOSCHostname="$OSCHostname$"");
 	
-	pStruct.Hostname = OSCParameters.getOSCHostname();
-	pStruct.Port = OSCParameters.getOSCPort();
+pStruct.Hostname = OSCParameters.getOSCHostname();
+pStruct.Port = OSCParameters.getOSCPort();
 
 	// HACK TO QUICK FIX OSCParameters going haywire!!!?!?!??!
-	pStruct.Hostname = "10.0.1.20";
-	pStruct.Port = 57120;	
+//	pStruct.Hostname = "10.0.1.20";
+//	pStruct.Port = 57120;	
 
 	sendOSC=true;
 
@@ -284,11 +319,8 @@ defaultproperties
   bRollToDesired=true;
   RemoteRole=ROLE_SimulatedProxy; // just for testing crashing bug
 
+  /*
   Begin Object Class=SkeletalMeshComponent Name=OSCMesh_valkordia
-//    SkeletalMesh=SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01'
- //   PhysicsAsset=PhysicsAsset'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Physics'
-  //  AnimSets(0)=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims'
-  //  AnimTreeTemplate=AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree_spawntest'
 		SkeletalMesh=SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01'
 		PhysicsAsset=PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics'
 		AnimSets(0)=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims'
@@ -298,7 +330,8 @@ defaultproperties
   End Object
   Mesh=OSCMesh_valkordia
   Components.Add(OSCMesh_valkordia)	
-  
+ */
+	
   Begin Object Name=CollisionCylinder
       CollisionRadius=+0021.000000
       CollisionHeight=+0044.000000

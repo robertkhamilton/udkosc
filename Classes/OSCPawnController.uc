@@ -27,7 +27,12 @@ simulated event PostBeginPlay()
    
   SetupPlayerCharacter();
   
-  Pawn.SetPhysics(PHYS_Flying);
+  // If Valkordia, make it fly
+  if(OSCPawn(Pawn).selectedPlayerMesh == 2) {
+	Pawn.SetPhysics(PHYS_Flying);
+  } else {
+	Pawn.SetPhysics(PHYS_Falling);  
+  }
   Pawn.SetMovementPhysics();	
 }
 
@@ -342,8 +347,8 @@ event PlayerTick(float DeltaTime)
 DefaultProperties
 {
 	velRotation = 5000;
-	InputClass=class'UT3OSC.OSCPawnInput';
+	InputClass=class'UDKOSC.OSCPawnInput';
 	
 	//Points to the UTFamilyInfo class for your custom character
-	//CharacterClass=class'UT3OSC.OSCFamilyInfo_OSCPawnBot'
+	//CharacterClass=class'UDKOSC.OSCFamilyInfo_OSCPawnBot'
 }
