@@ -18,6 +18,9 @@ var SkelControl_CCD_IK TrunkMover;
 var bool isValkordia;
 var bool isTrumbruticus;
 
+// array of bones for tracking
+var array <name> currentBones;
+
 // test vars for camera offsets
 var int camoffsetx, camoffsety, camoffsetz;
 
@@ -70,8 +73,11 @@ var float seekingTurnRate;
 var vector OSCCamera;
 var bool OSCFreeCamera;				// OSC Controlled Free-moving camera, not attached to Pawn
 var bool OSCAttachedCamera;			// OSC Controlled rotating camera attached to Pawn
+var bool OSCFollowCamera;				// OSC moving camera which always targets pawn as its view target
+var bool OSCFollowLockCamera;		// OSC controlled camera which always targets pawn as its view target
 var bool OSCBehindCamera;
 
+var int gRotatorOffset;  // 1177
 
 // testing
 var Rotator OSCRotation;
@@ -234,7 +240,8 @@ struct Coords
    var() config vector Origin, XAxis, YAxis, ZAxis;
 };
 
-
+var vector gCamLoc;
+var rotator gCamRot;
 
 dllimport final function sendOSCpointClick(PointClickStruct a);	
 dllimport final function sendOSCPlayerState(PlayerStateStruct a);
@@ -270,8 +277,15 @@ simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 {
 	super.PostInitAnimTree(SkelComp);
 	
+	gRotatorOffset = 1177;
+	
 	// For Trumbruticus trunk moving demo
 	//TrunkMover = SkelControl_CCD_IK(Mesh.FindSkelControl('TrunkMover'));
+}
+
+simulated exec function setRotatorOffset(int val)
+{
+	gRotatorOffset = val;
 }
 
 simulated exec function ChangePlayerMesh(int a)
@@ -308,6 +322,12 @@ simulated function setPawnMesh(int a)
 		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
 		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01');	
 		
+		// Add bones to array for tracking /* */
+		currentBones.Length = 0;			// Clear the array
+		
+		currentBones.addItem('valkordia_01Lwing_front_4');
+		currentBones.addItem('valkordia_01Rwing_front_4');		
+					
 //		Weapon.SetHidden(True);
 		
 		 // Search for the animation node blend list by name.
@@ -929,6 +949,31 @@ function setOSCCamera(vector val) {
 	
 }
 
+simulated exec function OSCSetFollowLockCamera(bool val) {
+	OSCFollowLockCamera = val;
+
+	if(val) {
+		OSCBehindCamera=false;
+		OSCAttachedCamera=false;
+		OSCFreeCamera=false;
+		OSCBehindCamera=false;
+		OSCFollowCamera = false;
+	}
+	
+}
+
+simulated exec function OSCSetFollowCamera(bool val) {
+	OSCFollowCamera = val;
+	if(val) {
+		OSCBehindCamera=false;
+		OSCAttachedCamera=false;
+		OSCFreeCamera=false;
+		OSCBehindCamera=false;
+		OSCFollowLockCamera=false;
+	}
+	
+}
+
 simulated exec function OSCSetBehindCamera(int val) {
 
 	if(val == 0) {
@@ -936,6 +981,8 @@ simulated exec function OSCSetBehindCamera(int val) {
 	} else {
 		OSCAttachedCamera=false;
 		OSCFreeCamera=false;
+		OSCFollowCamera=false;
+		OSCFollowLockCamera=false;		
 		OSCBehindCamera = true;
 	}
 }
@@ -953,6 +1000,8 @@ simulated exec function setOSCAttachedCamera(int val) {
 		OSCAttachedCamera=false;
 	} else {
 		OSCAttachedCamera=true;
+		OSCFollowCamera=false;		
+		OSCFollowLockCamera=false;		
 		OSCFreeCamera=false;
 	}
 }
@@ -971,7 +1020,185 @@ simulated exec function setOSCFreeCamera(int val) {
 		OSCFreeCamera=false;
 	} else {
 		OSCFreeCamera=true;
+		OSCFollowCamera=false;		
+		OSCFollowLockCamera=false;		
 	}
+}
+
+/*
+simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot, out float out_FOV )
+{
+
+	local vector start, end, hl, hn, hl2;
+	local actor a;
+	local Rotator rot2, SavedRot;
+
+	if(OSCPlayerControllerDLL(Controller).bUseMouseFreeLook)
+	{
+		start = Location;
+	
+		if (Controller != none)
+		{
+			end = Location - (Vector(Controller.Rotation) * 100.f);
+		}
+		else
+		{
+			end = Location - (Vector(Rotation) * 100.f);
+		}
+	
+		a = Trace(hl, hn, end, start, false);
+	
+		if (a != none)
+		{
+			out_CamLoc = hl + vect(0,0,50);
+		}
+		else
+		{
+		//	if (bUsingFreeCam)
+//			{
+				out_CamLoc.X = Location.X + Sin(Controller.Rotation.Yaw*0.0001) * 100.f;
+				out_CamLoc.Y = Location.Y + Cos(Controller.Rotation.Yaw*0.0001) * 100.f;
+				out_CamLoc.Z = Location.Z + CamOffset.Z;
+//			}
+//			else
+//			{
+//				out_CamLoc = end + vect(0,0,50);
+//			}
+		}
+	
+		GetActorEyesViewPoint(hl2, rot2);
+
+//		if (bUsingFreeCam)
+//		{
+			out_CamRot = Rotator(Location - out_CamLoc);
+//		}
+//		else
+//		{
+//			out_CamRot = rot2;
+//		}
+
+		return true;
+
+	}
+}
+*/
+
+
+
+	/*
+	
+	function RotationUpdate(TViewTarget OutVT, float dt)
+{
+
+  local Vector fromTarget;
+  local Vector desiredDir;
+  local float  currAngle;
+  local float  desiredAngle;
+  local Vector CamNoZ;
+  local Vector TargetNoZ;
+ 
+  CamNoZ      = CurrentCamLocation;
+  CamNoZ.Z    = 0.f;
+  TargetNoZ   = OutVT.Target.Location;
+  TargetNoZ.Z = 0.f;
+ 
+  fromTarget = CamNoZ - TargetNoZ;
+ 
+  if(fromTarget.X != 0) currAngle = Atan( fromTarget.Y / fromTarget.X );
+  else                  currAngle = Pi/2;
+  if(fromTarget.X < 0 ) currAngle -= Pi;
+ 
+  desiredAngle = currAngle + DesiredTurn / TurnRateRatio;
+ 
+  desiredDir.Y = Sin(desiredAngle);
+  desiredDir.X = Cos(desiredAngle);
+ 
+  CurrentCamLocation = OutVT.Target.Location + (desiredDir*VSize(fromTarget));
+ 
+  fromTarget = OutVT.Target.Location - CurrentCamLocation;
+  CurrentCamRotation = rotator(fromTarget + FreeCamOffset);
+}
+	
+	*/
+	
+simulated function bool __CalcCamera( float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot, out float out_FOV )
+{
+
+}
+	
+simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot, out float out_FOV )
+{
+	local float CamDistance;
+	local float CamDistanceX;
+	local float zValue;
+	
+	CamDistance = OSCPlayerControllerDLL(Controller).gCameraDistance;
+	//CamDistance = 0;
+	
+	if(OSCPlayerControllerDLL(Controller).PlayerInput.aMouseX > 0)
+	{
+		
+	}
+	
+	if(OSCPlayerControllerDLL(Controller).bUseMouseFreeLook)
+	{
+
+		if(	OSCPlayerControllerDLL(Controller).bUseMouseDive) {
+			out_CamLoc.X = Location.X + Sin(Controller.Rotation.Yaw * -0.0001) * 100.f;
+			out_CamLoc.Y = Location.Y + Cos(Controller.Rotation.Yaw * -0.0001) * 100.f;		
+			out_CamLoc.Z = (Location.Z ) + ATan(OSCPlayerControllerDLL(Controller).gTotalMousePitch * -0.0001) * (1000.0 + CamDistance); 
+		} else if ( OSCPlayerControllerDLL(Controller).gCameraMode == 1 ) {  
+			// static camera, no motion	
+			out_CamLoc = gCamLoc;			
+			out_CamRot = gCamRot;
+		} else if ( OSCPlayerControllerDLL(Controller).gCameraMode == 2 ) {  
+			// disable x and y mouse motion, leave Z/up attached 
+			out_CamLoc = gCamLoc;
+			out_CamLoc.X += CamDistanceX;
+			out_CamLoc.Z = (Location.Z ) + ATan(OSCPlayerControllerDLL(Controller).gTotalMousePitch * -0.0001) * (1000.0 + CamDistance); 
+		} else if ( OSCPlayerControllerDLL(Controller).gCameraMode == 3) {
+			// don't change camera location/leave it where it is		
+			out_CamLoc = gCamLoc;
+			out_CamLoc.X += CamDistanceX;
+		} else {
+			out_CamLoc.X = (Location.X  ) - Sin(OSCPlayerControllerDLL(Controller).gMouseRotation.Yaw * 0.0001) * (1000.0 + CamDistance);
+			out_CamLoc.Y = (Location.Y  )  - Cos(OSCPlayerControllerDLL(Controller).gMouseRotation.Yaw * 0.0001) * (1000.0 + CamDistance);
+			out_CamLoc.Z = (Location.Z ) + ATan(OSCPlayerControllerDLL(Controller).gTotalMousePitch * -0.0001) * (1000.0 + CamDistance); 	
+		}
+		
+		if ( OSCPlayerControllerDLL(Controller).gCameraMode != 1 ) {  
+			out_CamRot = rotator(Location - out_CamLoc);
+			// 1177 ???
+			out_CamRot.Pitch += gRotatorOffset;
+		}
+
+		
+		//`log("mouseFreeLook CameraLocation: "$out_CamLoc.X$", "$out_CamLoc.Y$", "$out_CamLoc.Z);
+		//`log("mouseFreeLook CameraRotation: "$out_CamRot.Pitch$", "$out_CamRot.Yaw$", "$out_CamRot.Roll);				
+	} else {		
+
+		CamDistanceX = 0;
+		if( OSCPlayerControllerDLL(Controller).gCameraMode == 0)
+			CamDistanceX = OSCPlayerControllerDLL(Controller).gCameraOffsetX;
+		
+		out_CamLoc.X = out_CamLoc.X + CamDistanceX + CamOffset.X;
+		Super.CalcCamera(fDeltaTime, out_CamLoc, out_CamRot, out_FOV);
+
+		if( OSCPlayerControllerDLL(Controller).gCameraMode == 0)
+			CamDistanceX = OSCPlayerControllerDLL(Controller).gCameraOffsetX;
+		
+		//`log("______________CameraLocation: "$out_CamLoc.X$", "$out_CamLoc.Y$", "$out_CamLoc.Z);
+		//`log("______________CameraRotation: "$out_CamRot.Pitch$", "$out_CamRot.Yaw$", "$out_CamRot.Roll);		
+	}
+	// 251
+	// 915 = 736
+	
+	// keep memory of last set camera location for freeze-camera routines
+	gCamLoc = out_CamLoc;
+	gCamLoc.X = out_CamLoc.X + CamDistanceX;
+	gCamRot = out_CamRot;
+	
+	return true;
 }
 
 
@@ -1034,9 +1261,28 @@ state OSCPlayerMoving {
 			out_CamLoc.Z += localOSCScriptCameramoveStruct.z;	
 				
 			out_CamRot = Rotation;
+//			out_CamRot = rotator(Location - out_CamLoc);
 			out_CamRot.Pitch += localOSCScriptCameramoveStruct.pitch;
 			out_CamRot.Yaw += localOSCScriptCameramoveStruct.yaw;
 			out_CamRot.Roll += localOSCScriptCameramoveStruct.roll;
+			
+			} else if (OSCFollowCamera) {
+
+				out_CamLoc = Location;						
+				out_CamLoc.X += localOSCScriptCameramoveStruct.x;
+				out_CamLoc.Y += localOSCScriptCameramoveStruct.y;
+				out_CamLoc.Z += localOSCScriptCameramoveStruct.z;	
+
+				out_CamRot = rotator(Location - out_CamLoc);
+
+			} else if(OSCFollowLockCamera) {
+			
+				out_CamLoc.X = localOSCScriptCameramoveStruct.x;
+				out_CamLoc.Y = localOSCScriptCameramoveStruct.y;
+				out_CamLoc.Z = localOSCScriptCameramoveStruct.z;		
+
+				out_CamRot = rotator(Location - out_CamLoc);
+				
 			} else {
 /*				if(OSCBehindCamera )
 				{
@@ -1262,7 +1508,8 @@ simulated function Tick(float DeltaTime)
 	}
 	
 	// Testing bone location
-	GetBoneLocations();
+	if(currentBones.Length > 0)
+		GetBoneLocations();
 	
 }
 
@@ -1547,6 +1794,7 @@ function getBoneLocation()
 	local 	int 			Idx;
 	local 	vector		BoneLoc;
 	local 	vector		offset;
+	local name bone;
 	//array<Name>			Bones;
 	
 //	for( Idx = 0; Idx < Bones.Length; Idx++ )
@@ -1555,16 +1803,24 @@ function getBoneLocation()
 //		HitInfo.HitComponent = Mesh;
 
 //		BoneLoc = Mesh.GetBoneLocation(Bones[Idx]);
-		BoneLoc = Mesh.GetBoneLocation('valkordia_01Rwing_front_4');
-	
+
+		foreach currentBones(bone)
+		{	
+//			BoneLoc = Mesh.GetBoneLocation('valkordia_01Rwing_front_4');
+			BoneLoc = Mesh.GetBoneLocation(bone);
+
 		// global coordinate
 //		`log("Bone Location [valkordia_01Rwing_front_4]: "$BoneLoc);
+		/* */
+			offset = BoneLoc - Location; 
+			offset = offset << Rotation; 
 		
-		offset = BoneLoc - Location;
+			// local coordinate (? need to transform from global to local space?)
+//			`log("Bone Offset [valkordia_01Rwing_front_4]: "$offset);
+			`log("Bone Offset ["$bone$"]: "$offset);
+	
 		
-		// local coordinate (? need to transform from global to local space?)
-//		`log("Bone Offset [valkordia_01Rwing_front_4]: "$offset);
-		
+		}
 //	}
 
 }

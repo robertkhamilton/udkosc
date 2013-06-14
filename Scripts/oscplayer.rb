@@ -33,7 +33,7 @@ start_time = 0
 
   puts "sleeping #{dt}"
   sleep(dt) if dt > 0
-  message = OSC::OSCPacket.messages_from_network(m[:message]).first
-  p message
+  message = OSC::OSCPacket.messages_from_network(m[:message]).first  
+  p message  
   @client.send(message)
 end

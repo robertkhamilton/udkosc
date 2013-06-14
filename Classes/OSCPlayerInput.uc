@@ -9,6 +9,7 @@
 class OSCPlayerInput extends PlayerInput within OSCPlayerController 
  config(UDKOSC);
  
+ 
  event PlayerInput (float DeltaTime)
  {
     
@@ -16,15 +17,24 @@ class OSCPlayerInput extends PlayerInput within OSCPlayerController
  
 	Super.PlayerInput(DeltaTime);
 	
+	aMouseX = 0.f;
+//	aTurn		= 0.f;
 	
  }
- /*
  
-// Postprocess the player's input.
+ /*
+// Postprocess the player's input. 
 event PlayerInput( float DeltaTime )
 {
 	local float FOVScale, TimeScale;
 
+	bEnableMouseSmoothing  = True;
+	
+	// ROB TESTING:  CANCEL MOUSE TURN
+	aMouseX =  0.f;
+	aTurn = 0.f;
+
+	
 	// Save Raw values
 	RawJoyUp		= aBaseY;
 	RawJoyRight		= aStrafe;
@@ -139,6 +149,7 @@ event PlayerInput( float DeltaTime )
 		aTurn		= 0.f;
 		aLookup		= 0.f;
 	}
+
 }
 
  */

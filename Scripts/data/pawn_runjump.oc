@@ -1,0 +1,15 @@
+#
+# Player runs straight and jumps
+#
+#  C:\Users\Rob\data\github\udkosc\Scripts\ruby osccontrol.rb localhost 7001 ./data/pawn_runjump.oc
+#
+# Single-pawn circle
+playermove teleport 600 600 1 0
+wait 1000
+playermove x 1 0
+playermove yaw 0 0 0
+playermove speed 400 0
+wait 2000
+playermove jump 600 0
+wait 1000
+playermove stop 0

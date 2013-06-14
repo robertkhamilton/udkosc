@@ -13,6 +13,9 @@ var class<UTFamilyInfo> CharacterClass;
 
 var array< float > averagedTurn; // Array for averaging mouse move values for smoothing
 var array< float > averagedLookup; // Array for averaging mouse move values for smoothing
+var array< float > averagedMouseX;
+var array< float > averagedMouseY;
+var float totalMouseX, totalMouseY;
 var float totalTurn, totalLookup; // Total values aggregating turn and lookup input for smoothing
 var int smootherCount;
 var float interpUpAmount;
@@ -27,6 +30,19 @@ var float interpYawAmount;
 var float interpYawTime;
 var float interpYawCurrent;
 var float interpYawTarget; 
+
+var float interpMouseXAmount;
+var float interpMouseXTime;
+var float interpMouseXCurrent;
+var float interpMouseXTarget;
+var float interpMouseYAmount;
+var float interpMouseYTime;
+var float interpMouseYCurrent;
+var float interpMouseYTarget;
+
+var float gSmoothMouseX;
+var float gSmoothMouseY;
+
 var float keyTurnScaler;
 var float pawnTurnThreshold;
 
@@ -42,7 +58,6 @@ var float currentAirSpeedIncrement;
 var bool bChangingPlayerSpeed;
 
 var bool testPawnStruct;
-
 
 var bool flying;
 var bool oscmoving;
@@ -69,6 +84,23 @@ var array<Pawn> OSCBots;
 
 // OSC Mode value for toggling pawn and controller modes
 var int gOSCMode;
+
+var bool bUseMouseTurn;
+var bool bUseMouseDive;
+var bool bUseMouseFreeLook;
+var bool bToggleMouseLook;
+var bool bFreezeCameraLocation;
+var int CameraMode;
+
+var rotator gMouseRotation;
+var float gDeltaMouseYaw;
+var float gDeltaMousePitch;
+var float gTotalMouseYaw;
+var float gTotalMousePitch;
+
+var int gCameraMode;
+var float gCameraDistance;
+var float gCameraOffsetX;
 
 // borrowing this for multiparameter testing
 struct OSCFingerController
@@ -334,6 +366,23 @@ simulated event PostBeginPlay()
 	interpYawTime = 20000;
 	interpYawTarget = 18;  
 	keyTurnScaler = 100.0;//0.06;
+	
+	interpMouseXAmount = 90 * DegToUnrRot;
+	interpMouseXTime = 20000;
+	interpMouseXTarget = 25;  
+
+	interpMouseYAmount = 90 * DegToUnrRot;
+	interpMouseYTime = 20000;
+	interpMouseYTarget = 25;  
+	
+	bUseMouseTurn = TRUE;
+	bUseMouseFreeLook = FALSE;
+	bUseMouseDive = FALSE;
+	bFreezeCameraLocation = FALSE;
+	
+	gCameraMode = 0;
+	gCameraDistance = 0;
+	gCameraOffsetX = 0;
 	
 	// Hide weapon, came up again
 //	SkeletalMeshComponent(Pawn.Weapon.Mesh).SetOwnerNoSee(True);
@@ -1351,6 +1400,81 @@ simulated function setPlayerSpeed() {
 	// Stub for PlayerFlying state function
 }
 
+// EXEC FUNCTIONS FOR CHANGING MOUSE LOOK/TURN BEHAVIORS
+exec function UseMouseFreeLook(bool value) {
+	bUseMouseFreeLook = value;
+}
+
+exec function setUDKOSCCameraMode(int value)
+{
+	gCameraMode = value;
+
+	
+	// 0:  reset to standard camera
+	// 1:  Static follow camera: no Location change, Rotation follows Player
+	// 2:  Static follow camera: mouse-controlled Z/height, no X,Y location change, Rotation follows Player
+	// 3:  Static camera: no Location or Rotation change	
+	
+}
+
+exec function FreezeCameraLocation(bool value) {
+	bFreezeCameraLocation = value;
+}
+
+exec function UseMouseTurn(bool value) {
+	bUseMouseTurn = value;
+}
+
+exec function UseMouseDive(bool value) {
+	bUseMouseDive = value;
+	bUseMouseTurn = value;
+}
+
+exec function ToggleMouseLook() {
+	if(bToggleMouseLook)
+	{
+		bToggleMouseLook = FALSE;
+		bUseMouseFreeLook = FALSE;
+		bUseMouseTurn = TRUE;
+	} else {
+		bToggleMouseLook = TRUE;
+		bUseMouseFreeLook = TRUE;
+		bUseMouseTurn = FALSE;
+	}
+}
+
+exec function MouseLookOn() {
+//	bUseMouseFreeLook = TRUE;
+//	bUseMouseTurn = FALSE;
+	bToggleMouseLook = TRUE;
+}
+
+exec function MouseLookOff() {
+//	bUseMouseFreeLook = FALSE;
+//	bUseMouseTurn = TRUE;
+	bToggleMouseLook = FALSE;
+}
+
+exec function setCameraDistance(float value) {
+	gCameraDistance = value; 
+}
+
+exec function IncrementCameraDistance() {
+	if( bToggleMouseLook ) {
+		gCameraDistance += 20.0f;
+	} else {
+		gCameraOffsetX += 20.0f;	
+	}
+}
+
+exec function DecrementCameraDistance() {
+	if( bToggleMouseLook ) {
+		gCameraDistance -= 20.0f;
+	} else {
+		gCameraOffsetX -= 20.0f;	
+	}
+}
+
 state PlayerFlying
 {
 
@@ -1431,6 +1555,37 @@ state PlayerFlying
 		
 		smootherCount = val;
 	}
+
+	exec function setInterpMouseXAmount(int val)
+	{
+		interpMouseXAmount = val  * DegToUnrRot;
+	}
+	
+	exec function setInterpMouseXTime(int val)
+	{
+		interpMouseXTime = val;
+	}
+
+	exec function setInterpMouseXTarget(int val)
+	{
+		interpMouseXTarget = val;
+	}
+
+	exec function setInterpMouseYAmount(int val)
+	{
+		interpMouseYAmount = val  * DegToUnrRot;
+	}
+	
+	exec function setInterpMouseYTime(int val)
+	{
+		interpMouseYTime = val;
+	}
+
+	exec function setInterpMouseYTarget(int val)
+	{
+		interpMouseYTarget = val;
+	}
+	
 	
 	exec function setInterpUpAmount(int val)
 	{
@@ -1469,13 +1624,13 @@ state PlayerFlying
 		
 		GetAxes(Rotation,X,Y,Z);
 		
-		Pawn.Acceleration = PlayerInput.aForward*X + PlayerInput.aStrafe*Y + PlayerInput.aUp*vect(0,0,1);;
+		Pawn.Acceleration = PlayerInput.aForward*X + PlayerInput.aStrafe*Y + PlayerInput.aUp*vect(0,0,1); 
 
 		if(!bIgnoreGravity) {
 		
 			// add some gravity back in?
 			flyingGravity = getGravityZ();// vect(0,0,-1);
-			Pawn.Acceleration.Z = (Pawn.Acceleration.Z + flyingGravity) * 1.00001;
+			Pawn.Acceleration.Z = (Pawn.Acceleration.Z + flyingGravity) * 1.1;//1.00001;
 		}
 		
 		Pawn.Acceleration = Pawn.AccelRate * Normal(Pawn.Acceleration);
@@ -1498,6 +1653,10 @@ state PlayerFlying
 	{
 		local int arrayLength;
 		local int i;
+
+		// turn off mouse turning
+		if(!bUseMouseTurn)
+			value = 0.f;
 		
 		arrayLength = averagedTurn.Length;
 		
@@ -1516,18 +1675,31 @@ state PlayerFlying
 			averagedTurn.Remove(0, 1); // remove 1st item in array
 		}
 
-//		totalTurn+=value;
-//		averagedTurn.addItem(value);
-
 		// Add strafe value into turning sequence
 		totalTurn+=value + (strafe * keyTurnScaler);
 		averagedTurn.addItem(value + (strafe * keyTurnScaler));
-		
-		//`log("TotalTurn: "$totalTurn);
-		//`log("strafe: "$strafe);
-		//`log("keyTurnScaler: "$keyTurnScaler);
-		
+				
 		averagedValue = totalTurn / arrayLength;
+	}
+	
+	function SmootherMouseX(float value, out float averagedValue)
+	{
+//	var array< float > averagedMouseX;
+		local int arrayLength;
+		local int i;
+		
+		if(bUseMouseTurn)
+			value = 0.f;
+		arrayLength = averagedMouseX.Length;
+	
+		totalMouseX -= averagedMouseX[0];
+		averagedMouseX.Remove(0, 1); // remove 1st item in array	
+
+		totalMouseX+=value;
+		averagedMouseX.addItem(value);
+
+		averagedValue = totalMouseX / arrayLength;
+		
 	}
 	
 	function SmootherLookUp(float value, out float averagedValue)
@@ -1535,6 +1707,10 @@ state PlayerFlying
 		local int arrayLength;
 		local int i;
 		
+		// turn off mouse turning
+		if(!bUseMouseTurn)
+			value = 0.f;
+			
 		arrayLength = averagedLookUp.Length;
 		
 		if(arrayLength > smootherCount) { 	// If we changed smootherCount in exec function, truncate last n array vals
@@ -1591,25 +1767,30 @@ state PlayerFlying
 		return interpUpCurrent;
 		
 	}
-
+	
 	
 	function float SmoothPawnRoll()
 	{
-		local float rollVal;
+		local float rollVal, localTurn;
 	
+		localTurn = PlayerInput.aTurn;
+		
+		if(!bUseMouseTurn)
+			localTurn = 0.f;
+			
 		rollVal = 1;
 		
 		//if(PlayerInput.aStrafe < 0)
-		if((PlayerInput.aTurn + (getDirection(PlayerInput.aStrafe) * keyTurnScaler)) < 0)			
+		if((localTurn + (getDirection(PlayerInput.aStrafe) * keyTurnScaler)) < 0)			
 		{
 			rollVal = -1;
 		}
 		
-		rollVal = getDirection(PlayerInput.aTurn + (getDirection(PlayerInput.aStrafe) * keyTurnScaler));
+		rollVal = getDirection(localTurn + (getDirection(PlayerInput.aStrafe) * keyTurnScaler));
 		
 		//`log("interpUpCurrent * UnrRotToDeg)%360: "$(interpUpCurrent * UnrRotToDeg)%360);
 		//if((PlayerInput.aTurn + (getDirection(PlayerInput.aStrafe) * keyTurnScaler)) < 0)	
-		if(PlayerInput.aStrafe != 0 || PlayerInput.aTurn != 0)
+		if(PlayerInput.aStrafe != 0 || localTurn != 0)
 		{
 		
 			if( (rollVal > 0) && (interpRollCurrent * UnrRotToDeg)%360 <= interpRollTarget) 
@@ -1629,7 +1810,9 @@ state PlayerFlying
 		return interpRollCurrent;
 		
 	}
-	
+
+
+
 	function int getDirection(int val)
 	{
 		local int returnVal;
@@ -1654,18 +1837,23 @@ state PlayerFlying
 	
 	function float scaledTurnX()
 	{
-		local float maxTurnX, retValue, turnXValue;
+		local float maxTurnX, retValue, turnXValue, localTurn;
 		
 		maxTurnX = 800.0;
 		
+		localTurn = PlayerInput.aTurn;
+		
+		if(!bUseMouseTurn)
+			localTurn = 0.f;
+			
 		if(pawnTurnThreshold > 0)
 			maxTurnX = pawnTurnThreshold;
 		
-		if(abs(PlayerInput.aTurn + PlayerInput.aStrafe) > maxTurnX)
+		if(abs(localTurn + PlayerInput.aStrafe) > maxTurnX)
 		{
-			turnXValue = maxTurnX * getDirection(PlayerInput.aTurn + PlayerInput.aStrafe);
+			turnXValue = maxTurnX * getDirection(localTurn + PlayerInput.aStrafe);
 		} else {			
-			turnXValue = PlayerInput.aTurn + PlayerInput.aStrafe;
+			turnXValue = localTurn + PlayerInput.aStrafe;
 		}
 		
 		// PlayerInput.aTurn and aStrafe are inputs
@@ -1677,9 +1865,14 @@ state PlayerFlying
 	
 	function float SmoothPawnYaw()
 	{
-		local float yawVal;
+		local float yawVal, localTurn;
 		local float localInterpYawTarget;
 		
+		localTurn = PlayerInput.aTurn;
+		
+		if(!bUseMouseTurn)
+			localTurn = 0.f;
+			
 		// Scale yaw amount by amount of mouse/strafe movement
 		localInterpYawTarget = interpYawTarget * scaledTurnX();
 		
@@ -1692,7 +1885,7 @@ state PlayerFlying
 //			yawVal = -1;
 //		}
 				
-		if( ((PlayerInput.aStrafe != 0) && (PlayerInput.aForward > 0)) || (PlayerInput.aTurn != 0) && (PlayerInput.aForward > 0))
+		if( ((PlayerInput.aStrafe != 0) && (PlayerInput.aForward > 0)) || (localTurn != 0) && (PlayerInput.aForward > 0))
 		{		
 			if( (interpYawCurrent * UnrRotToDeg)%360 <= localInterpYawTarget) 
 			{
@@ -1795,7 +1988,7 @@ state PlayerFlying
 
 		ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
 		SetRotation(ViewRotation);
-
+		
 		ViewShake( deltaTime );
 
 		NewRotation = ViewRotation;
@@ -1806,7 +1999,74 @@ state PlayerFlying
 		
 		if ( Pawn != None )
 			OSCPawn(Pawn).FaceRotation(NewRotation, deltatime);
+
+		// Calculate rotation based on mouse input for camera rotation
+		if(!bUseMouseTurn)
+		{
+			DeltaRot.Yaw = PlayerInput.aTurn;
+			DeltaRot.Pitch = PlayerInput.aLookUp;
+			
+//			ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
+			
+
+			gMouseRotation += DeltaRot;
+			gDeltaMouseYaw = PlayerInput.aTurn;
+			gDeltaMousePitch = PlayerInput.aLookUp;
+
+			gTotalMouseYaw += PlayerInput.aTurn;
+			gTotalMousePitch += PlayerInput.aLookUp;
+	/*		
+			if(gTotalMouseYaw > DegToUnrRot * 90.f) {
+				gTotalMouseYaw = DegToUnrRot * 90.f;
+			} else if(gTotalMouseYaw < DegToUnrRot * -90.f) {
+				gTotalMouseYaw = DegToUnrRot * -90.f;		
+			}
+*/
+			if(gTotalMousePitch > DegToUnrRot * 90.f) {
+				gTotalMousePitch = DegToUnrRot * 90.f;
+			} else if(gTotalMousePitch < DegToUnrRot * -90.f) {
+				gTotalMousePitch = DegToUnrRot * -90.f;		
+			}			
+
+		} else {
+			// Smooth mouse x value for independent camera
+			//SmootherMouseX(PlayerInput.aMouseX, gSmoothMouseX);
+		}
+	
 	}
+
+	/**   FROM PLAYERCONTROLLER.UC
+	*
+	* Processes the player's ViewRotation
+	* adds delta rot (player input), applies any limits and post-processing
+	* returns the final ViewRotation set on PlayerController
+	*
+	* @param	DeltaTime, time since last frame
+	* @param	ViewRotation, current player ViewRotation
+	* @param	DeltaRot, player input added to ViewRotation
+	*/
+	function ProcessViewRotation( float DeltaTime, out Rotator out_ViewRotation, Rotator DeltaRot )
+	{
+		if( PlayerCamera != None )
+		{
+			PlayerCamera.ProcessViewRotation( DeltaTime, out_ViewRotation, DeltaRot );
+		}
+
+		if ( Pawn != None )
+		{	// Give the Pawn a chance to modify DeltaRot (limit view for ex.)
+			Pawn.ProcessViewRotation( DeltaTime, out_ViewRotation, DeltaRot );
+		}
+		else
+		{
+			// If Pawn doesn't exist, limit view
+
+			// Add Delta Rotation
+			out_ViewRotation	+= DeltaRot;
+			out_ViewRotation	 = LimitViewRotation(out_ViewRotation, -16384, 16383 );
+		}
+	}
+
+
 	
 	function rotator pawnRotate(rotator currentRotation, float DeltaTime)
 	{	
