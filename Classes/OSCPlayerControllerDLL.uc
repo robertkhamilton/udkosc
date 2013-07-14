@@ -59,7 +59,7 @@ var bool bChangingPlayerSpeed;
 
 var bool testPawnStruct;
 
-var bool flying;
+var repnotify bool flying;
 var bool oscmoving;
 var int currentFingerTouches[5]; //borrowing this for multiparameter testing
 var array<vector> fingerTouchArray; //borrowing this for multiparameter testing
@@ -284,6 +284,8 @@ var OSCPlayerTeleportStruct 				localOSCPlayerTeleportStruct;
 // Control over whether gravity affects flying pawns
 var bool bIgnoreGravity;
 
+//"Bool to make pawns float with inertia or not (stop immediately) 
+var bool bFlightInertia;
 
 dllimport final function sendOSCpointClick(PointClickStruct a);	
 dllimport final function OSCFingerController getOSCFingerController(); //borrowing this for multiparameter testing
@@ -347,6 +349,7 @@ simulated exec function trunkmove(float valx, float valy, float valz)
 	Utp.TrunkMover.EffectorLocation=Pawn.Location + TrunkLocation; 
 }
 
+//simulated event PostBeginPlay()
 simulated event PostBeginPlay()
 {
   super.PostBeginPlay();
@@ -383,6 +386,8 @@ simulated event PostBeginPlay()
 	gCameraMode = 0;
 	gCameraDistance = 0;
 	gCameraOffsetX = 0;
+	
+	bFlightInertia = TRUE;
 	
 	// Hide weapon, came up again
 //	SkeletalMeshComponent(Pawn.Weapon.Mesh).SetOwnerNoSee(True);
@@ -435,11 +440,11 @@ simulated exec function initPiece()
 	self.ConsoleCommand("OSCStartBotOutput");
 	
 	`log("Initializing 'Echo::Canyon' environment...");
-	self.ConsoleCommand("ToggleHUD");	
+	//self.ConsoleCommand("ToggleHUD");	
 	self.ConsoleCommand("HideWeapon");
 	self.ConsoleCommand("ChangePlayerMesh 2");
-	self.ConsoleCommand("BehindView"); 
-	self.ConsoleCommand("BehindViewSet 28 0 -40"); 
+	//self.ConsoleCommand("BehindView"); 
+	//self.ConsoleCommand("BehindViewSet 28 0 -40"); 
 	self.ConsoleCommand("FlyWalk");
 	self.ConsoleCommand("OSCMove");	
 
@@ -465,8 +470,15 @@ simulated exec function initPiece()
 // From UTPlayerController
 exec function BehindView()
 {
-	if ( WorldInfo.NetMode == NM_Standalone )
+	//if ( WorldInfo.NetMode == NM_Standalone )
 		SetBehindView(!bBehindView);
+}
+
+// This bool will enable floating pawns to have a bit of inertia. Setting it to TRUE will cause cheat flying to not be used, which allows for inertia. Setting FALSE will cause pawn to stop immediately.
+exec function setPawnInertia(bool val)
+{
+//	bFlightInertia = val;
+	bCheatFlying=!val;
 }
 
 function SpawnOSCBots()
@@ -474,7 +486,7 @@ function SpawnOSCBots()
 	// GROUPING CURRENTLY IS SET IN OSCAICONTROLLER Follow state
 	`log("OSCBots length: "$OSCBots.length);
 	
-	if(OSCBots.length==12)
+	if(OSCBots.length>=12)
 		ClearTimer('SpawnOSCBots');
 
 	// Spawn lead and 5 followers
@@ -590,7 +602,8 @@ simulated exec function spawnOSCBot()
 	spawnOSCBotAt(0, 0, 1000);
 }
 
-simulated exec function spawnOSCBotAt(int x, int y, int z, int mesh=2)
+//simulated exec function spawnOSCBotAt(int x, int y, int z, int mesh=2)
+exec function spawnOSCBotAt(int x, int y, int z, int mesh=2)
 {
 
 	local OSCBot bot;
@@ -642,7 +655,8 @@ simulated exec function spawnOSCBotAt(int x, int y, int z, int mesh=2)
 	}	
 }
 
-simulated exec function spawnPawnBot()
+//simulated exec function spawnPawnBot()
+exec function spawnPawnBot()
 {
 	spawnOSCBotAt(0, 0, 2000);
 }
@@ -702,7 +716,8 @@ self.ConsoleCommand("OSCPawnMove");
 
 
 // Exec function to spawn a new OSCPawnBot at a given location. An optional parameter to assign a specific Mesh to that OSCPawnBot defaults to "2" (Valkordia) for now
-simulated exec function spawnPawnBotAt(int x, int y, int z, int mesh=2)
+//simulated exec function spawnPawnBotAt(int x, int y, int z, int mesh=2)
+exec function spawnPawnBotAt(int x, int y, int z, int mesh=2)
 {
 	local string PClassName;
 	local string CClassName;
@@ -867,6 +882,21 @@ simulated exec function OSCCheckPawnBots()
 	}
 }
 
+simulated exec function followMe()
+{
+	local OSCBot P;
+	local int targetPawnUID;
+	/**/
+	foreach WorldInfo.AllActors(class 'OSCBot', P)
+	{
+		
+		OSCAIController(P.Controller).target=OSCPawn(Pawn);
+		OSCAIController(P.Controller).gotoState('Follow');
+		P.SetPhysics(PHYS_Flying);
+	}
+
+}
+
 simulated exec function followOSCBots()
 {
 	local OSCBot P;
@@ -988,8 +1018,11 @@ simulated exec function OSCSetFly(int val)
 		}	
 }
 
-simulated exec function FlyWalk()
+exec function FlyWalk()
 {
+
+	toggleFlying();
+	/*
 	if(flying)
 	{
 		GotoState('PlayerWalking');
@@ -1002,6 +1035,7 @@ simulated exec function FlyWalk()
 	 // bCheatFlying=true;
 	  flying=true;
 	}
+	*/
 }
 
 reliable server function toggleFlying()
@@ -1009,13 +1043,15 @@ reliable server function toggleFlying()
 	if(flying)
 	{
 		GotoState('PlayerWalking');
-		bCheatFlying=false;
+		if(!bFlightInertia)
+		    bCheatFlying=false;
 		flying=false;
 	}
 	else
 	{
 	  GotoState('PlayerFlying');
-	  bCheatFlying=true;
+	  if(!bFlightInertia)
+	    bCheatFlying=true;
 	  flying=true;
 	}
 }
@@ -1323,6 +1359,9 @@ function calculateSpeed()
 		local int i;
 		local float totalDistance;
 		
+		
+	bForceNetUpdate = TRUE; // Force replication
+	
 		currentPosition = Pawn.Location;
 		
 //		`log("currentPosition: "$currentPosition);
@@ -1475,12 +1514,13 @@ exec function DecrementCameraDistance() {
 	}
 }
 
-state PlayerFlying
+auto state PlayerFlying
 {
-
+  /**/
 	// Called by Tick; data is populated by key presses
 	simulated function setPlayerSpeed()
 	{
+
 		local int i;
 		local int arrayLength;
 		local float totalValue;
@@ -1619,8 +1659,12 @@ state PlayerFlying
 	// From PlayerController.uc
 	function PlayerMove(float DeltaTime)
 	{
+	
 		local vector X,Y,Z;
 		local float flyingGravity;
+	
+
+	bForceNetUpdate = TRUE; // Force replication
 		
 		GetAxes(Rotation,X,Y,Z);
 		
@@ -1636,7 +1680,6 @@ state PlayerFlying
 		Pawn.Acceleration = Pawn.AccelRate * Normal(Pawn.Acceleration);
 
 
-		// Not using bCheatFlying anymore, so not called...
 		if ( bCheatFlying && (Pawn.Acceleration == vect(0,0,0)) )
 			Pawn.Velocity = vect(0,0,0);
 			
@@ -1651,6 +1694,7 @@ state PlayerFlying
 	
 	function SmootherTurn(float value, float strafe, out float averagedValue)
 	{
+	
 		local int arrayLength;
 		local int i;
 
@@ -1684,6 +1728,7 @@ state PlayerFlying
 	
 	function SmootherMouseX(float value, out float averagedValue)
 	{
+	
 //	var array< float > averagedMouseX;
 		local int arrayLength;
 		local int i;
@@ -1704,6 +1749,7 @@ state PlayerFlying
 	
 	function SmootherLookUp(float value, out float averagedValue)
 	{
+	
 		local int arrayLength;
 		local int i;
 		
@@ -1736,6 +1782,7 @@ state PlayerFlying
 
 	function float SmoothPawnUp()
 	{
+	
 		local float pitchVal;
 	
 		pitchVal = 1;
@@ -1771,6 +1818,7 @@ state PlayerFlying
 	
 	function float SmoothPawnRoll()
 	{
+	
 		local float rollVal, localTurn;
 	
 		localTurn = PlayerInput.aTurn;
@@ -1837,6 +1885,7 @@ state PlayerFlying
 	
 	function float scaledTurnX()
 	{
+
 		local float maxTurnX, retValue, turnXValue, localTurn;
 		
 		maxTurnX = 800.0;
@@ -1865,6 +1914,7 @@ state PlayerFlying
 	
 	function float SmoothPawnYaw()
 	{
+	
 		local float yawVal, localTurn;
 		local float localInterpYawTarget;
 		
@@ -1946,9 +1996,12 @@ state PlayerFlying
 	// From PlayerController.uc
 	function UpdateRotation( float DeltaTime )
 	{
+	
 		local Rotator	DeltaRot, newRotation, ViewRotation;
 		local float smoothTurn, smoothLookUp, strafedRoll;		
 		local float strafe;
+
+	bForceNetUpdate = TRUE; // Force replication
 		
 		ViewRotation = Rotation;
 		if (Pawn!=none)
@@ -2070,7 +2123,10 @@ state PlayerFlying
 	
 	function rotator pawnRotate(rotator currentRotation, float DeltaTime)
 	{	
+		
 		local rotator targetRotation, viewRotation;
+
+	bForceNetUpdate = TRUE; // Force replication
 		
 		targetRotation = currentRotation; 
 
@@ -2302,15 +2358,15 @@ state OSCPlayerMoving
 				bSaveJump = false;
 			}
 
-			if( Role < ROLE_Authority ) {
+//			if( Role < ROLE_Authority ) {
 //				ReplicateMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - OSCCameraRotation);
-				ReplicateMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - OSCPlayerRotation);
-			}
-			else
-			{
+//				ReplicateMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - OSCPlayerRotation);
+//			}
+//			else
+//			{
 //				ProcessMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - OSCCameraRotation);
 				ProcessMove(DeltaTime, NewAccel, DoubleClickMove, OldRotation - OSCPlayerRotation);
-			}
+//			}
 			bPressedJump = bSaveJump;
 			//bPressedJump = bOSCJump;
 		}
@@ -2528,8 +2584,9 @@ function DrawHUD( HUD H )
 /*
  * The default state for the player controller
  */
-auto state PlayerWaiting
+state PlayerWaiting
 {
+	//`log("AutoState: PlayerWaiting:: OSCPlayerControllerDLL");
 	
 	/*
 	 * The function called when the user presses the fire key (left mouse button by default)
@@ -2716,6 +2773,28 @@ simulated function setOSCBotState(bool val) {
 function AddOnlineDelegates(bool bRegisterVoice) {
 }
 
+
+replication
+{
+//	if (bNetDirty && Role==ROLE_Authority) {
+	//	flying;
+//	}
+}
+
+/*
+	// Things the server should send to the client.
+   if ( bNetDirty && (Role == Role_Authority) )
+      Score, Deaths, bHasFlag, PlayerLocationHint,
+      PlayerName, Team, TeamID, bIsFemale, bAdmin,
+      bIsSpectator, bOnlySpectator, bWaitingPlayer, bReadyToPlay,
+      StartTime, bOutOfLives, UniqueId;
+   if ( bNetDirty && (Role == Role_Authority) && !bNetOwner )
+      PacketLoss, Ping;
+   if ( bNetInitial && (Role == Role_Authority) )
+      PlayerID, bBot;
+	  
+}
+*/
 defaultproperties 
 {
 	OSCBotCount=0;
@@ -2729,6 +2808,11 @@ defaultproperties
 	speedArraySizeMax = 40;				// size of averaging array for AirSpeed
 	airSpeedIncrement = 2000.0;
 	
+//	transformedMesh=SkeletalMesh'CH_IronGuard_Male.Mes h.SK_CH_IronGuard_MaleA'
+//	transformedAnimTree=AnimTree'CH_AnimHuman_Tree.AT_ CH_Human'
+//	transformedAnimSet(0)=AnimSet'CH_AnimHuman.Anims.K _AnimHuman_BaseMale'
+//	transformedPhysicsAsset=PhysicsAsset'CH_AnimCorrup t.Mesh.SK_CH_Corrupt_Male_Physics'
+
 	// CUSTOM CAMERA TESTING
 //	CameraClass=class'OSCCamera'
 }

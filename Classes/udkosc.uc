@@ -45,12 +45,12 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 
 function initUDKOSC(PlayerController PC)
 {
-	`log("In Here...");
+	`log("In initUDKOSC function in udkosc.uc...");
 	PC.ConsoleCommand("ToggleHUD");	
-	PC.ConsoleCommand("HideWeapon");		
-	PC.ConsoleCommand("ChangePlayerMesh 2");
+//	PC.ConsoleCommand("HideWeapon");		
+//	PC.ConsoleCommand("ChangePlayerMesh 2");
 	PC.ConsoleCommand("BehindView");	
-	PC.ConsoleCommand("BehindViewSet 28 0 -40");
+//	PC.ConsoleCommand("BehindViewSet 28 0 -40");
 	PC.ConsoleCommand("FlyWalk");	
 }
 
@@ -80,6 +80,9 @@ defaultproperties
 // PlayerReplicationInfoClass=class'UDKOSC.OSCPlayerReplicationInfo'
 	
  BotClass=class'UDKOSC.OSCBot'
+ 
+ // Delayed start to False lets multiplayer work!!!
+ bDelayedStart=false
  
  TimeLimit=0
  

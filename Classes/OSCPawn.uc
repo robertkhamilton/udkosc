@@ -243,6 +243,19 @@ struct Coords
 var vector gCamLoc;
 var rotator gCamRot;
 
+// WAVE TRACE VARIABLE BLOCK
+var array<vector> waveTraces;					//Array to hold vector waveTraces
+var bool bWaveTraceLog;							
+var bool bWaveTracePoints;
+var bool bWaveTraceLines;
+var bool bWaveTraceSpheres;
+var bool bWaveTraceDebug;
+var int waveTraceCount;
+var int waveTraceRadius;
+var int waveTraceSetSize;
+var vector waveTraceStartLocation;
+
+
 dllimport final function sendOSCpointClick(PointClickStruct a);	
 dllimport final function sendOSCPlayerState(PlayerStateStruct a);
 dllimport final function OSCMessageStruct getOSCTest();
@@ -288,13 +301,15 @@ simulated exec function setRotatorOffset(int val)
 	gRotatorOffset = val;
 }
 
-simulated exec function ChangePlayerMesh(int a)
+//simulated exec function ChangePlayerMesh(int a)
+exec function ChangePlayerMesh(int a)
 {
 //	selectedPlayerMesh = a;
 	SetPawnMesh(a);
 }
 
 simulated function setPawnMesh(int a)
+//server reliable function setPawnMesh(int a)
 {
 	local AnimNode temp;
 
@@ -484,9 +499,18 @@ simulated exec function setGroundSpeed(float gs) {
 	groundspeed=gs;
 }
 
+simulated event PostBeginPlay() {
+
+	`log("In PostBeginPlay... OSCPawn");
+	
+	Super.PostBeginPlay();
+}
+
 simulated event PreBeginPlay() {
 	Super.PreBeginPlay();
-	
+
+	`log("In PreBeginPlay... OSCPawn");
+		
 	// ****************************************************************************** //
 	// HACK FOR CRASHING WITH LOST OSCPARAMETERS REFERENCE
 	// ****************************************************************************** //
@@ -494,7 +518,7 @@ OSCParameters = spawn(class'OSCParams');
 OSCHostname = OSCParameters.getOSCHostname();
 OSCPort = OSCParameters.getOSCPort();	
 
-	object1.X=0;
+	object1.X=0; 
 	object1.Y=0;
 	object1.Z=0;
 	object2.X=0;
@@ -527,6 +551,9 @@ OSCPort = OSCParameters.getOSCPort();
 // Overloading FaceRotation from UTPawn to let pawn pitch follow camera
 simulated function FaceRotation(rotator NewRotation, float DeltaTime)
 {
+
+	bForceNetUpdate = TRUE; // Force replication
+	
 	if ( Physics == PHYS_Ladder )
 	{
 		NewRotation = OnLadder.Walldir;
@@ -568,7 +595,7 @@ simulated function sendPlayerState()
 	
 	// Populate pcStruct with tracehit info using rkh String format hack
 	psStruct.PlayerName ="bob";
-	psStruct.id = uid;
+	psStruct.id = Controller.PlayerReplicationInfo.PlayerID;//uid;  Changed for multiplayer... bots and AI are still on manual iDs (NEED TO CHANGE)
 	psStruct.LocX = Location.X;
 	psStruct.LocY = Location.Y;
 	psStruct.LocZ = Location.Z;
@@ -1135,10 +1162,10 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
 	CamDistance = OSCPlayerControllerDLL(Controller).gCameraDistance;
 	//CamDistance = 0;
 	
-	if(OSCPlayerControllerDLL(Controller).PlayerInput.aMouseX > 0)
-	{
-		
-	}
+//	if(OSCPlayerControllerDLL(Controller).PlayerInput.aMouseX > 0)
+//	{
+//		
+//	}
 	
 	if(OSCPlayerControllerDLL(Controller).bUseMouseFreeLook)
 	{
@@ -1448,6 +1475,36 @@ simulated event BecomeViewTarget( PlayerController PC )
 //	}
 }
 
+function drawWaveTraces()
+{
+	local int i;
+	local vector origLocation;
+	local LinearColor col;
+
+    col.A = 255;
+    col.R = 255;
+
+	for(i=0; i<waveTraceCount; i++)
+	{
+		
+		origLocation = waveTraces[i];
+		origLocation.Z = waveTraceStartLocation.Z;
+		
+		//waveTraces[i].Z = waveTraces[i].Z + 500;
+	
+	    if(bWaveTracePoints)
+			DrawDebugPoint(waveTraces[i], 1, col, false);
+		
+		if(bWaveTraceLines)
+			DrawDebugLine(origLocation, waveTraces[i], 255,0,0,false);
+		
+		if(bWaveTraceSpheres)
+			DrawDebugSphere(waveTraces[i], 10, 10, 0, 255, 0, false);
+//		native static final function DrawDebugPoint (Object.Vector Position, float Size, Object.LinearColor PointColor, optional bool bPersistentLines) const
+//native static final function DrawDebugSphere (Object.Vector Center, float Radius, int Segments, byte R, byte G, byte B, optional bool bPersistentLines) const
+	}
+}
+
 simulated function Tick(float DeltaTime)
 {
 	//SetMeshVisibility(true);
@@ -1479,6 +1536,11 @@ simulated function Tick(float DeltaTime)
 	lastGameGravity = localOSCGameParamsStruct.gameGravity;
 	lastGameSpeed = localOSCGameParamsStruct.gameSpeed;
 
+	if(bWaveTraceDebug) {
+		
+		drawWaveTraces();
+	}
+	
 	Super.Tick(DeltaTIme);
 
 	//`log("**************************** OSCPAWN::SENDING OSC: "$sendingOSC);
@@ -1644,6 +1706,7 @@ simulated function sideTracer(int rval)
 
 
 
+
 simulated function downTrace()
 {
 
@@ -1694,6 +1757,176 @@ simulated function downTrace()
 //		ClientMessage("Component: "$hitInfo.HitComponent);
 }
 
+exec function setWaveTraceDebug(bool val)
+{
+	bWaveTraceDebug = val;
+}
+
+exec function setWaveTraceLog(bool val)
+{
+	bWaveTraceLog = val;
+}
+
+exec function setWaveTraceSpheres(bool val)
+{
+	bWaveTraceSpheres = val;
+}
+
+exec function setWaveTracePoints(bool val)
+{
+	bWaveTracePoints = val;
+}
+
+exec function setWaveTraceLines(bool val)
+{
+	bWaveTraceLines = val;
+}
+
+exec function setWaveTraceCount(int val)
+{
+	waveTraceCount = val;
+	waveTrace();
+}
+
+exec function setWaveTraceRadius(int val)
+{
+	waveTraceRadius = val;
+}
+
+exec function setWaveTraceSetSize(int val)
+{
+	waveTraceSetSize = val;
+	waveTrace();
+}
+
+function spawnOSCTraceLight(float Xpos, float Ypos, float Zpos)
+{
+	local OSCTraceLight p;
+	local OSCProj_ShockBall sb;
+	local float xval, yval, zval;
+	local vector positionVector;
+
+	positionVector.X = Xpos;
+	positionVector.Y = Ypos;
+	positionVector.Z = Zpos+1400.0;
+	
+//p = Spawn(class'OSCTraceLight',,, positionVector, rot(0, 0, -1), ,true );
+
+//p.setBrightness(10);
+//p.setColor(255, 0, 255, 255);
+
+sb = Spawn(class'OSCProj_ShockBall',,, positionVector, rot(0,0,0), , true);
+sb.Init( positionVector);
+sb.setSpeed(0);
+sb.freeze();
+
+//debug info
+`log("made a light!");
+
+
+}
+
+
+// Create a ring of traces in a circle around the pawn and move them outwards
+exec function waveTrace()
+{
+	local vector loc, norm, end;
+	local TraceHitInfo hitInfo;
+	local Actor traceHit;
+    local vector tempRotation;
+	local float trace_distance;
+	local vector tempLocation;
+	local float currentAngle;// = 360.0 / traceCount;
+	local int i, j;
+	local int waveTraceSetCount;
+	local float rotateSet;
+	
+	waveTraceStartLocation = Location;
+	
+	for(j=0; j<(waveTraceCount / waveTraceSetSize); j++) {
+	//end = Location + normal(vector(Rotation))*gtracelength; // trace to "infinity"
+	  for(i=0; i<waveTraceSetSize; i++) {
+	    	
+		// create new trace and add it to array
+		// ( Math.cos( angle ) * radius, Math.sin( angle ) * radius )
+
+//		X = radius * Cos(Angle);
+//		Y = radius * Sin(Angle);
+//		currentAngle = 360.0 / i+1;
+		
+		// On odd iterations of the set loop, half-rotate the set a notch for better coverage
+//		if( ((waveTraceCount / waveTraceSetSize) % (j+1)) > 0)  {
+//			rotateSet = (360.0 / waveTraceSetSize) / 2.0;
+//		} else {
+//			rotateSet = 0.0;
+//		}
+
+		currentAngle = 0 + i * (360.0 / waveTraceSetSize) + rotateSet;
+		
+		tempLocation = waveTraceStartLocation;
+		tempLocation.X = waveTraceStartLocation.X + (j+1) * waveTraceRadius * Cos(currentAngle);
+		tempLocation.Y = waveTraceStartLocation.Y + (j+1) * waveTraceRadius * Sin(currentAngle);
+		
+		// each trace should be at 360deg/traceCount around a circle at an offset radius 
+		end = tempLocation + vect(0, 0, -1)* 32768;//gtracelength;
+		traceHit = trace(loc, norm, end, tempLocation, true,, hitInfo);
+		trace_distance = VSize(tempLocation - loc);
+	
+			// By default only 4 console messages are shown at the time
+ 		//`log("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
+ 		//`log("Location: "$loc.X$","$loc.Y$","$loc.Z);
+ 		//`log("Material: "$hitInfo.Material$"  PhysMaterial: "$hitInfo.PhysMaterial);
+		//`log("Component: "$hitInfo.HitComponent);
+		
+		//tempLocation.Z = tempLocation.Z - trace_distance;
+		
+		waveTraces[i + j * waveTraceSetSize] = loc; //tempLocation;		
+		
+//		`log("WaveTrace #"$i + j * waveTraceSetSize$": "$tempLocation.X$", "$tempLocation.Y$", "$tempLocation.Z);
+		if(bWaveTraceLog)
+			`log("WaveTrace #"$i + j * waveTraceSetSize$": "$loc.X$", "$loc.Y$", "$loc.Z);
+
+		//spawnOSCTraceLight(tempLocation.X, tempLocation.Y, tempLocation.Z);
+		
+		
+		
+		
+		//DrawDebugLine(tempLocation, end, 255,0,0,false);
+			
+		//bWaveTraced = TRUE;
+	  }
+	}
+	
+//	`log("********************************************:  IN PAWNTRACE *************** trace_distance "$trace_distance);
+//	`log("********************************************:  IN PAWNTRACE *************** AFTER CHECK: trace_distance "$trace_distance);
+//	`log("********************************************:  IN PAWNTRACE *************** AFTER CHECK: gdowntracelength "$gdowntracelength);
+	
+	
+	/*
+	if (traceHit == none)
+	{
+		ClientMessage("Trace failed.");
+		gDownTrace = 0;
+		return;		
+	}
+	else
+	{
+*/	
+//		gDownTrace = trace_distance;
+
+		//ClientMessage("Down: "$trace_distance);
+
+		// Play a sound to confirm the information
+//		ClientPlaySound(SoundCue'A_Vehicle_Cicada.SoundCues.A_Vehicle_Cicada_TargetLock');
+
+		// By default only 4 console messages are shown at the time
+ //		ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
+ //		ClientMessage("Location: "$loc.X$","$loc.Y$","$loc.Z);
+ //		ClientMessage("Material: "$hitInfo.Material$"  PhysMaterial: "$hitInfo.PhysMaterial);
+//		ClientMessage("Component: "$hitInfo.HitComponent);
+}
+
+
 simulated exec function setProjectileTargets(float X, float Y, float Z)
 {
 	local OSCProj_SeekingShockBall pSSB;
@@ -1729,6 +1962,12 @@ event Possess(Pawn inPawn, bool bVehicleTransition)
 exec function getPawnUid()
 {
 	ClientMessage("Pawn UID = "$getUID());
+	
+	// Need Controller ID Here to differentiate pawns from bots from AI
+	//ClientMessage("GetALocalPlayerControllerId(): "$GetALocalPlayerControllerId());
+	
+	ClientMessage("PlayerID: "$Controller.PlayerReplicationInfo.PlayerID);
+	
 }
 
 simulated function int getUID()
@@ -1817,7 +2056,12 @@ function getBoneLocation()
 		
 			// local coordinate (? need to transform from global to local space?)
 //			`log("Bone Offset [valkordia_01Rwing_front_4]: "$offset);
-			`log("Bone Offset ["$bone$"]: "$offset);
+
+
+// *******************************************************************************************
+			// THIS WORKS HERE: COMMENTING OUT FOR NOW (ROB - 7/7/13)
+// *******************************************************************************************
+//			`log("Bone Offset ["$bone$"]: "$offset);
 	
 		
 		}
@@ -1848,6 +2092,11 @@ exec function GetBone()
 */
 defaultproperties
 {
+	// number of waveTraces to perform, radius and set size 
+	waveTraceCount = 72;
+	waveTraceRadius = 200;
+	waveTraceSetSize = 12;
+	
 	//groundspeed=10000.0
 	seekingTurnRate=20.00000
 
@@ -1889,7 +2138,7 @@ Begin Object Name=WPawnSkeletalMeshComponent
 AnimTreeTemplate=AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree'
 End Object
 
-
+ControllerClass=class'UDKOSC.OSCPlayerControllerDLL'
 
  CamOffset = (X=60, Y=0, Z= 0)
  // CamOffset = (X=camoffsetx, Y=camoffsety, Z=camoffsetz)
