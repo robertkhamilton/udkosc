@@ -1,0 +1,15 @@
+#
+# Set Camera
+#
+#  C:\Users\Rob\data\github\udkosc\Scripts\ruby osccontrol.rb localhost 7001 ./data/camera_setup.oc
+#
+# 
+# Good Values for OSCSETFOLLOWCAMERA
+cameramove x -140
+cameramove y 110
+cameramove z 20
+
+# 
+cameramove x -700
+cameramove y 0
+cameramove z 100

@@ -1,5 +1,5 @@
 class OSCProj_SeekingRocket extends UTProj_SeekingRocket
-	config(UT3OSC)
+	config(UDKOSC)
 	DLLBind(oscpack_1_0_2);
 
 	
@@ -633,7 +633,7 @@ defaultproperties
 /*
 
 class OSCHomingProj_ShockBall extends OSCProj_ShockBall;
-	config(UT3OSC)
+	config(UDKOSC)
 	DLLBind(oscpack_1_0_2);
 	
 	

@@ -1,0 +1,86 @@
+playermove teleport 0 0 100 1
+playermove speed 50 1
+cameramove z 120
+# cameramove pitch -90 200
+cameramove x -200 20
+cameramove pitch -20
+playermove yaw 501 200 1
+
+playermove x 1 1000 1
+
+playermove stop 1
+
+cameramove z 10000 9000
+[
+cameramove z -9000 1400
+cameramove pitch -90 1400
+]
+playermove jump 600 1
+playermove teleport 0 0 500 1
+
+playermove speed 500 1
+[
+playermove x 180 1000 1
+playermove y -270 2000 1
+]
+[
+playermove x -180 2000 1
+playermove y -360 2000 1
+cameramove z 5000 400
+]
+playermove stop 1
+playermove teleport 100.0 200.0 400.0 1
+
+playermove stop 1
+playermove x 0 1
+playermove y 0 1
+playermove z 0 1
+playermove stop 1
+cameramove x 0 20
+cameramove y 0 20
+cameramove z 3000 20
+cameramove pitch -90 20
+cameramove yaw 0 20
+cameramove roll 0 20
+playermove speed 500 20 1
+playermove pitch 0 20 1
+playermove yaw 0 20 1
+playermove roll 0 20 1
+wait 2000
+cameramove z -2700 2000
+[
+cameramove x -590 1000
+cameramove pitch 75 1000
+]
+[
+playermove y 90 1000 1
+cameramove y 1200 3000
+]
+playermove x 180 1000 1
+playermove y -270 2000 1
+playermove x -180 2000 1
+playermove y -360 2000 1
+[
+playermove x -90 1000 1
+playermove y 0 1000 1
+]
+playermove stop 1
+wait 1000
+playermove x 0 20 1
+cameramove y -1000 2000
+playermove stop 1
+[
+cameramove yaw -90 2000
+cameramove x 1000 2000
+]
+playermove x -90 20 1
+cameramove x 200 2000
+playermove stop 1
+cameramove x -300 2000
+[
+cameramove y -200 2000
+cameramove yaw -70 2000
+]
+cameramove y -100 2000
+playermove x 45 500 1
+playermove stop 1

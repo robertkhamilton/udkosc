@@ -14,6 +14,8 @@ var float lastY;
 var float lastZ;
 var bool lastCrouch;
 
+var int selectedPlayerMesh;
+
 // ************************************************************************************************
 // Structs to hold OSC parameter data
 // ************************************************************************************************
@@ -63,26 +65,119 @@ struct PawnStateStruct
 var OSCScriptPlayermoveStruct localOSCScriptPlayermoveStruct;
 var OSCScriptPlayerTeleportStruct localOSCScriptPlayerTeleportStruct;
 
+// vars for pawnbot follow behaviors
+var Pawn followTargetPawn;
+var OSCPawnBot followTargetPawnBot;
+var rotator targetRotation;
+var int targetX, targetY, targetZ;
+var vector targetAccel;
+var bool follow;
+
 dllimport final function OSCScriptPlayermoveStruct getOSCScriptPlayermove();
 dllimport final function OSCScriptPlayerTeleportStruct getOSCScriptPlayerTeleport();
 dllimport final function sendOSCPawnState(PawnStateStruct a);
 dllimport final function testt(float thisx);
 // ************************************************************************************************
 
-DefaultProperties
-{
-	uid=-1;
-	bRollToDesired=true;
-	RemoteRole=ROLE_SimulatedProxy; // just for testing crashing bug
-}
 
 simulated event PreBeginPlay()
 {
 	Super.PreBeginPlay();
-	OSCParameters = spawn(class'OSCParams');	
-	OSCHostname = OSCParameters.getOSCHostname();
-	OSCPort = OSCParameters.getOSCPort();	
+OSCParameters = spawn(class'OSCParams');	
+OSCHostname = OSCParameters.getOSCHostname();
+OSCPort = OSCParameters.getOSCPort();	
 }
+
+//override to do nothing
+simulated function SetCharacterClassFromInfo(class<UTFamilyInfo> Info)
+{
+}
+
+
+simulated function setPawnMesh(int a)
+{
+	local AnimNode temp;
+
+	selectedPlayerMesh = a;
+	
+	if(a==1)
+	{
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree_spawntest');
+
+		} else if(a==2) {
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01');	
+		
+	} else if(a==3) {	
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_LIAM_Cathode.Mesh.SK_CH_LIAM_Cathode');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'CH_AnimHuman.Anims.K_AnimHuman_BaseMale';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
+		
+	} else if(a==4) {
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_IronGuard_Male.Mesh.SK_CH_IronGuard_MaleA');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'CH_AnimHuman.Anims.K_AnimHuman_BaseMale';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
+	}
+}
+
+
+simulated function followPawnBot()
+{
+	// Set each PawnBot to be sending OSC	
+	local OSCPawnBot P;
+	local OSCPawn Pwn;
+	//local float targetGroundSpeed;
+	//local float targetAirSpeed;
+	
+//	`log("IN FOLLOWPAWNBOT ********************************************** MY UID = "$uid);
+	
+	foreach WorldInfo.AllActors(class 'OSCPawnBot', P)
+	{
+		if(uid > 0) {
+
+//	`log("IN FOLLOWPAWNBOT ******************************** UID > 0 *******************");
+			if(P.uid==uid-1) //followTargetPawnBot)
+			{
+//	`log("IN FOLLOWPAWNBOT ******************************** P.UID = uid-1 *******************");
+
+			// set this pawn's rotation and speed to match target
+				GroundSpeed = P.GroundSpeed;
+				targetRotation = rotator( P.Location - Self.Location); //P.Rotation
+				
+				AirSpeed = P.AirSpeed;		
+				targetAccel = P.Acceleration;
+				//Self.SetRotation(targetRotation);
+				}
+		} else {
+
+//			`log("IN FOLLOWPAWNBOT ******************************** UID = 0 *******************");
+
+		foreach WorldInfo.AllActors(class 'OSCPawn', Pwn)
+			{
+				if(Pwn.uid==0)
+				{
+//			`log("IN FOLLOWPAWNBOT ******************************** Pwn.uid ==0 *******************");
+
+					GroundSpeed = Pwn.GroundSpeed;
+//					targetRotation = Pwn.Rotation;
+				targetRotation = rotator( Pwn.Location - Self.Location); //P.Rotation
+					//Self.SetRotation(targetRotation);
+					AirSpeed = Pwn.AirSpeed;
+					targetAccel = Pwn.Acceleration;
+				}
+			}
+		}
+	}
+}
+
+
 
 simulated reliable client function teleport(float x, float y, float z)
 {
@@ -124,36 +219,50 @@ auto state OSCMove
 
 }
 
-
 simulated function Tick(float DeltaTime)
 {
+	// ONLY CALL IF Controller is OSCPawnController
+//	if(Self.Controller
+	
+	//`log("OSCPawnBot Controller Outername: "$Controller.class.outer.name);
+	//`log("OSCPawnBot Controller Outername: "$Controller.class);
+	/* */
+	if(string(Controller.class)== "OSCPawnController") 
+	{
 	// Call this Pawn's Controller's playertick method
 	OSCPawnController(Controller).PlayerTick(DeltaTime);
-
+	}
+	
 	Super.Tick(DeltaTIme);
 
 	if(sendingOSC)
 	{
-		`log("Sending OSC from PawnBot #"$uid);
+		//`log("Sending OSC from PawnBot #"$uid);
 		sendPawnState();
 	}	
+	
+	// Chained follow call
+	if(follow)
+	{
+		followPawnBot();
+	}
 }
 
 simulated function sendPawnState()
 {
 	
-	Local vector loc, norm, end;
-	Local TraceHitInfo hitInfo;
-	Local Actor traceHit;
-	local MyPlayerStruct tempVals;
+	//Local vector loc, norm, end;
+//	Local TraceHitInfo hitInfo;
+	//Local Actor traceHit;
+	//local MyPlayerStruct tempVals;
 	local PawnStateStruct pStruct;
-	local PawnStateStruct testStruct;
+	//local PawnStateStruct testStruct;
 	//local OSCParams OSCParameters;
 	//local string OSCHostname;
 	//local int OSCPort;
 	local bool sendOSC;
 	
-	//end = Location + normal(vector(Rotation))*32768; // trace to "infinity"
+	//end = Location + normal(vector(Rotfation))*32768; // trace to "infinity"
 	//traceHit = trace(loc, norm, end, Location, true,, hitInfo);
 
 	// Populate pcStruct with tracehit info using rkh String format hack
@@ -163,14 +272,17 @@ simulated function sendPawnState()
 	pStruct.LocZ = Location.Z;
 	//pStruct.Crouch = isCrouching;
 	
-	OSCHostname = OSCParameters.getOSCHostname();
-	OSCPort = OSCParameters.getOSCPort();
+OSCHostname = OSCParameters.getOSCHostname();
+OSCPort = OSCParameters.getOSCPort();
 	
 	//ClientMessage("OSCParameters.getOSCHostname="$OSCHostname$"");
 	
-	pStruct.Hostname = OSCParameters.getOSCHostname();
-	pStruct.Port = OSCParameters.getOSCPort();
+pStruct.Hostname = OSCParameters.getOSCHostname();
+pStruct.Port = OSCParameters.getOSCPort();
 
+	// HACK TO QUICK FIX OSCParameters going haywire!!!?!?!??!
+//	pStruct.Hostname = "10.0.1.20";
+//	pStruct.Port = 57120;	
 
 	sendOSC=true;
 
@@ -182,15 +294,15 @@ simulated function sendPawnState()
 
 	if(sendOSC)
 	{
-		`log("Vals - id: "$pStruct.id$", x: "$pStruct.LocX$", y: "$pStruct.LocY$", z: "$pStruct.LocZ$", hostname: "$pStruct.Hostname$", port: "$pStruct.Port);
+/*
+ 	`log("Vals - id: "$pStruct.id$", x: "$pStruct.LocX$", y: "$pStruct.LocY$", z: "$pStruct.LocZ$", hostname: "$pStruct.Hostname$", port: "$pStruct.Port);
 		testStruct.id = 0;
 		testStruct.LocX = 10.0;
 		testStruct.LocY = 10.0;
 		testStruct.LocZ = 10.0;
 		testStruct.Hostname = "10.0.1.100";
 		testStruct.Port = 1000;
-		//testt(9999.99);
-		//sendOSCPawnState(testStruct);
+*/		
 		sendOSCPawnState(pStruct);
 	}
 	
@@ -199,4 +311,38 @@ simulated function sendPawnState()
 	lastY = Location.Y;
 	lastZ = Location.Z;
 	//lastCrouch = isCrouching;
+}
+
+defaultproperties
+{
+  uid=-1;
+  bRollToDesired=true;
+  RemoteRole=ROLE_SimulatedProxy; // just for testing crashing bug
+
+  /*
+  Begin Object Class=SkeletalMeshComponent Name=OSCMesh_valkordia
+		SkeletalMesh=SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01'
+		PhysicsAsset=PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics'
+		AnimSets(0)=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims'
+		AnimTreeTemplate=AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01'	
+			
+//AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree'
+  End Object
+  Mesh=OSCMesh_valkordia
+  Components.Add(OSCMesh_valkordia)	
+ */
+	
+  Begin Object Name=CollisionCylinder
+      CollisionRadius=+0021.000000
+      CollisionHeight=+0044.000000
+	  bDrawBoundingBox=True
+  End Object
+  
+  CylinderComponent=CollisionCylinder
+  CylinderComponent.bDrawBoundingBox = True
+  
+  WalkingPhysics=PHYS_Flying
+  LandMovementState=PlayerFlying
+	
+  
 }

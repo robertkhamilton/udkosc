@@ -1,6 +1,6 @@
 class OSCKActor extends KActor
 	placeable
-	config(UT3OSC)
+	config(UDKOSC)
 	DLLBind(oscpack_1_0_2); 
 	
 var float lastX;
@@ -36,13 +36,13 @@ event PreBeginPlay()
 function sendMeshState(string val)
 
 {
-	Local vector loc, norm, end;
-	Local TraceHitInfo hitInfo;
-	Local Actor traceHit;
+	//Local vector loc, norm, end;
+	//Local TraceHitInfo hitInfo;
+	//Local Actor traceHit;
 	local MeshStateStruct mStruct;
 	
-	end = Location + normal(vector(Rotation))*32768; // trace to "infinity"
-	traceHit = trace(loc, norm, end, Location, true,, hitInfo);
+	//end = Location + normal(vector(Rotation))*32768; // trace to "infinity"
+	//traceHit = trace(loc, norm, end, Location, true,, hitInfo);
 	
 	mStruct.Hostname = OSCHostname;
 	mStruct.Port = OSCPort;	

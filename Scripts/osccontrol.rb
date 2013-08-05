@@ -8,8 +8,9 @@ CONNECTION = [DEFAULTHOST, DEFAULTPORT]
 SPACE = " "
 OSCROOT = "/udkosc/script"
 PLAYERMOVE = "playermove"
+PAWNMOVE = "pawnmove"
 CAMERAMOVE = "cameramove"
-STARTBLOCK = "["
+STARTBLOCK = "[" 
 ENDBLOCK = "]"
 BLOCK = "block"
 WAIT = "wait"
@@ -22,6 +23,10 @@ PLAYERCROUCH = "crouch"
 PLAYERPITCH = "pitch"
 PLAYERYAW = "yaw"
 PLAYERROLL = "roll"
+PLAYERSETPITCH = "setpitch"
+PLAYERSETYAW = "setyaw"
+PLAYERSETROLL = "setroll"
+PLAYERMODE = "mode"
 PLAYERSTOP = "stop"
 PLAYERTELEPORT = "teleport"
 CAMERAX = "x"
@@ -42,12 +47,27 @@ OSCMESSAGE = "oscmessage"
 OSCBUNDLE = "oscbundle"
 ROTATIONCONSTANT = 182.044403
 COMMENT = "#"
-CONSOLE = "console"
-BEHINDVIEW = "behindview"
 BLANK = ""
 DEFAULTSPEED = 300.0
+
+# Console Commands/Mode hash
+CONSOLE = "console"
+CONSOLEOSCSTARTOUTPUT = "oscstartoutput"	
+CONSOLEBEHINDVIEW = "behindview"
+CONSOLEOSCMOVE = "oscmove"
+CONSOLEFREECAMERAON = "freecameraon"
+CONSOLEFREECAMERAOFF = "freecameraoff"
+CONSOLEATTACHEDCAMERAON = "attachedcameraon"
+CONSOLEATTACHEDCAMERAOFF = "attachedcameraoff"
 $commands = Hash.new
-$commands[BEHINDVIEW] = 1
+$commands[CONSOLEOSCSTARTOUTPUT] = 1.0
+$commands[CONSOLEOSCMOVE] = 2.0
+$commands[CONSOLEBEHINDVIEW] = 3.0
+$commands[CONSOLEFREECAMERAON] = 4.0
+$commands[CONSOLEFREECAMERAOFF] = 5.0
+$commands[CONSOLEATTACHEDCAMERAON] = 6.0
+$commands[CONSOLEATTACHEDCAMERAOFF] = 7.0
+
 
 module CMD
   BEHINDVIEW = 1
@@ -61,7 +81,7 @@ $currentTime = 0.0
 $currentBlockTime = 0.0
 $inblock = false
 $blockUtime = 0.0
-$validCommands = [PLAYERMOVE, CAMERAMOVE, WAIT, STARTBLOCK, ENDBLOCK, CONSOLE]
+$validCommands = [PLAYERMOVE, PAWNMOVE, CAMERAMOVE, WAIT, STARTBLOCK, ENDBLOCK, CONSOLE]
 # Parameters to track slew value
 $currentVals = Hash.new
 
@@ -102,13 +122,13 @@ def preprocess(arr)
 
     inputArray = processLine(line.strip)
 
-    # if playermove stop call
+    # if playermove/pawnmove stop call
     if !localInBlock
 
       break if inputArray[0] == nil
 
-      if inputArray[0] == PLAYERMOVE
-
+      if (inputArray[0] == PLAYERMOVE) || (inputArray[0] == PAWNMOVE)
+          
         if inputArray[1] == PLAYERSTOP
 
           # set global
@@ -120,7 +140,7 @@ def preprocess(arr)
           localcurrentSpeed = inputArray[2]
 
         elsif [PLAYERX, PLAYERY, PLAYERZ].include?(inputArray[1])
-
+            
           if localPlayerStopped
 
             # insert row of speed = currentVal
@@ -135,7 +155,7 @@ def preprocess(arr)
 
       elsif inputArray[0] == STARTBLOCK
 
-        # if block has a playermove command [x,y,z] then add speed cmd
+        # if block has a playermove/pawnmove command [x,y,z] then add speed cmd
         localInBlock = true
 
       end
@@ -225,16 +245,25 @@ def createMove(params, val, *timetag)
   localUID = nil
   messageArray = Array.new
   noProcessArray = [METHOD, SLEW, WAIT, USERID]
-  rotationParams = [CAMERAPITCH, CAMERAYAW, CAMERAYAW, PLAYERPITCH, PLAYERYAW, PLAYERROLL]
-
+  rotationParams = [CAMERAPITCH, CAMERAYAW, CAMERAYAW, PLAYERPITCH, PLAYERYAW, PLAYERROLL, PLAYERSETPITCH, PLAYERSETYAW, PLAYERSETROLL]
 
   if params.has_key?(USERID)
     localUID=params[USERID].to_f()
-    $currentVals[PLAYERMOVE+USERID] = localUID
-  else
+
     if val==PLAYERMOVE
-      localUID=$currentVals[PLAYERMOVE+USERID]
+        $currentVals[PLAYERMOVE+USERID] = localUID
+    elsif val==PAWNMOVE
+        $currentVals[PAWNMOVE+USERID] = localUID
     end
+
+  else
+      
+    if val==PLAYERMOVE
+        localUID=$currentVals[PLAYERMOVE+USERID]
+    elsif val==PAWNMOVE
+        localUID=$currentVals[PAWNMOVE+USERID]
+    end
+      
   end
 
   # If this call has a slew value, create slew set of messages
@@ -244,10 +273,9 @@ def createMove(params, val, *timetag)
 
     params.each_pair do |k,v|
 
-      #Scale Camera vals by constant: ROTATIONCONSTANT
+      #Scale Rotation vals by constant: ROTATIONCONSTANT
       if rotationParams.include?(k)
         v = v.to_f() * ROTATIONCONSTANT
-        #puts "rotated v #{v}"
       end
 
       # For data hashes, create a new OSC message and sleep call and pass them back
@@ -258,14 +286,13 @@ def createMove(params, val, *timetag)
           #   - find which param it is, take its current value
           #   - for i=1 (first val in the slew block) start with currentVal for that param and add the stepp'd slew value
           #   - for each slew'd val do the same
-          if k == PLAYERYAW || k == PLAYERPITCH || k == PLAYERROLL
+          if k == PLAYERYAW || k == PLAYERPITCH || k == PLAYERROLL || k == PLAYERSETYAW || k == PLAYERSETPITCH || k == PLAYERSETROLL
             $currentVals["#{val}#{k}"] = (v.to_f() / slewCount.to_f())
             puts $currentVals["#{val}#{k}"]
             puts v.to_f()
           else
             $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f() / slewCount.to_f())
           end
-          #puts "rotated v2 #{v / slewCount.to_f()}"
 
           # calc time for future use as timetag
           timeNow=Time.now()
@@ -287,7 +314,9 @@ def createMove(params, val, *timetag)
 
   else # if not a SLEW value...
 
+
     params.each_pair do |k,v|
+        
       if !noProcessArray.include?(k)
 
         if rotationParams.include?(k)
@@ -295,9 +324,13 @@ def createMove(params, val, *timetag)
         end
 
         if k==PLAYERSTOP #|| k== PLAYERCROUCH
-          # puts k
           $currentVals["#{val}#{k}"] = 1.0
-          msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL,$currentVals[PLAYERMOVE+USERID])
+
+          if val==PLAYERMOVE
+              msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL,$currentVals[PLAYERMOVE+USERID])
+          elsif val==PAWNMOVE
+              msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL,$currentVals[PAWNMOVE+USERID])
+          end
         else
 
           # If setting playerspeed > 0, set currentVal of PLAYERSTOP to 0, indicating that we're moving
@@ -310,14 +343,13 @@ def createMove(params, val, *timetag)
           # Don't Aggregate jump height, teleport, userid
           if k==PLAYERJUMP || k==USERID
             $currentVals["#{val}#{k}"] = v.to_f()
-          elsif val==PLAYERMOVE && k==PLAYERTELEPORT
+          elsif (val==PLAYERMOVE || val==PAWNMOVE) && k==PLAYERTELEPORT
             # $currentVals["#{val}#{k}"] = "#{v[0]} #{v[1]} #{v[2]}"
             msg = OSC::Message.new_with_time("#{localRoot}/#{k}", 1000.00, NIL, v[0].to_f(), v[1].to_f(), v[2].to_f(), localUID)
             oscMsg = Hash.new
             oscMsg[OSCMESSAGE] = msg
             messageArray << oscMsg
           else
-            #puts "CURRENTVALS: #{val}: #{k}"
             # $currentVals["#{val}#{k}"] = $currentVals["#{val}#{k}"] + (v.to_f())
             if val==CAMERAMOVE
               if k==CAMERATELEPORT
@@ -366,6 +398,41 @@ def buildHash(val)
       # do nothing in case of comment
     when CONSOLE
       params[CONSOLE] = val[1]
+    when PAWNMOVE
+      params[USERID] = val[count -1]
+      
+      if count == 3
+          # jump/stop currently uses 3 total params; default val to 1 for jump, switch to PLAYERSPEED = 0 for stop
+          
+          if val[1]==PLAYERJUMP
+              params[val[1]] = 1
+              elsif val[1]==PLAYERSTOP
+              params[val[1]] = 0.0
+              #elsif val[1]==PLAYERCROUCH
+              #params[val[1]] = $currentVals["#{PLAYERMOVE}#{PLAYERCROUCH}"]%1
+          end
+      end
+      
+      if count > 3
+          
+          if val[1]==PLAYERTELEPORT
+              
+              # playermove teleport 500.0 500.0 500.0 1
+              teleportCoordinates = Array.new
+              teleportCoordinates[0] = val[2]
+              teleportCoordinates[1] = val[3]
+              teleportCoordinates[2] = val[4]
+              params[val[1]] = teleportCoordinates
+              
+              else
+              (1..count-3).step(2) {|i| params[val[i]] = val[i+1] }
+              
+              if count.odd?
+                  params[SLEW] = val[count-2]
+              end
+          end
+      end
+      
     when PLAYERMOVE
       params[USERID] = val[count -1]
 
@@ -469,6 +536,8 @@ def createMessages(val)
       messages = createConsoleCommand(params, "/#{CONSOLE}")
     when PLAYERMOVE
       messages = createMove(params, "#{PLAYERMOVE}")
+    when PAWNMOVE
+      messages = createMove(params, "#{PAWNMOVE}")
     when CAMERAMOVE
       messages = createMove(params, "#{CAMERAMOVE}")
     when WAIT
@@ -528,6 +597,10 @@ def initCurrentValues
   $currentVals["#{PLAYERMOVE}#{PLAYERPITCH}"] = 0.0
   $currentVals["#{PLAYERMOVE}#{PLAYERYAW}"] = 0.0
   $currentVals["#{PLAYERMOVE}#{PLAYERROLL}"] = 0.0
+  $currentVals["#{PLAYERMOVE}#{PLAYERSETPITCH}"] = 0.0
+  $currentVals["#{PLAYERMOVE}#{PLAYERSETYAW}"] = 0.0
+  $currentVals["#{PLAYERMOVE}#{PLAYERSETROLL}"] = 0.0
+
   $currentVals["#{CAMERAMOVE}#{CAMERAX}"] = 0.0
   $currentVals["#{CAMERAMOVE}#{CAMERAY}"] = 0.0
   $currentVals["#{CAMERAMOVE}#{CAMERAZ}"] = 0.0
@@ -542,6 +615,18 @@ def initCurrentValues
   $currentVals["#{PLAYERMOVE}#{PLAYERTELEPORT}"] = 0.0
   $currentVals["#{PLAYERMOVE}#{USERID}"] = -1
 
+    $currentVals["#{PAWNMOVE}#{PLAYERX}"] = 0.0
+    $currentVals["#{PAWNMOVE}#{PLAYERY}"] = 0.0
+    $currentVals["#{PAWNMOVE}#{PLAYERZ}"] = 0.0
+    $currentVals["#{PAWNMOVE}#{PLAYERSPEED}"] = 0.0
+    $currentVals["#{PAWNMOVE}#{PLAYERPITCH}"] = 0.0
+    $currentVals["#{PAWNMOVE}#{PLAYERYAW}"] = 0.0
+    $currentVals["#{PAWNMOVE}#{PLAYERROLL}"] = 0.0
+    $currentVals["#{PAWNMOVE}#{PLAYERSTOP}"] = 0.0
+    $currentVals["#{PAWNMOVE}#{PLAYERJUMP}"] = 0.0
+    $currentVals["#{PAWNMOVE}#{PLAYERCROUCH}"] = 0.0
+    $currentVals["#{PAWNMOVE}#{PLAYERTELEPORT}"] = 0.0
+    $currentVals["#{PAWNMOVE}#{USERID}"] = -1
 end
 
 def createBlockMessages(val)
@@ -560,6 +645,8 @@ def createBlockMessages(val)
       # Ignore comment lines
     when PLAYERMOVE
       messages = createMove(params, "#{PLAYERMOVE}")
+    when PAWNMOVE
+      messages = createMove(params, "#{PAWNMOVE}")
     when CAMERAMOVE
       messages = createMove(params, "#{CAMERAMOVE}")
     when WAIT
@@ -623,8 +710,6 @@ def createSortedBundle(messages)
 
   # ADD MESSAGES TO AN ARRAY FOR EACH UNIQUE START TIME. THESE WILL BECOME BUNDLES
   uniqueStarttimes.each do |stime|
-
-
 
     currentBundle = Array.new
 

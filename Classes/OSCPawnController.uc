@@ -2,6 +2,8 @@ class OSCPawnController extends OSCPlayerController
  DLLBind(oscpack_1_0_2)
  dependson(OSCPlayerControllerDLL);
 
+var class<UTFamilyInfo> CharacterClass;
+ 
 var int pawnUID;
 
 var float velRotation;
@@ -19,11 +21,28 @@ dllimport final function OSCPawnBotStateValuesStruct getOSCPawnBotStateValues(in
 dllimport final function OSCPawnBotTeleportStruct getOSCPawnBotTeleportValues(int id);
 dllimport final function OSCPawnBotDiscreteValuesStruct getOSCPawnBotDiscreteValues(int id);
 
-DefaultProperties
+simulated event PostBeginPlay()
 {
-	velRotation = 5000;
-	InputClass=class'UT3OSC.OSCPawnInput';
+  super.PostBeginPlay();
+   
+  SetupPlayerCharacter();
+  
+  // If Valkordia, make it fly
+  if(OSCPawn(Pawn).selectedPlayerMesh == 2) {
+	Pawn.SetPhysics(PHYS_Flying);
+  } else {
+	Pawn.SetPhysics(PHYS_Falling);  
+  }
+  Pawn.SetMovementPhysics();	
 }
+
+/** Set player's character info class & perform any other initialization */
+function SetupPlayerCharacter()
+{
+  //Set character to our custom character
+  ServerSetCharacterClass(CharacterClass);
+}
+
 
 simulated function setOSCScriptPlayermoveStruct(OSCScriptPlayermoveStruct fstruct)
 {
@@ -35,11 +54,9 @@ simulated function setOSCScriptTeleportStruct(OSCScriptPlayerTeleportStruct tstr
 	localOSCScriptTeleportStruct = tstruct;
 }	
 
-
-
 auto state OSCPawnMove
 {
-		
+	
 	function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, Rotator DeltaRot)
 	{
 	
@@ -62,26 +79,32 @@ auto state OSCPawnMove
 		local rotator			OldRotation;
 		local Vector Direction;
 		local Rotator NewRotation, DesiredRotation;
-		
-		
-		`log("Teleport id="$localOSCPawnBotTeleportStruct.id$", "$localOSCPawnBotTeleportStruct.teleportx$", "$localOSCPawnBotTeleportStruct.teleporty$", "$localOSCPawnBotTeleportStruct.teleportz);
-		
+
 		if (localOSCPawnBotTeleportStruct.teleport > 0)
 		{		
 			OSCPawnBot(Pawn).teleport(localOSCPawnBotTeleportStruct.teleportx, localOSCPawnBotTeleportStruct.teleporty, localOSCPawnBotTeleportStruct.teleportz);					
 		}
 		
-
 		OSCJump = localOSCPawnBotDiscreteValuesStruct.jump;
 		OSCVector.X = localOSCPawnBotStateValuesStruct.x;
 		OSCVector.Y = localOSCPawnBotStateValuesStruct.y;
 		OSCVector.Z = localOSCPawnBotStateValuesStruct.z;
 		OSCGroundSpeed = localOSCPawnBotStateValuesStruct.speed;
 		OSCStop = localOSCPawnBotDiscreteValuesStruct.stop;
+		
 		OSCPitch = localOSCPawnBotStateValuesStruct.pitch;
 		OSCYaw  = localOSCPawnBotStateValuesStruct.yaw;
 		OSCRoll = localOSCPawnBotStateValuesStruct.roll;
 		
+				// Testing follow functions
+		if ( OSCPawnBot(Pawn).follow==true )
+		{
+			OSCVector.X = OSCPawnBot(Pawn).targetAccel.X;
+			OSCVector.Y = OSCPawnBot(Pawn).targetAccel.Y;
+			OSCVector.Z = OSCPawnBot(Pawn).targetAccel.Z;
+			
+			`log("                *****************                       ******************* XYZ in PawnController");
+		}	
 		
 		if (OSCJump > 0.0) 
 		{
@@ -91,7 +114,7 @@ auto state OSCPawnMove
 
 		if( Pawn == None )
 		{
-			GotoState('Dead');
+			GotoState('Dead'); //"
 		}
 		else
 		{
@@ -108,7 +131,7 @@ auto state OSCPawnMove
 */			
 			NewAccel = OSCVector.X*X + OSCVector.Y*Y;
 			NewAccel = Pawn.AccelRate * Normal(NewAccel);
-			
+/*			
 			if(OSCStop > 0.0)
 			{
 	//			`log("OSCStop: "$OSCStop$" - id: "$pawnUID);
@@ -116,7 +139,7 @@ auto state OSCPawnMove
 				NewAccel.Y = 0;
 				NewAccel.Z = 0;
 			}		
-		
+*/		
 			//DesiredRotation = Rotator(NewAccel);
 			OldRotation = Rotation;
 			UpdateRotation(DeltaTime);
@@ -125,8 +148,9 @@ auto state OSCPawnMove
 			//`log("PROCESSING MOVE.........NewAccel: "$NewAccel.X$", "$NewAccel.Y$", "$NewAccel.Z);
 			
 			Pawn.GroundSpeed = OSCGroundSpeed;   	// Add OSC speed control
-
-			DoubleClickMove = PlayerInput.CheckForDoubleClickMove( DeltaTime/WorldInfo.TimeDilation );
+			Pawn.AirSpeed = OSCGroundSpeed;  // for now share speed
+			
+			//DoubleClickMove = PlayerInput.CheckForDoubleClickMove( DeltaTime/WorldInfo.TimeDilation );
 			
 			//OldRotation = Rotation;
 			
@@ -180,23 +204,6 @@ auto state OSCPawnMove
 	
 	function UpdateRotation( float DeltaTime )
 	{
-/*
-		local float deltaRotation;
-		local Rotator newRotation;
-   
-		deltaRotation = velRotation * DeltaTime; 
-   
-		newRotation = Rotation;
-		newRotation.Pitch = localOSCPawnBotStateValuesStruct.pitch;
-		newRotation.Yaw  = localOSCPawnBotStateValuesStruct.yaw;
-		newRotation.Roll = localOSCPawnBotStateValuesStruct.roll;
-		
-		newRotation.Pitch += deltaRotation;
-		newRotation.Yaw  += deltaRotation;   
-		newRotation.Roll  += deltaRotation;   
-
-		SetRotation( newRotation );   	
-*/
 		local Rotator DeltaRot, newRotation, ViewRotation;
 		local float OSCPitch, OSCYaw, OSCRoll;
 		
@@ -209,22 +216,33 @@ auto state OSCPawnMove
 		{
 			Pawn.SetDesiredRotation(ViewRotation);
 		}
-
+	
 		// Calculate Delta to be applied on ViewRotation
 		DeltaRot.Yaw = OSCYaw;
 		DeltaRot.Pitch = OSCPitch;
 		DeltaRot.Roll = OSCRoll;
-
+		
 		ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
+
+				// Testing follow functions
+		if ( OSCPawnBot(Pawn).follow==true )
+		{
+			ViewRotation = OSCPawnBot(Pawn).targetRotation;
+			`log("                *****************                       ******************* PawnController");
+		}		
+
 		SetRotation(ViewRotation);
 
 		ViewShake( deltaTime );
 
 		NewRotation = ViewRotation;
 		NewRotation.Roll = Rotation.Roll;
-
+		
 		if ( Pawn != None )
+		{
 			Pawn.FaceRotation(NewRotation, deltatime);
+		}
+		
 		
 	}
 	
@@ -301,7 +319,7 @@ auto state OSCPawnMove
 	Begin:
 		pawnUID = OSCPawnBot(Pawn).getUID();
 		
-		`log("IN OSCPawnController state OSCPawnMove::Pawn.uid"$OSCPawnBot(Pawn).getUID());
+		`log("IN OSCPawnController state OSCPawnMove::Pawn.uid = "$OSCPawnBot(Pawn).getUID());
 		
 }
 
@@ -324,4 +342,13 @@ function AddOnlineDelegates(bool bRegisterVoice)
 event PlayerTick(float DeltaTime)
 {
 	Super.PlayerTick(DeltaTime);
+}
+
+DefaultProperties
+{
+	velRotation = 5000;
+	InputClass=class'UDKOSC.OSCPawnInput';
+	
+	//Points to the UTFamilyInfo class for your custom character
+	//CharacterClass=class'UDKOSC.OSCFamilyInfo_OSCPawnBot'
 }

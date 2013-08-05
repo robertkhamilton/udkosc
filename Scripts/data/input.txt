@@ -1,12 +1,315 @@
-playermove teleport 0 0 1000 1
-playermove x 1 1
-playermove speed 0 1
+pawnmove teleport 0 0 12000 0
+pawnmove teleport 800 800 12500 1
+pawnmove x 1 0
+pawnmove x 1 1
+pawnmove speed 700 0
+pawnmove speed 600 1
+[
+pawnmove yaw 720 14000 0
+pawnmove yaw 720 14000 1
+]
+[
+pawnmove pitch -45 1000 0
+pawnmove pitch -45 1000 1
+]
+[
+pawnmove pitch 45 1000 0
+pawnmove pitch 45 1000 1
+]
+[
+pawnmove yaw 720 14000 0
+pawnmove yaw 720 14000 1
+]
+[
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 1
+]
+[
+pawnmove pitch 65 1000 0
+pawnmove pitch 65 1000 1
+]
+[
+pawnmove pitch -65 1000 0
+pawnmove pitch -65 1000 1
+]
+[
+pawnmove yaw 360 14000 0
+pawnmove yaw 360 14000 1
+]
+[
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 1
+]
+[
+pawnmove yaw 720 14000 0
+pawnmove yaw 720 14000 1
+]
+[
+pawnmove pitch -45 1000 0
+pawnmove pitch -45 1000 1
+]
+[
+pawnmove pitch 45 1000 0
+pawnmove pitch 45 1000 1
+]
+[
+pawnmove yaw 720 14000 0
+pawnmove yaw 720 14000 1
+]
+[
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 1
+]
+[
+pawnmove pitch 65 1000 0
+pawnmove pitch 65 1000 1
+]
+[
+pawnmove pitch -65 1000 0
+pawnmove pitch -65 1000 1
+]
+[
+pawnmove yaw 360 14000 0
+pawnmove yaw 360 14000 1
+]
+[
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 1
+]
+[
+pawnmove yaw 720 14000 0
+pawnmove yaw 720 14000 1
+]
+[
+pawnmove pitch -45 1000 0
+pawnmove pitch -45 1000 1
+]
+[
+pawnmove pitch 45 1000 0
+pawnmove pitch 45 1000 1
+]
+[
+pawnmove yaw 720 14000 0
+pawnmove yaw 720 14000 1
+]
+[
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 1
+]
+[
+pawnmove pitch 65 1000 0
+pawnmove pitch 65 1000 1
+]
+[
+pawnmove pitch -65 1000 0
+pawnmove pitch -65 1000 1
+]
+[
+pawnmove yaw 360 14000 0
+pawnmove yaw 360 14000 1
+]
+[
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 1
+]
+
+pawnmove pitch 65 1000 0
+pawnmove pitch -65 1000 0
+pawnmove yaw 360 7000 0	
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 0
+pawnmove pitch -45 1000 0
+pawnmove pitch 45 1000 0
+pawnmove yaw 360 7000 0
+pawnmove pitch 65 1000 0
+pawnmove pitch -65 1000 0
+pawnmove yaw 360 7000 0	
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 0
+
+pawnmove teleport 1110 0 900 0
+pawnmove stop 0
+wait 5000
+pawnmove x 1 0
+pawnmove speed 500 0
+pawnmove yaw 360 10000 0
+pawnmove yaw -360 10000 0
+pawnmove stop 0
+
+pawnmove teleport 1110 0 900 0
+
+pawnmove speed 20 0
+pawnmove x 1 0
+
+wait 3000
+pawnmove x 0 0
+
+pawnmove speed 0 0
+
+pawnmove x 0 0
+
+pawnmove stop 0
+
+pawnmove stop 0
+pawnmove x 0 0
+
+pawnmove teleport 1110 0 900 0
+pawnmove speed 390 0
+pawnmove x 1 0
+
+
+pawnmove speed 390 0
+pawnmove x 1 0
+
+
+pawnmove teleport 1110 0 900 0
+
+
+
+pawnmove stop 0
+pawnmove y 0 0
+pawnmove z 1 0
+pawnmove speed 205 0
+pawnmove pitch 90 0
+pawnmove pitch -90 5000 0
 
 [
-playermove yaw 7200 50000 1
-playermove speed 10000 50000 1
+pawnmove teleport 0 0 1000 0
+pawnmove x 19999999 0
+pawnmove y 2999999999.1 0
+pawnmove z 3999999999 0
+pawnmove stop 0
+pawnmove jump 2000 0
+pawnmove speed 2000 0
 ]
-playermove stop 1
+
+wait 2000
+pawnmove teleport 0 0 1000 0
+
+playermove speed 500 0
+playermove x 1 0
+pawnmove stop 0
+
+pawnmove jump 2000 0
+
+pawnmove speed 500 0
+pawnmove x 1 0
+wait 2000
+pawnmove stop 0
+
+# pawnmove jump 2000 0
+# pawnmove teleport 0 0 1000 0
+
+
+player move teleport 0 0 1000 0	
+
+pawnmove teleport 10 10 10 0
+pawnmove jump 2000 0
+pawnmove speed 500 0
+[
+pawnmove speed 2000 2000 0
+pawnmove z 500 2000 0
+]
+
+console 1
+
+playermove z 1000 2
+pawnmove x 500 0
+pawnmove y 500 1
+pawnmove z 500 2
+[
+pawnmove x 900 200 0
+pawnmove y 800 200 1
+pawnmove z 700 200 2
+playermove z 2000 200 2
+]
+
+
+
+
+playermove x 1 0
+playermove x 1 1
+<<<<<<< HEAD
+playermove speed 0 1
+
+=======
+pawnmove x 1 1
+playermove x 1 2
+
+
+pawnmove teleport 0 0 1000 10
+
+playermove teleport 0 0 1000 10
+
+cameramove x 100
+playermove x 1 0
+playermove y 2 0
+playermove z 3 0
+ 
+
+
+
+
+cameramove z 2000 1000
+cameramove teleport 100 100 500
+cameramove pitch -90
+
+playermove x 1 0
+playermove speed 0 0
+>>>>>>> cf508aa52ddf06ae6403c6d45db10bedf2375aba
+[
+playermove yaw 7200 20000 0
+playermove speed 10000 20000 0
+]
+playermove stop 0
+
+# cameramove x -1000
+cameramove pitch -90
+
+[
+cameramove x 1000 2000
+cameramove y 1000 2000
+]
+
+playermove teleport 0 0 1000 0
+
+wait 2000
+playermove x 1 0
+playermove speed 0 0
+[
+playermove yaw 7200 20000 0
+playermove speed 10000 20000 0
+]
+playermove stop 0
+
+playermove teleport 0 0 1000 1
+
+playermove jump 2000.0 0
+playermove jump 2000.0 1
+playermove jump 2000.0 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 playermove teleport 0 0 1000 1

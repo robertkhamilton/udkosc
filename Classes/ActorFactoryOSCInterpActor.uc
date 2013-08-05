@@ -7,5 +7,5 @@ class ActorFactoryOSCInterpActor extends ActorFactoryDynamicSM
 defaultproperties
 {
 	MenuName="Add OSCInterpActor"
-	NewActorClass=class'UT3OSC.OSCInterpActor'
+	NewActorClass=class'UDKOSC.OSCInterpActor'
 }

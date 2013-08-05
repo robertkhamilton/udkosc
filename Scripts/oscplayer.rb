@@ -9,7 +9,7 @@ m_time = 0
 start_time = 0
 
 @client = OSC::Client.new( address, port )
-# @client = OSC::Client.new( 'localhost', 3334 )
+#@client = OSC::Client.new( 'localhost', 3334 )
 
 @messages = YAML.load($stdin)
 # e.g. @messages = YAML::load(File.open("/Users/rob/data/udkosc/git/udkosc/Scripts/pawn_0_spiral_4.yml"))
@@ -33,7 +33,7 @@ start_time = 0
 
   puts "sleeping #{dt}"
   sleep(dt) if dt > 0
-  message = OSC::OSCPacket.messages_from_network(m[:message]).first
-  p message
+  message = OSC::OSCPacket.messages_from_network(m[:message]).first  
+  p message  
   @client.send(message)
 end

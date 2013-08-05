@@ -2,7 +2,7 @@
  * Copyright 1998-2010 Epic Games, Inc. All Rights Reserved.
  */
 class OSCProj_LinkPlasma extends UTProj_LinkPlasma
-	config(UT3OSC)
+	config(UDKOSC)
 	DLLBind(oscpack_1_0_2); // extends UTProjectile;
 	
 var int id;
@@ -83,7 +83,7 @@ AccelRate=30.0
 	DrawScale=3.2
 	Physics=PHYS_Falling
 	CustomGravityScaling=0.0	
-	TickFrequency=0	/** float: Actor: How often to tick this actor. If 0, tick every frame */
+//	TickFrequency=0	/** float: Actor: How often to tick this actor. If 0, tick every frame */
 }
 
 /*

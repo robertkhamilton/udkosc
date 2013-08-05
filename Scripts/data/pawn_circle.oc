@@ -1,0 +1,13 @@
+#
+# Player runs in circle then stops
+#
+#  C:\Users\Rob\data\github\udkosc\Scripts\ruby osccontrol.rb localhost 7001 ./data/pawn_circle.oc
+#
+# Single-pawn circle
+playermove teleport 0 1000 1 0
+wait 1000
+playermove x 1 0
+playermove yaw 0 0 0
+playermove speed 400 0
+playermove yaw 360 2000 0
+playermove stop 0

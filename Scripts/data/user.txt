@@ -1,0 +1,1232 @@
+# #########################################
+#
+# #########################################
+#
+# LOCATIONS
+#
+# Home Cave:			0, 0, 50
+# Main Tower "Nest": 	953, -425, 9162
+# Cave Mouth A:		-6006, -6181, -2950	
+# Lookout Crystals:	-14766, 24693, 3839
+# 
+# Pylon 1:				-2050, 257, 178
+# Pylon 2:				-2976, -237, 373
+# Pylon 3:				-4075, 218, 704
+# Cluster A:			-4727, 132, 666				
+# Cluster B:			-5581, 230, 642
+# Gate 1:				-6000, -429, 631
+# Pylon 4:				-7225, -695, 467
+# Pylon 5:				-8424, -198, 81
+# Cluster C:			-9243, 118, 85
+# Pylon 6:				-9182, -704, -74
+# Pylon 7:				-9717, 479, 62
+# Pylon 8: 			-10210, -555, 86
+# Pylon 9:				-10493, 829, 135
+# Pylon 10:			-1130, 385, 304
+# 
+# #########################################
+#
+# CONSOLE COMMANDS
+#
+# console oscstartoutput
+# console behindview
+# console oscmove
+# console freecameraon
+# console freecameraoff
+# console attachedcameraon
+# console attachedcameraoff
+# playermove mode 1 0 [NOT USED]
+#
+# #########################################
+# init player (incremental) params
+# #########################################
+playermove stop 0
+playermove speed 0 0 
+playermove teleport -3500 1200 12000 0
+playermove x 0 0
+playermove y 0 0
+playermove z 0 0
+playermove setpitch 0 0
+playermove setyaw 0 0
+playermove setroll 0 0
+#
+#
+#
+# Nest::Walk to front
+playermove teleport 953 -425 9162 0
+playermove setyaw 90 0
+wait 200 
+playermove yaw 130 4000 0
+playermove speed 100 0
+playermove x 1 0
+wait 200 
+playermove jump 1000 0
+playermove pitch -22 2000
+playermove pitch -68 3000 0
+playermove pitch 180 4000 0
+
+
+playermove yaw 90 4000 0
+
+# Nest::Walk to edge
+#
+playermove teleport 953 -425 9162 0
+playermove setyaw 90 0
+wait 4000
+playermove speed 100 0
+playermove x 1 0
+wait 21000
+[
+playermove pitch -45 2000 0
+playermove yaw -50 1000 0
+]
+playermove stop 0
+wait 2000
+playermove yaw 100 3000 0
+
+
+
+
+
+
+
+
+
+
+
+
+# Rotate Absolute val
+playermove setroll 0 0 
+
+playermove setpitch 90 0
+playermove roll 180 5000 0
+
+playermove pitch 50 2000 0
+
+
+playermove setyaw 2 0
+playermove setpitch 90 0
+playermove wait 200 0
+playermove pitch 0 3000 0
+
+
+
+# Cave
+playermove teleport 0 0 50 0
+
+
+# #########################################
+#
+#
+# init player (incremental) params
+#
+playermove teleport -3500 1200 12000 0
+playermove x 0 0
+playermove y 0 0
+playermove z 0 0
+playermove pitch 0 0
+playermove yaw 0 0
+playermove roll 0 0
+playermove speed 1000 0
+playermove x 1 0
+wait 3000
+[
+playermove yaw 20 12000 0
+playermove pitch -20 12000 0
+]
+[
+playermove pitch -30 3000 0
+playermove yaw -30 3000 0
+]
+[
+playermove pitch 50 5000 0
+playermove yaw 10 5000 0
+]	
+# pitch should be 0
+
+
+
+
+cameramove x -540
+cameramove y 0
+cameramove z 62
+#
+# Almost exactly same distance and angle from setAttachedCamera 0/1
+#
+#
+# playermove stop 0
+#
+# Start Moving
+#
+playermove x 1 0
+#
+[
+cameramove x 500 20000
+cameramove yaw -30 20000
+playermove yaw 90 20000 0
+]
+
+
+
+
+
+
+
+# playermove stop 0
+# cameramove x 800
+
+#
+#
+cameramove x -200
+cameramove z 60
+cameramove y 0
+cameramove pitch 0
+cameramove yaw 0
+cameramove roll 0
+#
+playermove x 1 0
+#
+[
+playermove pitch -30 20000 0
+cameramove x 0 20000 
+]
+[
+playermove yaw 180 10000 0
+playermove pitch 30 10000 0
+]
+
+playermove yaw -900 15000 0
+
+playermove pitch 60 3000 0
+
+playermove yaw 0 9000 0
+
+playermove yaw -200 10000 0
+
+cameramove 
+cameramove x 200
+cameramove y 10
+
+playermove yaw 15 0
+
+cameramove pitch -10
+
+playermove x 1 0
+playermove speed 500 0
+playermove yaw -180 7000 0
+playermove stop 0
+
+cameramove pitch 
+
+playermove yaw -90 0 
+playermove pitch -45 0 
+
+cameramove x 200
+playermove x 1 0
+playermove speed 20 0
+
+playermove teleport 0 0 15000 0
+cameramove x -500
+
+playermove pitch -100 0
+
+playermove teleport 0 0 15000 0
+
+playermove yaw 90 0
+
+playermove x 1 0
+playermove speed 100 0
+cameramove yaw 90 
+
+cameramove pitch 0
+cameramove 
+playermove x -1 0
+playermove pitch 0 0
+
+playermove stop 0
+playermove teleport 0 0 16000 0
+
+
+playermove speed 800 0
+
+cameramove pitch -30 3000
+
+playermove yaw 0 2000 0
+playermove speed 100 0
+playermove z 0 0
+cameramove pitch -10
+
+cameramove x 150
+cameramove yaw 0
+playermove x 1 0
+playermove z 0 0
+playermove speed 20 0
+playermove yaw 2000 1000 0
+
+[
+playermove yaw 100 2000 0
+]
+
+cameramove z 
+playermove yaw 200 0
+playermove x 11 0
+[
+playermove yaw 100 2000 0
+playermove pitch 90 5000 0
+]
+
+cameramove yaw 90 
+
+cameramove x -100
+
+cameramove x -2200
+cameramove y 400
+
+cameramove yaw 0
+cameramove pitch 20
+playermove x 1 0
+playermove yaw 20 0
+playermove speed 500 0
+playermove pitch 10 0
+
+playermove teleport 0 0 16000 0
+
+playermove yaw 220 0
+playermove speed 500 0
+
+cameramove x 100
+cameramove pitch 0 
+
+playermove teleport 0 0 16000 0
+
+playermove pitch 90 0
+playermove yaw 90 0
+
+
+playermove teleport 0 0 16000 0
+playermove x 0 0
+playermove speed 500 0
+playermove yaw 90 0
+playermove x 0 0
+playermove y 0 0
+playermove speed 500 0
+playermove pitch -45 0
+playermove yaw 50 0
+
+cameramove x 0
+cameramove y 0
+cameramove z 1000
+cameramove pitch -90
+
+
+cameramove yaw 10
+cameramove roll 0
+cameramove x -7700
+cameramove y 220
+cameramove z 700
+
+playermove x 0 0
+playermove z 0 0
+playermove pitch 20 0
+playermove speed 1400 0
+cameramove pitch 0
+cameramove yaw 20
+cameramove z 0
+cameramove x -100
+playermove yaw 0 0
+playermove y 0 0
+
+cameramove z 0
+
+playermove teleport 0 0 16000 0
+
+cameramove x 0
+cameramove y 0
+cameramove z 12500
+
+playermove teleport 0 0 12000 0
+
+cameramove pitch -90
+cameramove z 450
+playermove x 1 0
+playermove yaw 45 0
+wait 1000
+playermove stop 0
+cameramove z 1050
+
+# FREE MODE CAMERA TEST
+cameramove x 0
+cameramove y 0
+cameramove z 12500
+cameramove pitch -30
+cameramove yaw 0
+cameramove roll 0
+playermove teleport 0 0 12000 0
+playermove x 1 0
+playermove speed 1000 0
+
+playermove x 1 0
+
+cameramove x 0
+cameramove y 0
+cameramove z 16000
+cameramove pitch -20
+cameramove yaw -30
+cameramove roll 0
+
+playermove teleport 0 0 11000
+
+cameramove x 0
+cameramove y 0
+cameramove z 16000
+cameramove pitch 0
+cameramove yaw 0
+cameramove roll 0
+
+cameramove y 0
+cameramove z 100
+
+cameramove pitch -45
+playermove x 1 0
+playermove speed 400 0
+playermove teleport 0 0 14000
+
+teleport 0 0 1000 0
+
+playermove teleport 0 0 1000 0
+cameramove x -400
+playermove x 1 0
+playermove y 0 0
+playermove z 0 0
+playermove pitch 45 0
+playermove yaw 45 0
+playermove roll 45 0
+
+
+playermove yaw 190 400 0
+
+cameramove -400
+
+playermove teleport 0 0 1000 0
+
+playermove yaw 90 0
+playermove x 1 0
+
+playermove teleport 0 0 1000 0
+cameramove x -300
+cameramove z 100
+cameramove yaw -30
+
+playermove pitch 20 0
+
+playermove yaw 15 0
+
+
+playermove x 1 0
+playermove yaw 45 0
+playermove speed 1 0
+playermove y 0 0
+playermove z 1 0
+
+playermove yaw 90 0
+
+
+
+cameramove x -300
+cameramove z 100
+playermove teleport 0 0 100 0
+playermove x 1 0
+playermove yaw 0 0
+cameramove x 2000 5000
+cameramove speed 10
+
+
+playermove yaw 90 0
+
+cameramove yaw 0
+playermove x 0 0
+
+playermove x 1 0
+
+
+playermove yaw 300 0
+
+cameramove x -300
+cameramove z 100
+playermove teleport 0 0 100 0
+
+cameramove yaw 0
+cameramove x -200
+playermove yaw 45 
+
+playermove teleport 0 0 20 0
+playermove yaw 45 0
+playermove x 1 0
+playermove speed 14 0
+
+cameramove yaw -45
+
+cameramove pitch 45
+
+cameramove z 50
+cameramove x -200
+
+playermove yaw -1 0
+
+playermove yaw 180 5000 0
+
+cameramove x -400 5000 
+
+cameramove yaw 12
+
+
+playermove yaw 45 0
+
+
+cameramove yaw 15
+
+cameramove z 150
+cameramove x -200
+playermove x 1 0
+cameramove yaw -45
+
+playermove yaw 45 0
+
+
+
+playermove teleport 0 0 20 0
+playermove x 1 0
+cameramove x -110
+playermove yaw 45 0
+
+playermove stop 0
+
+playermove teleport 560 -660 50 0
+
+cameramove yaw 30
+playermove yaw 0 2000 0
+
+playermove yaw 300 0
+
+cameramove x 0
+cameramove y 0
+cameramove z 50
+cameramove yaw 0
+
+
+
+cameramove z 200
+
+
+playermove teleport 0 0 200 0
+playermove x 1 0
+cameramove x 2000 2000 
+playermove yaw -100 3000 0
+playermove stop 0
+
+cameramove x 110
+cameramove y 0
+cameramove z 300
+cameramove yaw 200
+
+playermove teleport 0 0 200 0
+playermove x 1 0
+playermove yaw 100 3000 0
+playermove stop 0
+
+
+playermove yaw 300 200 0
+
+cameramove yaw 200
+
+cameramove teleport 0 0 1000
+
+playermove teleport 1910 320 250 0
+playermove x 1 0
+playermove y 0 0
+playermove yaw 2290 0
+cameramove x -100
+cameramove y 0
+cameramove z 20
+cameramove yaw -90 3000
+playermove stop 0
+
+wait 100
+playermove stop 0
+
+cameramove yaw -140
+
+playermove yaw 900 3000 0
+
+cameramove x 2400
+cameramove y 500
+cameramove z 300
+cameramove yaw -140
+
+playermove x 1 0
+playermove yaw -220 0
+
+playermove speed 40 0
+
+wait 1000
+playermove stop 0
+
+cameramove x 200
+cameramove y 0
+cameramove z 0
+cameramove yaw 150 
+cameramove yaw 0 3000
+
+
+playermove yaw 120 100 0
+
+cameramove x 2400
+cameramove y 500
+cameramove z 300
+cameramove yaw -170
+
+playermove teleport -300 0 1500 0
+
+cameramove yaw 200
+cameramove pitch -45 2000
+playermove pitch 45 0
+playermove yaw 90 2000 0
+playermove yaw 90 2000 0
+playermove yaw 90 2000 0
+playermove stop 0
+
+
+playermove teleport -3000 0 2000 0
+playermove x 1 0
+playermove yaw 0
+playermove speed 100 0
+wait 2000
+
+
+[
+cameramove yaw 180 2000
+cameramove pitch -45 2000
+]
+
+
+
+
+
+
+pawnmove teleport 0 0 2000 0
+pawnmove teleport 800 800 2500 1
+pawnmove x 1 0
+pawnmove x 1 1
+pawnmove speed 700 0
+pawnmove speed 600 1
+[
+pawnmove yaw 720 14000 0
+pawnmove yaw 720 14000 1
+]
+[
+pawnmove pitch -45 1000 0
+pawnmove pitch -45 1000 1
+]
+[
+pawnmove pitch 45 1000 0
+pawnmove pitch 45 1000 1
+]
+[
+pawnmove yaw 720 14000 0
+pawnmove yaw 720 14000 1
+]
+[
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 1
+]
+[
+pawnmove pitch 65 1000 0
+pawnmove pitch 65 1000 1
+]
+[
+pawnmove pitch -65 1000 0
+pawnmove pitch -65 1000 1
+]
+[
+pawnmove yaw 360 14000 0
+pawnmove yaw 360 14000 1
+]
+[
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 1
+]
+
+pawnmove pitch 65 1000 0
+pawnmove pitch -65 1000 0
+pawnmove yaw 360 7000 0	
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 0
+pawnmove pitch -45 1000 0
+pawnmove pitch 45 1000 0
+pawnmove yaw 360 7000 0
+pawnmove pitch 65 1000 0
+pawnmove pitch -65 1000 0
+pawnmove yaw 360 7000 0	
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 0
+pawnmove yaw 360 7000 0
+
+pawnmove teleport 1110 0 900 0
+pawnmove stop 0
+wait 5000
+pawnmove x 1 0
+pawnmove speed 500 0
+pawnmove yaw 360 10000 0
+pawnmove yaw -360 10000 0
+pawnmove stop 0
+
+pawnmove teleport 1110 0 900 0
+
+pawnmove speed 20 0
+pawnmove x 1 0
+
+wait 3000
+pawnmove x 0 0
+
+pawnmove speed 0 0
+
+pawnmove x 0 0
+
+pawnmove stop 0
+
+pawnmove stop 0
+pawnmove x 0 0
+
+pawnmove teleport 1110 0 900 0
+pawnmove speed 390 0
+pawnmove x 1 0
+
+
+pawnmove speed 390 0
+pawnmove x 1 0
+
+
+pawnmove teleport 1110 0 900 0
+
+
+
+pawnmove stop 0
+pawnmove y 0 0
+pawnmove z 1 0
+pawnmove speed 205 0
+pawnmove pitch 90 0
+pawnmove pitch -90 5000 0
+
+[
+pawnmove teleport 0 0 1000 0
+pawnmove x 19999999 0
+pawnmove y 2999999999.1 0
+pawnmove z 3999999999 0
+pawnmove stop 0
+pawnmove jump 2000 0
+pawnmove speed 2000 0
+]
+
+wait 2000
+pawnmove teleport 0 0 1000 0
+
+playermove speed 500 0
+playermove x 1 0
+pawnmove stop 0
+
+pawnmove jump 2000 0
+
+pawnmove speed 500 0
+pawnmove x 1 0
+wait 2000
+pawnmove stop 0
+
+# pawnmove jump 2000 0
+# pawnmove teleport 0 0 1000 0
+
+
+player move teleport 0 0 1000 0	
+
+pawnmove teleport 10 10 10 0
+pawnmove jump 2000 0
+pawnmove speed 500 0
+[
+pawnmove speed 2000 2000 0
+pawnmove z 500 2000 0
+]
+
+console 1
+
+playermove z 1000 2
+pawnmove x 500 0
+pawnmove y 500 1
+pawnmove z 500 2
+[
+pawnmove x 900 200 0
+pawnmove y 800 200 1
+pawnmove z 700 200 2
+playermove z 2000 200 2
+]
+
+
+
+
+playermove x 1 0
+playermove x 1 1
+pawnmove x 1 1
+playermove x 1 2
+
+
+pawnmove teleport 0 0 1000 10
+
+playermove teleport 0 0 1000 10
+
+cameramove x 100
+playermove x 1 0
+playermove y 2 0
+playermove z 3 0
+ 
+
+
+
+
+cameramove z 2000 1000
+cameramove teleport 100 100 500
+cameramove pitch -90
+
+playermove x 1 0
+playermove speed 0 0
+[
+playermove yaw 7200 20000 0
+playermove speed 10000 20000 0
+]
+playermove stop 0
+
+# cameramove x -1000
+cameramove pitch -90
+
+[
+cameramove x 1000 2000
+cameramove y 1000 2000
+]
+
+playermove teleport 0 0 1000 0
+
+wait 2000
+playermove x 1 0
+playermove speed 0 0
+[
+playermove yaw 7200 20000 0
+playermove speed 10000 20000 0
+]
+playermove stop 0
+
+playermove teleport 0 0 1000 1
+
+playermove jump 2000.0 0
+playermove jump 2000.0 1
+playermove jump 2000.0 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+playermove teleport 0 0 1000 1
+wait 1000
+
+playermove jump 2000.0 0
+playermove jump 2000.0 1
+playermove jump 2000.0 2
+playermove jump 2000.0 3
+playermove jump 2000.0 4
+playermove jump 2000.0 5
+playermove jump 2000.0 6
+playermove jump 2000.0 7
+playermove jump 2000.0 8
+playermove jump 2000.0 9
+playermove jump 2000.0 10
+wait 5000
+
+ 
+playermove speed 150 1
+playermove x 0 1
+playermove pitch 90 2000 1
+playermove stop 1
+
+playermove teleport 0 0 1000 1
+wait 3000
+playermove speed 200 1
+playermove x 1 1
+playermove yaw 90 1
+wait 3000
+playermove yaw 90 1
+wait 3000
+playermove yaw 90 3000 1
+wait 3000
+playermove yaw 0 1
+wait 3000
+playermove stop 1
+
+playermove pitch -1 1
+wait 3000
+playermove pitch 1 1
+
+
+playermove teleport 0 0 1000 1
+playermove speed 400 1
+playermove x 1 1
+playermove y 1 1
+playermove yaw .5 1
+wait 10000
+playermove stop 1
+playermove speed 0 1
+wait 1000
+playermove yaw 0 1
+
+playermove speed 0 1
+playermove teleport 0 0 1000 1
+wait 4000
+playermove speed 150.0 1
+playermove x 1 1
+wait 3000
+playermove stop 1
+wait 4000
+playermove x -1 1
+playermove speed 666 1
+playermove stop 1
+wait 4000
+playermove y 2 1
+
+
+playermove teleport 0.0 110.0 1000.0 1
+playermove x 1 1
+wait 5000
+playermove jump 666.0 1
+wait 5000
+playermove stop 1
+wait 20
+wait 5000
+playermove speed 150.0 1
+wait 20
+playermove x 1 1
+wait 3000
+playermove jump 1000.0 1
+
+playermove teleport 0.0 0.0 1000.0 0
+playermove teleport 0.0 220.0 1000.0 2
+playermove teleport 0.0 330.0 1000.0 3
+playermove teleport 0.0 440.0 1000.0 4
+playermove speed 50.0 0
+
+playermove x 1 0
+playermove y 1 0
+wait 3000
+playermove stop 0
+wait 2000
+playermove speed 50.0 0
+playermove speed 50.0 1
+playermove x 1 0
+playermove x 1 1
+playermove y 1 0
+wait 3000
+playermove jump 666.0 0
+playermove stop 0
+playermove stop 1
+playermove teleport 0.0 0.0 1000.0 0
+playermove teleport 0.0 110.0 1000.0 1
+playermove teleport 0.0 220.0 1000.0 2
+playermove teleport 0.0 330.0 1000.0 3
+playermove teleport 0.0 440.0 1000.0 4
+playermove speed 50.0 0
+playermove speed 50.0 1
+playermove x 1 0
+playermove x 1 1
+playermove y 1 0
+wait 3000
+playermove jump 666.0 0
+playermove stop 0
+playermove stop 1
+wait 2000
+
+# playermove speed 0 0 
+# playermove speed 0 1
+
+playermove speed 100 1
+playermove x 1 1
+wait 1000
+playermove stop 1
+wait 1000
+playermove x 2 1
+
+
+
+playermove stop 0
+playermove stop 1
+playermove stop 2
+playermove stop 3
+playermove stop 4
+playermove teleport 0.0 0.0 1000.0 0
+playermove teleport 0.0 110.0 1000.0 1
+playermove teleport 0.0 220.0 1000.0 2
+playermove teleport 0.0 330.0 1000.0 3
+playermove teleport 0.0 440.0 1000.0 4
+playermove speed 300 0
+playermove speed 300 1
+playermove speed 300 2
+playermove speed 300 3
+playermove speed 300 4
+playermove x 300 0
+playermove x 300 1
+playermove x 300 2
+playermove x 300 3
+playermove x 300 4
+wait 2000
+playermove jump 500.0 0
+playermove jump 500.0 4
+playermove jump 500.0 2
+playermove jump 500.0 3
+playermove jump 500.0 1
+playermove stop 0
+playermove stop 1
+playermove stop 2
+playermove stop 3
+playermove stop 4
+
+playermove x -1 1
+playermove speed 300 1
+
+
+playermove speed 300.0 1
+playermove x 1 20 1
+
+playermove jump 500.0 7
+playermove jump 500.0 8
+playermove jump 500.0 9
+playermove jump 1500.0 0
+playermove jump 500.0 4
+playermove jump 500.0 2
+playermove jump 500.0 3
+playermove jump 500.0 5
+playermove jump 500.0 6
+
+playermove teleport 0.0 0.0 2000.0 1
+
+playermove speed 300.0 1
+wait 20
+playermove speed 300.0 2
+wait 20
+playermove speed 300.0 3
+wait 20
+playermove x -1 1
+wait 20
+playermove y 1 2
+wait 20
+playermove x 1 3
+wait 20
+
+[
+playermove x 1000.0 5000.0 2
+playermove x 2000.0 5000.0 3
+playermove y 3000.0 5000.0 2
+]
+
+wait 20
+playermove y 200.0 1
+wait 20
+playermove z 300.0 1
+wait 20
+playermove x 400.0 1
+
+playermove speed 0 1
+wait 20
+playermove speed 0 2
+wait 20
+playermove speed 0 3
+wait 20
+playermove teleport 1400 100 1600 1
+wait 20
+playermove teleport 1400 200 1600 2
+wait 20
+playermove teleport 1400 300 1600 3
+wait 20
+playermove teleport 1400 400 1600 4
+wait 20
+playermove teleport 1400 500 1600 5
+wait 20
+playermove teleport 1400 600 1600 6
+wait 20
+playermove teleport 1400 700 1600 7
+wait 1500
+wait 20
+playermove speed 130 1
+wait 20
+playermove x 1 1
+wait 20
+# playermove speed 500 1
+# wait 20
+playermove x 100 2
+wait 20
+# playermove speed 1200 1
+# wait 20
+playermove x 270 3
+
+playermove speed 1150 0
+wait 20
+playermove x 1 1
+wait 10
+playermove y 300 1
+wait 10
+playermove speed 1110 1
+wait 10
+playermove speed 0 2
+wait 1000
+playermove speed 0 1
+
+[
+cameramove x 500 5000
+cameramove y 500 5000
+cameramove z 5000 5000
+cameramove pitch -180 3000
+cameramove roll 90 2000
+]
+
+
+playermove speed 150 2
+wait 10
+playermove x 1 2
+wait 10
+playermove y 111 2
+wait 10
+playermove speed 150 3
+wait 10
+playermove x 1 3
+wait 10
+playermove y 221 3
+
+wait 300
+playermove jump 900 1
+wait 300
+playermove jump 900 2
+wait 300
+playermove jump 900 3
+
+
+playermove teleport 100 300 600 10
+wait 20
+playermove teleport 300 100 600 11
+wait 20
+playermove teleport 600 100 600 12
+wait 20
+playermove teleport 100 600 600 13
+playermove jump 500.0 2
+playermove stop 2
+playermove x 0 2
+playermove y 0 2
+
+wait 5000
+playermove jump 500.0 2
+playermove stop 2
+
+playermove speed 1300.0 1
+playermove x 1 1
+
+playermove x 1 1
+playermove wait 3000.0 1
+
+
+playermove x 1 3000.0 1
+playermove stop 1
+
+wait 15
+playermove jump 500.0 1
+wait 15
+playermove jump 500.0 4
+playermove speed 100 6
+playermove x 1 6
+playermove y 1 6
+
+playermove speed 500 1
+[
+playermove x 180 1000 1
+playermove y -270 2000 1
+]
+[
+playermove x -180 2000 1
+playermove y -360 2000 1
+cameramove z 5000 400
+]
+playermove stop 1
+playermove teleport 100.0 200.0 400.0 1
+
+playermove stop 1
+playermove x 0 1
+playermove y 0 1
+playermove z 0 1
+playermove stop 1
+cameramove x 0 20
+cameramove y 0 20
+cameramove z 3000 20
+cameramove pitch -90 20
+cameramove yaw 0 20
+cameramove roll 0 20
+playermove speed 500 20 1
+playermove pitch 0 20 1
+playermove yaw 0 20 1
+playermove roll 0 20 1
+wait 2000
+cameramove z -2700 2000
+[
+cameramove x -590 1000
+cameramove pitch 75 1000
+]
+[
+playermove y 90 1000 1
+cameramove y 1200 3000
+]
+playermove x 180 1000 1
+playermove y -270 2000 1
+playermove x -180 2000 1
+playermove y -360 2000 1
+[
+playermove x -90 1000 1
+playermove y 0 1000 1
+]
+playermove stop 1
+wait 1000
+playermove x 0 20 1
+cameramove y -1000 2000
+playermove stop 1
+[
+cameramove yaw -90 2000
+cameramove x 1000 2000
+]
+playermove x -90 20 1
+cameramove x 200 2000
+playermove stop 1
+cameramove x -300 2000
+[
+cameramove y -200 2000
+cameramove yaw -70 2000
+]
+cameramove y -100 2000
+playermove x 45 500 1
+playermove stop 1

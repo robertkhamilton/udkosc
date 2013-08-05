@@ -1,5 +1,5 @@
 class OSCProj_SeekingShockBall extends UTProj_ShockBall
-	config(UT3OSC)
+	config(UDKOSC)
 	DLLBind(oscpack_1_0_2);
 
 	
@@ -54,8 +54,8 @@ defaultproperties
 {
 	BaseTrackingStrength=10000000.0
 	HomingTrackingStrength=10000000.0
-	LifeSpan=1000.0
-	speed=620.0
+	LifeSpan=10.0 //was 1000
+	speed=0.0 //was 620.0
 	MaxSpeed=620.0
 	Damage=0.0
 	bSuperSeekAirTargets=false
@@ -66,7 +66,7 @@ defaultproperties
 	TurnRate=5.000000
 	OSCNewSpeed=1.000000
 	DrawScale=.6
-	ProjectileLightClass=class'UT3OSC.OSCSeekingShockBallLight'
+	ProjectileLightClass=class'UDKOSC.OSCSeekingShockBallLight'
 	seekTargetClassName="OSCProj_ShockBall"
 	seekTargetVolumeType="none"
 	bCollideComplex=true;

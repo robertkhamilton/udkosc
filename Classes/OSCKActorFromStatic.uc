@@ -1,6 +1,6 @@
 class OSCKActorFromStatic extends KActorFromStatic
 	placeable
-	config(UT3OSC)
+	config(UDKOSC)
 	DLLBind(oscpack_1_0_2); 
 	
 var float lastX;
@@ -23,13 +23,13 @@ dllimport final function sendOSCPlayerState(PlayerStateStruct a);
 function sendPlayerState()
 {
 	
-	Local vector loc, norm, end;
-	Local TraceHitInfo hitInfo;
-	Local Actor traceHit;
+	//Local vector loc, norm, end;
+	//Local TraceHitInfo hitInfo;
+	//Local Actor traceHit;
 	local PlayerStateStruct psStruct;
 	
-	end = Location + normal(vector(Rotation))*32768; // trace to "infinity"
-	traceHit = trace(loc, norm, end, Location, true,, hitInfo);
+	//end = Location + normal(vector(Rotation))*32768; // trace to "infinity"
+	//traceHit = trace(loc, norm, end, Location, true,, hitInfo);
 
 	// By default only 4 console messages are shown at the time
  	//ClientMessage("Hit: "$traceHit$"  class: "$traceHit.class.outer.name$"."$traceHit.class);
