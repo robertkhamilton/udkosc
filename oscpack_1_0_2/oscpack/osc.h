@@ -159,13 +159,14 @@ struct PlayerStateStruct
 	float LocX;
 	float LocY;
 	float LocZ;
-	bool crouch;
+	int crouch;
 	float Pitch;
 	float Yaw;
 	float Roll;
 	float leftTrace;
 	float rightTrace;
 	float downTrace;
+	float sendCall;
 };
 
 struct PawnStateStruct

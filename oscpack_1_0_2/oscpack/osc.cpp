@@ -974,13 +974,14 @@ __declspec(dllexport)void sendOSCPlayerState(PlayerStateStruct* pState)
         << (float)pState->LocX
 		<< (float)pState->LocY
 		<< (float)pState->LocZ
-		<< (bool)pState->crouch
+		<< (int)pState->crouch
 		<< (float)pState->Pitch
 		<< (float)pState->Yaw
 		<< (float)pState->Roll
 		<< (float)pState->leftTrace
 		<< (float)pState->rightTrace
 		<< (float)pState->downTrace
+		<< (float)pState->sendCall
 	  << osc::EndMessage;
 	
    if(p.IsReady()){ socket.Send( p.Data(), p.Size() );}
