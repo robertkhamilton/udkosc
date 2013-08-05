@@ -287,6 +287,10 @@ var bool bIgnoreGravity;
 //"Bool to make pawns float with inertia or not (stop immediately) 
 var bool bFlightInertia;
 
+// Player's "Call"
+var bool gCall;
+var float gSendCall;
+
 dllimport final function sendOSCpointClick(PointClickStruct a);	
 dllimport final function OSCFingerController getOSCFingerController(); //borrowing this for multiparameter testing
 dllimport final function OSCScriptPlayermoveStruct getOSCScriptPlayermove();
@@ -388,6 +392,9 @@ simulated event PostBeginPlay()
 	gCameraOffsetX = 0;
 	
 	bFlightInertia = TRUE;
+	
+//	gCall = FALSE;
+//	gSendCall = 0.0;
 	
 	// Hide weapon, came up again
 //	SkeletalMeshComponent(Pawn.Weapon.Mesh).SetOwnerNoSee(True);
@@ -1424,6 +1431,7 @@ exec function increasePlayerSpeed()
 {
 //	`log("In increasePlayerSpeed exec function...");
 	changePlayerSpeed(1.0);
+	Server_changePlayerSpeed(1.0);
 }
 	
 exec function decreasePlayerSpeed()
@@ -1432,6 +1440,10 @@ exec function decreasePlayerSpeed()
 }
 
 simulated function changePlayerSpeed(float value) {
+	// Stub for PlayerFlying state function
+}
+
+reliable server function Server_changePlayerSpeed(float value) {
 	// Stub for PlayerFlying state function
 }
 
@@ -1447,7 +1459,6 @@ exec function UseMouseFreeLook(bool value) {
 exec function setUDKOSCCameraMode(int value)
 {
 	gCameraMode = value;
-
 	
 	// 0:  reset to standard camera
 	// 1:  Static follow camera: no Location change, Rotation follows Player
@@ -1494,8 +1505,65 @@ exec function MouseLookOff() {
 	bToggleMouseLook = FALSE;
 }
 
+/*
+// Trigger player's "Call"
+exec function Call(bool val) {
+
+	gCall = val;
+	
+	sendCall();
+	ClientMessage("gCall: "$gCall);
+}
+*/
+/*
+function sendCall() {
+
+	ClientMessage("gCall2: "$gCall);
+
+	if(gCall) {
+		gSendCall = 1;
+		gCall = False;
+	} else {
+		gSendCall = 0;
+	}
+	
+	
+	ClientMessage("gCall3: "$gCall);
+	ClientMessage("gsendCall: "$gSendCall);
+	
+}
+*/
+
 exec function setCameraDistance(float value) {
 	gCameraDistance = value; 
+}
+
+exec function IncrementCameraMode() {
+	
+	gCameraMode = gCameraMode + 1;
+	if(gCameraMode > 3)
+		gCameraMode = 0;
+	
+	// 0:  Dynamic player-facing camera; mouse controlled camera around player
+	// 1:  Static camera: no Location or Rotation change	
+	// 2:  Static follow camera: mouse-controlled Z/height, no X,Y location change, Rotation follows Player
+	// 3:  Static follow camera: no Location change, Rotation follows Player
+		
+	//ClientMessage("Inc gCameraMode:"$gCameraMode);
+}
+
+exec function DecrementCameraMode() {
+
+	gCameraMode = gCameraMode - 1;
+	if(gCameraMode < 0)
+		gCameraMode = 3;
+
+	// 0:  Dynamic player-facing camera; mouse controlled camera around player
+	// 1:  Static camera: no Location or Rotation change	
+	// 2:  Static follow camera: mouse-controlled Z/height, no X,Y location change, Rotation follows Player
+	// 3:  Static follow camera: no Location change, Rotation follows Player
+	
+	//ClientMessage("Dec gCameraMode:"$gCameraMode);
 }
 
 exec function IncrementCameraDistance() {
@@ -1514,7 +1582,8 @@ exec function DecrementCameraDistance() {
 	}
 }
 
-auto state PlayerFlying
+
+state PlayerFlying
 {
   /**/
 	// Called by Tick; data is populated by key presses
@@ -1562,7 +1631,8 @@ auto state PlayerFlying
 		}
 		
 //		`log("arrayLength: "$arrayLength);
-		totalValue = totalValue / arrayLength; //speedArraySizeMax;
+		if(arrayLength > 0)
+			totalValue = totalValue / arrayLength; //speedArraySizeMax;
 		
 		if( totalValue + OSCPawn(Pawn).baseAirSpeed > maxAirSpeed)  {
 			totalValue = maxAirSpeed;
@@ -1577,7 +1647,13 @@ auto state PlayerFlying
 //		`log("Changing AirSpeed: "$OSCPawn(Pawn).AirSpeed);
 		
 	}
-		
+
+	reliable server  function Server_changePlayerSpeed(float value)
+	{
+		currentAirSpeedIncrement =  airSpeedIncrement * value;	
+		bChangingPlayerSpeed = TRUE;
+	}
+	
 	simulated function changePlayerSpeed(float value)
 	{
 		currentAirSpeedIncrement =  airSpeedIncrement * value;	
@@ -1687,7 +1763,10 @@ auto state PlayerFlying
 		UpdateRotation( DeltaTime );
 
 		if ( Role < ROLE_Authority ) // then save this move and replicate it
+		{
+			OSCPawn(Pawn).baseAirSpeed = 2500;
 			ReplicateMove(DeltaTime, Pawn.Acceleration, DCLICK_None, rot(0,0,0));
+		}
 		else 
 			ProcessMove(DeltaTime, Pawn.Acceleration, DCLICK_None, rot(0,0,0));
 	}
@@ -1722,8 +1801,9 @@ auto state PlayerFlying
 		// Add strafe value into turning sequence
 		totalTurn+=value + (strafe * keyTurnScaler);
 		averagedTurn.addItem(value + (strafe * keyTurnScaler));
-				
-		averagedValue = totalTurn / arrayLength;
+		
+		if(arrayLength > 0)
+			averagedValue = totalTurn / arrayLength;
 	}
 	
 	function SmootherMouseX(float value, out float averagedValue)
@@ -1777,7 +1857,8 @@ auto state PlayerFlying
 		totalLookUp+=value;
 		averagedLookUp.addItem(value);
 
-		averagedValue = totalLookUp / arrayLength;
+		if(arrayLength > 0)
+			averagedValue = totalLookUp / arrayLength;
 	}
 
 	function float SmoothPawnUp()
@@ -2222,12 +2303,12 @@ state OSCPlayerMoving
 		local vector			X,Y,Z, NewAccel;
 		local eDoubleClickDir	DoubleClickMove;
 		local rotator			OldRotation;
-		local rotator			OSCCameraRotation;
+		//local rotator			OSCCameraRotation;
 		local rotator           OSCPlayerRotation;
 		local bool				bSaveJump;
 		local bool				bOSCJump;
 		local float				OSCJump;
-		local int				OSCCurrentID;
+		//local int				OSCCurrentID;
 		local float 			OSCPitch, OSCYaw, OSCRoll, OSCSetPitch, OSCSetYaw, OSCSetRoll;
 		local vector			OSCVector; 
 		local float 			OSCGroundSpeed, OSCAirSpeed;
@@ -2250,9 +2331,9 @@ state OSCPlayerMoving
 		OSCJump = localOSCPlayerDiscreteValuesStruct.jump;
 		OSCStop = localOSCPlayerDiscreteValuesStruct.stop;
 			
-		OSCPitch = localOSCPlayerStateValuesStruct.pitch;
-		OSCYaw  = localOSCPlayerStateValuesStruct.yaw;
-		OSCRoll = localOSCPlayerStateValuesStruct.roll;
+		//OSCPitch = localOSCPlayerStateValuesStruct.pitch;
+		//OSCYaw  = localOSCPlayerStateValuesStruct.yaw;
+		//OSCRoll = localOSCPlayerStateValuesStruct.roll;
 			
 		OSCSetPitch = localOSCPlayerStateValuesStruct.setpitch;
 		OSCSetYaw  = localOSCPlayerStateValuesStruct.setyaw;
@@ -2584,7 +2665,7 @@ function DrawHUD( HUD H )
 /*
  * The default state for the player controller
  */
-state PlayerWaiting
+auto state PlayerWaiting
 {
 	//`log("AutoState: PlayerWaiting:: OSCPlayerControllerDLL");
 	

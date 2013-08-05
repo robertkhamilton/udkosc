@@ -55,7 +55,7 @@ bBounce=true
 	DrawScale=3.2
 	Physics=PHYS_Falling
 	CustomGravityScaling=0.0	
-	TickFrequency=0	/** float: Actor: How often to tick this actor. If 0, tick every frame */
+	//TickFrequency=0	/** float: Actor: How often to tick this actor. If 0, tick every frame */
 	
 	bCollideActors=true
 	TurnRate=5.000000

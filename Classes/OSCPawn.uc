@@ -120,13 +120,14 @@ struct PlayerStateStruct
 	var float LocX;
 	var float LocY;
 	var float LocZ;
-	var bool crouch;
+	var int crouch;
 	var float Pitch;
 	var float Yaw;
 	var float Roll;
-	var float leftTrace;
+	var float leftTrace; 
 	var float rightTrace;
 	var float downTrace;
+	var float sendCall;											// 1/0 Call is fired
 };
 
 struct PlayerStateStructTEST
@@ -255,6 +256,13 @@ var int waveTraceRadius;
 var int waveTraceSetSize;
 var vector waveTraceStartLocation;
 
+var() ParticleSystemComponent PSC_CallEmitter;
+var name					ValkordiaTailSocket;
+var vector pscOffset;
+
+// Player's "Call"
+var bool gCall;
+var float gSendCall;
 
 dllimport final function sendOSCpointClick(PointClickStruct a);	
 dllimport final function sendOSCPlayerState(PlayerStateStruct a);
@@ -291,7 +299,7 @@ simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 	super.PostInitAnimTree(SkelComp);
 	
 	gRotatorOffset = 1177;
-	
+		
 	// For Trumbruticus trunk moving demo
 	//TrunkMover = SkelControl_CCD_IK(Mesh.FindSkelControl('TrunkMover'));
 }
@@ -311,7 +319,7 @@ exec function ChangePlayerMesh(int a)
 simulated function setPawnMesh(int a)
 //server reliable function setPawnMesh(int a)
 {
-	local AnimNode temp;
+	//local AnimNode temp;
 
 	selectedPlayerMesh = a;
 	
@@ -351,6 +359,8 @@ simulated function setPawnMesh(int a)
 		isValkordia=true;
 		isTrumbruticus=false;
 		
+		self.Mesh.ForceSkelUpdate();
+		
 	} else if(a==3) {	
 		self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_LIAM_Cathode.Mesh.SK_CH_LIAM_Cathode');
 		self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
@@ -368,7 +378,35 @@ simulated function setPawnMesh(int a)
 		
 		isValkordia=false;
 		isTrumbruticus=false;
+		
+	} else if(a==5) {
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_IronGuard_Male.Mesh.SK_CH_IronGuard_MaleA');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'CH_AnimHuman.Anims.K_AnimHuman_BaseMale';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
+		
+		isValkordia=false;
+		isTrumbruticus=false;
 	}
+}
+
+/* " */
+// Trigger player Call
+exec function Call(bool val) {
+
+	gCall = val;	
+	sendCall();
+}
+
+function sendCall() {
+	
+	if(gCall) {
+		gSendCall = 1;
+		gCall = False;
+	} else {
+		gSendCall = 0;
+	}
+		
 }
 
 // Disable FeignDeath (from UTPawn)
@@ -504,11 +542,23 @@ simulated event PostBeginPlay() {
 	`log("In PostBeginPlay... OSCPawn");
 	
 	Super.PostBeginPlay();
+	
+	self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics');
+	self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01');
+	self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
+	
+	gCall = FALSE;
+	gSendCall = 0.0;
+	
 }
 
 simulated event PreBeginPlay() {
 	Super.PreBeginPlay();
 
+	self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics');	
+	self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01');
+	self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
+	
 	`log("In PreBeginPlay... OSCPawn");
 		
 	// ****************************************************************************** //
@@ -585,7 +635,7 @@ simulated function sendPlayerState()
 	Local vector loc, norm, end;
 	Local TraceHitInfo hitInfo;
 	Local Actor traceHit;
-	local MyPlayerStruct tempVals;
+	//local MyPlayerStruct tempVals;
 	local PlayerStateStruct psStruct;
 	local bool sendOSC;
 	local Rotator viewrotator;
@@ -599,11 +649,16 @@ simulated function sendPlayerState()
 	psStruct.LocX = Location.X;
 	psStruct.LocY = Location.Y;
 	psStruct.LocZ = Location.Z;
-	psStruct.Crouch = isCrouching;
-    
+	if(isCrouching) {
+		psStruct.Crouch = 1;
+	} else {
+		psStruct.Crouch = 0;
+	}
+		
 	psStruct.leftTrace = gLeftTrace;
 	psStruct.rightTrace = gRightTrace;
 	psStruct.downTrace = gDownTrace;
+	psStruct.sendCall = gSendCall;
 	
 	// adding rotation to the player output call
 	psStruct.Yaw = Rotation.Yaw%65535;
@@ -736,7 +791,46 @@ simulated function showHitLocation()
 //	sendOSCPointClick(pcStruct);
 }
 
+exec function activateCallEmitter()
+{
+	PSC_CallEmitter.ActivateSystem();
+	
+//	PSC_CallEmitter.SetActive(bNowActive);
 
+}
+
+exec function deactivateCallEmitter()
+{
+	PSC_CallEmitter.DeactivateSystem();
+}
+
+exec function attachEmitter()
+{
+
+	// on bone: 'valkordia_01Tail2'
+	ValkordiaTailSocket = 'trail_socket_01';
+	
+	// Attach Component...	ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Projectile'
+	if (ValkordiaTailSocket != '') {
+		if (Mesh != none && PSC_CallEmitter != none) {
+			Mesh.AttachComponentToSocket(PSC_CallEmitter, ValkordiaTailSocket);
+			PSC_CallEmitter.ActivateSystem();
+		}
+	}
+
+/*	
+	if (Mesh.GetSocketByName(ValkordiaTailSocket) != None)
+{
+  // Socket exists
+  `log("SOCKET EXISTS");
+}
+else
+{
+  // Socket doesn't exist
+    `log("SOCKET DOESN'T EXIST");
+}
+*/
+}
 
 simulated function StartFire(byte FireModeNum)
 {
@@ -1439,9 +1533,11 @@ simulated function setPawnAnimSpeed()
 {
 	local float currentRate;
 	
-	if(isTrumbruticus) {
+	if(OSCPlayerControllerDLL(Controller)!=None) {
+	
+	  if(isTrumbruticus) {
 		self.Mesh.GlobalAnimRateScale=self.GroundSpeed / 440.0;
-	} else if(isValkordia) {
+	  } else if(isValkordia) {
 		if(OSCPlayerControllerDLL(Controller).flying)
 		{
 //		if(self.AirSpeed < 440.0) {
@@ -1459,9 +1555,9 @@ simulated function setPawnAnimSpeed()
 //			`log("GlobalAnimRateScale = "$self.Mesh.GlobalAnimRateScale);
 			//		}
 		}
-	}
+	  }
 	
-
+    }
 //	`log("Groundspeed = "$self.GroundSpeed);
 }
 
@@ -1560,14 +1656,18 @@ simulated function Tick(float DeltaTime)
 	if(pawnSidetrace) {
 		psideTrace();	
 	}
-	
-	if(selectedPlayerMesh==0)
-	{
+
+	// set playermesh by default to Valkordia	
+	if(selectedPlayerMesh==0) {
+		`log("OSCPawn::Tick::selectedPlayerMesh: "$selectedPlayerMesh);
+		selectedPlayerMesh = 5;
+		SetPawnMesh(selectedPlayerMesh);
+	} else if(selectedPlayerMesh == 5){ 
+		`log("OSCPawn::Tick::selectedPlayerMesh: "$selectedPlayerMesh);
 		selectedPlayerMesh = 2;
-		// set playermesh by default to Valkordia
-		SetPawnMesh(selectedPlayerMesh);		
-//		`log("selectedPlayerMesh: "$selectedPlayerMesh);	
+		SetPawnMesh(selectedPlayerMesh);			
 	}
+
 	
 	// Testing bone location
 	if(currentBones.Length > 0)
@@ -2030,7 +2130,7 @@ exec function GetBoneLocations()
 
 function getBoneLocation()
 {
-	local 	int 			Idx;
+	//local 	int 			Idx;
 	local 	vector		BoneLoc;
 	local 	vector		offset;
 	local name bone;
@@ -2090,6 +2190,16 @@ exec function GetBone()
 //	`log("Get Bone: "$GetBoneCoords( 'valkordia_01Rwing_front_4' ));	
 }
 */
+/*
+exec function setParticleOffset(float X, float Y, float Z)
+{
+	PSC_CallEmitter.Translation.X = X;
+	PSC_CallEmitter.Translation.Y = Y;
+	PSC_CallEmitter.Translation.Z = Z;
+}
+*/
+
+
 defaultproperties
 {
 	// number of waveTraces to perform, radius and set size 
@@ -2133,12 +2243,39 @@ defaultproperties
 	OSCFingerWorldMin.Z = 0.00001
 */
 
+/*
+Begin Object Name=WPawnSkeletalMeshComponent
+//AnimTreeTemplate=AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree'
+AnimTreeTemplate=AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01'
+End Object
+*/
+
 
 Begin Object Name=WPawnSkeletalMeshComponent
-AnimTreeTemplate=AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree'
+//Begin Object Class=SkeletalMeshComponent Name=SkelMeshComp
+	bHasPhysicsAssetInstance=true
+	PhysicsAsset=PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics'
+	SkeletalMesh=SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01'
+	AnimTreeTemplate=AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01'
+	AnimSets(0)=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims'
 End Object
 
-ControllerClass=class'UDKOSC.OSCPlayerControllerDLL'
+Begin Object Class=ParticleSystemComponent Name=CallEmitter
+	bOwnerNoSee=false
+	bAutoActivate=false
+	//Translation=(X=21.0, Y=0.0, Z=-25.0)
+	Template=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Projectile'
+End Object
+PSC_CallEmitter = CallEmitter
+Components.Add(CallEmitter)								// If used, PSC not attaching to Socket?
+//components.add(WPawnSkeletalMeshComponent)
+
+//Mesh=SkelMeshComp
+//components.add(SkelMeshComp); //(WPawnSkeletalMeshComponent)
+//	StartLocationOffset=(X=121.000000,Y=0.000000,Z=-120.000000)
+
+
+//ControllerClass=class'OSCPlayerControllerDLL'
 
  CamOffset = (X=60, Y=0, Z= 0)
  // CamOffset = (X=camoffsetx, Y=camoffsety, Z=camoffsetz)
