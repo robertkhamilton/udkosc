@@ -3,5 +3,5 @@ class ActorFactoryOSCStaticMeshActor extends ActorFactoryStaticMesh;
 DefaultProperties
 {
    MenuName="Add OSCStaticMeshActor"
-   NewActorClass=Class'UDKOSC.OSCStaticMeshActor'
+   NewActorClass=Class'ut3osc.OSCStaticMeshActor'
 }

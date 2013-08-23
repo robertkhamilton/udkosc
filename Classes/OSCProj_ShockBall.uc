@@ -1,5 +1,5 @@
 class OSCProj_ShockBall extends UTProj_ShockBall
-	config(UDKOSC)
+	config(ut3osc)
 	DLLBind(oscpack_1_0_2);
 	
 var int id;

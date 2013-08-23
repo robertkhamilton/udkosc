@@ -403,7 +403,7 @@ state PlayerFlying
 
 DefaultProperties
 {
-	InputClass=class'UDKOSC.OSCPawnInput';
+	InputClass=class'ut3osc.OSCPawnInput';
 }
 
 */

@@ -7,7 +7,7 @@
 *******************************************************************************/
 
 class OSCPlayerInput extends PlayerInput within OSCPlayerController 
- config(UDKOSC);
+ config(ut3osc);
  
  
  event PlayerInput (float DeltaTime)

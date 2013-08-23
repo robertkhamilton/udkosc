@@ -347,8 +347,8 @@ event PlayerTick(float DeltaTime)
 DefaultProperties
 {
 	velRotation = 5000;
-	InputClass=class'UDKOSC.OSCPawnInput';
+	InputClass=class'ut3osc.OSCPawnInput';
 	
 	//Points to the UTFamilyInfo class for your custom character
-	//CharacterClass=class'UDKOSC.OSCFamilyInfo_OSCPawnBot'
+	//CharacterClass=class'ut3osc.OSCFamilyInfo_OSCPawnBot'
 }

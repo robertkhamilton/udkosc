@@ -3,5 +3,5 @@ class ActorFactoryOSCKActor extends ActorFactoryRigidBody;
 DefaultProperties
 {
    MenuName="Add OSCKActor"
-   NewActorClass=Class'UDKOSC.OSCKActor'
+   NewActorClass=Class'ut3osc.OSCKActor'
 }

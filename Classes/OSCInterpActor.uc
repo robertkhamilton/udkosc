@@ -1,6 +1,6 @@
 class OSCInterpActor extends InterpActor
 	placeable
-	config(UDKOSC)
+	config(ut3osc)
 	DLLBind(oscpack_1_0_2); 
 	
 var float lastX;
