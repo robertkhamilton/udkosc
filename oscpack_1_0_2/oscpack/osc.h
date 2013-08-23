@@ -167,6 +167,9 @@ struct PlayerStateStruct
 	float rightTrace;
 	float downTrace;
 	float sendCall;
+	float bone1X;
+	float bone1Y;
+	float bone1Z;
 };
 
 struct PawnStateStruct

@@ -1,23 +1,23 @@
-﻿Build started 7/19/2013 9:20:52 AM.
-     1>Project "C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\oscpack_1_0_2.vcxproj" on node 2 (build target(s)).
+﻿Build started 8/16/2013 3:50:55 PM.
+     1>Project "G:\git\udkosc\oscpack_1_0_2\oscpack_1_0_2.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
          Creating "Release\oscpack_1_0_2.unsuccessfulbuild" because "AlwaysCreate" was specified.
        ClCompile:
-         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oy- /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D OSCPACK_1_0_2_EXPORTS /D _WINDLL /D _UNICODE /D UNICODE /Gm- /EHsc /MD /Zp4 /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt oscpack\includes\stdafx.cpp oscpack\ip\IpEndpointName.cpp oscpack\ip\win32\NetworkingUtils.cpp oscpack\ip\win32\UdpSocket.cpp oscpack\osc.cpp oscpack\osc\OscOutboundPacketStream.cpp oscpack\osc\OscPrintReceivedElements.cpp oscpack\osc\OscReceivedElements.cpp oscpack\osc\OscTypes.cpp
+         D:\Applications\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oy- /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D OSCPACK_1_0_2_EXPORTS /D _WINDLL /D _UNICODE /D UNICODE /Gm- /EHsc /MD /Zp4 /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt oscpack\includes\stdafx.cpp oscpack\ip\IpEndpointName.cpp oscpack\ip\win32\NetworkingUtils.cpp oscpack\ip\win32\UdpSocket.cpp oscpack\osc.cpp oscpack\osc\OscOutboundPacketStream.cpp oscpack\osc\OscPrintReceivedElements.cpp oscpack\osc\OscReceivedElements.cpp oscpack\osc\OscTypes.cpp
          stdafx.cpp
          IpEndpointName.cpp
      1>oscpack\ip\IpEndpointName.cpp(46): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
+                 D:\Applications\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
      1>oscpack\ip\IpEndpointName.cpp(52): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
+                 D:\Applications\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
      1>oscpack\ip\IpEndpointName.cpp(61): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
+                 D:\Applications\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
      1>oscpack\ip\IpEndpointName.cpp(67): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
+                 D:\Applications\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
      1>oscpack\ip\IpEndpointName.cpp(71): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
+                 D:\Applications\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
      1>oscpack\ip\IpEndpointName.cpp(78): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
+                 D:\Applications\Microsoft Visual Studio 10.0\VC\include\stdio.h(371) : see declaration of 'sprintf'
          NetworkingUtils.cpp
          UdpSocket.cpp
          osc.cpp
@@ -35,32 +35,32 @@
      1>oscpack\osc.cpp(453): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
      1>oscpack\osc.cpp(706): warning C4101: 'tempStruct' : unreferenced local variable
      1>oscpack\osc.cpp(730): warning C4101: 'tempStruct' : unreferenced local variable
-     1>oscpack\osc.cpp(1215): warning C4800: 'const wchar_t *' : forcing value to bool 'true' or 'false' (performance warning)
-     1>oscpack\osc.cpp(1325): warning C4172: returning address of local variable or temporary
+     1>oscpack\osc.cpp(1218): warning C4800: 'const wchar_t *' : forcing value to bool 'true' or 'false' (performance warning)
+     1>oscpack\osc.cpp(1328): warning C4172: returning address of local variable or temporary
          OscOutboundPacketStream.cpp
      1>oscpack\osc\OscOutboundPacketStream.cpp(339): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\string.h(105) : see declaration of 'strcpy'
+                 D:\Applications\Microsoft Visual Studio 10.0\VC\include\string.h(105) : see declaration of 'strcpy'
      1>oscpack\osc\OscOutboundPacketStream.cpp(581): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\string.h(105) : see declaration of 'strcpy'
+                 D:\Applications\Microsoft Visual Studio 10.0\VC\include\string.h(105) : see declaration of 'strcpy'
      1>oscpack\osc\OscOutboundPacketStream.cpp(601): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\string.h(105) : see declaration of 'strcpy'
+                 D:\Applications\Microsoft Visual Studio 10.0\VC\include\string.h(105) : see declaration of 'strcpy'
          OscPrintReceivedElements.cpp
      1>oscpack\osc\OscPrintReceivedElements.cpp(117): warning C4996: 'ctime': This function or variable may be unsafe. Consider using ctime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\time.inl(86) : see declaration of 'ctime'
+                 D:\Applications\Microsoft Visual Studio 10.0\VC\include\time.inl(86) : see declaration of 'ctime'
      1>oscpack\osc\OscPrintReceivedElements.cpp(120): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-                 C:\Program Files\Microsoft Visual Studio 10.0\VC\include\string.h(105) : see declaration of 'strcpy'
+                 D:\Applications\Microsoft Visual Studio 10.0\VC\include\string.h(105) : see declaration of 'strcpy'
          OscReceivedElements.cpp
          OscTypes.cpp
          Generating Code...
-     1>c:\users\rob\data\github\udkosc\oscpack_1_0_2\oscpack\osc.cpp(464): warning C4700: uninitialized local variable 'a3' used
-     1>c:\users\rob\data\github\udkosc\oscpack_1_0_2\oscpack\osc.cpp(465): warning C4700: uninitialized local variable 'a4' used
-     1>c:\users\rob\data\github\udkosc\oscpack_1_0_2\oscpack\osc.cpp(466): warning C4700: uninitialized local variable 'a5' used
-     1>c:\users\rob\data\github\udkosc\oscpack_1_0_2\oscpack\osc.cpp(467): warning C4700: uninitialized local variable 'a6' used
-     1>c:\users\rob\data\github\udkosc\oscpack_1_0_2\oscpack\osc.cpp(468): warning C4700: uninitialized local variable 'a7' used
+     1>g:\git\udkosc\oscpack_1_0_2\oscpack\osc.cpp(464): warning C4700: uninitialized local variable 'a3' used
+     1>g:\git\udkosc\oscpack_1_0_2\oscpack\osc.cpp(465): warning C4700: uninitialized local variable 'a4' used
+     1>g:\git\udkosc\oscpack_1_0_2\oscpack\osc.cpp(466): warning C4700: uninitialized local variable 'a5' used
+     1>g:\git\udkosc\oscpack_1_0_2\oscpack\osc.cpp(467): warning C4700: uninitialized local variable 'a6' used
+     1>g:\git\udkosc\oscpack_1_0_2\oscpack\osc.cpp(468): warning C4700: uninitialized local variable 'a7' used
        ManifestResourceCompile:
-         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\rc.exe /nologo /fo"Release\oscpack_1_0_2.dll.embed.manifest.res" Release\oscpack_1_0_2_manifest.rc 
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\rc.exe /nologo /fo"Release\oscpack_1_0_2.dll.embed.manifest.res" Release\oscpack_1_0_2_manifest.rc 
        Link:
-         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.dll" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Ws2_32.lib WINMM.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Release\oscpack_1_0_2.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.pdb" /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.lib" /MACHINE:X86 /DLL Release\oscpack_1_0_2.dll.embed.manifest.res
+         D:\Applications\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"G:\git\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.dll" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Ws2_32.lib WINMM.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Release\oscpack_1_0_2.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"G:\git\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.pdb" /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"G:\git\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.lib" /MACHINE:X86 /DLL Release\oscpack_1_0_2.dll.embed.manifest.res
          Release\stdafx.obj
          Release\IpEndpointName.obj
          Release\NetworkingUtils.obj
@@ -71,12 +71,12 @@
          Release\OscReceivedElements.obj
          Release\OscTypes.obj
      1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/OPT:ICF' specification
-            Creating library C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.lib and object C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.exp
+            Creating library G:\git\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.lib and object G:\git\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.exp
        Manifest:
-         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /out:"Release\oscpack_1_0_2.dll.embed.manifest" /manifest Release\oscpack_1_0_2.dll.intermediate.manifest
-         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\rc.exe /nologo /fo"Release\oscpack_1_0_2.dll.embed.manifest.res" Release\oscpack_1_0_2_manifest.rc 
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /out:"Release\oscpack_1_0_2.dll.embed.manifest" /manifest Release\oscpack_1_0_2.dll.intermediate.manifest
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\rc.exe /nologo /fo"Release\oscpack_1_0_2.dll.embed.manifest.res" Release\oscpack_1_0_2_manifest.rc 
        LinkEmbedManifest:
-         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.dll" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Ws2_32.lib WINMM.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Release\oscpack_1_0_2.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.pdb" /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.lib" /MACHINE:X86 /DLL Release\oscpack_1_0_2.dll.embed.manifest.res
+         D:\Applications\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"G:\git\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.dll" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Ws2_32.lib WINMM.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Release\oscpack_1_0_2.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"G:\git\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.pdb" /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"G:\git\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.lib" /MACHINE:X86 /DLL Release\oscpack_1_0_2.dll.embed.manifest.res
          Release\stdafx.obj
          Release\IpEndpointName.obj
          Release\NetworkingUtils.obj
@@ -87,13 +87,13 @@
          Release\OscReceivedElements.obj
          Release\OscTypes.obj
      1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/OPT:ICF' specification
-            Creating library C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.lib and object C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.exp
-         oscpack_1_0_2.vcxproj -> C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.dll
+            Creating library G:\git\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.lib and object G:\git\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.exp
+         oscpack_1_0_2.vcxproj -> G:\git\udkosc\oscpack_1_0_2\Release\oscpack_1_0_2.dll
        FinalizeBuildStatus:
          Deleting file "Release\oscpack_1_0_2.unsuccessfulbuild".
          Touching "Release\oscpack_1_0_2.lastbuildstate".
-     1>Done Building Project "C:\Users\Rob\data\github\udkosc\oscpack_1_0_2\oscpack_1_0_2.vcxproj" (build target(s)).
+     1>Done Building Project "G:\git\udkosc\oscpack_1_0_2\oscpack_1_0_2.vcxproj" (build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:13.92
+Time Elapsed 00:00:08.15

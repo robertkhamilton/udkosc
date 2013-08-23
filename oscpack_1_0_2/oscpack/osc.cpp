@@ -982,6 +982,9 @@ __declspec(dllexport)void sendOSCPlayerState(PlayerStateStruct* pState)
 		<< (float)pState->rightTrace
 		<< (float)pState->downTrace
 		<< (float)pState->sendCall
+		<< (float)pState->bone1X
+		<< (float)pState->bone1Y
+		<< (float)pState->bone1Z
 	  << osc::EndMessage;
 	
    if(p.IsReady()){ socket.Send( p.Data(), p.Size() );}
