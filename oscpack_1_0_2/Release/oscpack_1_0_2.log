@@ -1,4 +1,4 @@
-﻿Build started 8/16/2013 3:50:55 PM.
+﻿Build started 8/25/2013 12:53:24 PM.
      1>Project "G:\git\udkosc\oscpack_1_0_2\oscpack_1_0_2.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
          Creating "Release\oscpack_1_0_2.unsuccessfulbuild" because "AlwaysCreate" was specified.
@@ -35,8 +35,8 @@
      1>oscpack\osc.cpp(453): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
      1>oscpack\osc.cpp(706): warning C4101: 'tempStruct' : unreferenced local variable
      1>oscpack\osc.cpp(730): warning C4101: 'tempStruct' : unreferenced local variable
-     1>oscpack\osc.cpp(1218): warning C4800: 'const wchar_t *' : forcing value to bool 'true' or 'false' (performance warning)
-     1>oscpack\osc.cpp(1328): warning C4172: returning address of local variable or temporary
+     1>oscpack\osc.cpp(1221): warning C4800: 'const wchar_t *' : forcing value to bool 'true' or 'false' (performance warning)
+     1>oscpack\osc.cpp(1331): warning C4172: returning address of local variable or temporary
          OscOutboundPacketStream.cpp
      1>oscpack\osc\OscOutboundPacketStream.cpp(339): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  D:\Applications\Microsoft Visual Studio 10.0\VC\include\string.h(105) : see declaration of 'strcpy'
@@ -96,4 +96,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:08.15
+Time Elapsed 00:00:08.88

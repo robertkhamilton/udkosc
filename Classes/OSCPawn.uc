@@ -24,6 +24,7 @@ var bool isTrumbruticus;
 
 // array of bones for tracking
 var array <name> currentBones;
+var array <vector> currentBoneLocations;
 
 // test vars for camera offsets
 var int camoffsetx, camoffsety, camoffsetz;
@@ -135,9 +136,13 @@ struct PlayerStateStruct
     var float bone1X;
     var float bone1Y;
     var float bone1Z;
+	var float bone2X;
+    var float bone2Y;
+    var float bone2Z;
 };
 
 var vector gBone1;
+var vector gBone2;
 
 struct PlayerStateStructTEST
 {
@@ -362,7 +367,8 @@ simulated function setPawnMesh(int a)
         currentBones.Length = 0;            // Clear the array
         
         currentBones.addItem('valkordia_01Lwing_front_4');
-        currentBones.addItem('valkordia_01Rwing_front_4');        
+        currentBones.addItem('valkordia_01Rwing_front_4');       
+		
                     
 //        Weapon.SetHidden(True);
         
@@ -706,10 +712,12 @@ simulated function sendPlayerState()
     psStruct.Pitch = viewrotator.Pitch%65535;
     psStruct.Roll = Rotation.Roll%65535;
     
-    psStruct.bone1X = gBone1.X;
-    psStruct.bone1Y = gBone1.Y;
-    psStruct.bone1Z = gBone1.Z;
-    
+    psStruct.bone1X = currentBoneLocations[0].X; //gBone1.X;
+    psStruct.bone1Y = currentBoneLocations[0].Y;
+    psStruct.bone1Z = currentBoneLocations[0].Z;
+    psStruct.bone2X = currentBoneLocations[1].X;;
+    psStruct.bone2Y = currentBoneLocations[1].Y;;
+    psStruct.bone2Z = currentBoneLocations[1].Z;;    
     
 OSCHostname = OSCParameters.getOSCHostname();
 OSCPort = OSCParameters.getOSCPort();
@@ -2182,6 +2190,8 @@ function getBoneLocation()
     local     vector        BoneLoc;
     local     vector        offset;
     local name bone;
+	local int i;
+	
     //array<Name>            Bones;
     
 //    for( Idx = 0; Idx < Bones.Length; Idx++ )
@@ -2190,7 +2200,9 @@ function getBoneLocation()
 //        HitInfo.HitComponent = Mesh;
 
 //        BoneLoc = Mesh.GetBoneLocation(Bones[Idx]);
-
+		
+		i = 0;
+		
         foreach currentBones(bone)
         {    
 //            BoneLoc = Mesh.GetBoneLocation('valkordia_01Rwing_front_4');
@@ -2212,7 +2224,13 @@ function getBoneLocation()
 // *******************************************************************************************
             //`log("Bone Offset ["$bone$"]: "$offset);
             // Send offset to OSC
-            gBone1 = offset;      
+			
+			// temp, will replace with currentBoneLocations array
+            gBone1 = offset;  
+			
+			currentBoneLocations[i] = offset;
+			i++;			
+			
         
         }
 //    }
@@ -2252,6 +2270,12 @@ exec function setParticleOffset(float X, float Y, float Z)
 
 defaultproperties
 {
+	// Trace default properties
+	gdowntracelength = 50000;
+	gtracelength = 500000;
+	pawnDowntrace = true;
+	pawnSidetrace = true;
+	
     // number of waveTraces to perform, radius and set size 
     waveTraceCount = 72;
     waveTraceRadius = 200;

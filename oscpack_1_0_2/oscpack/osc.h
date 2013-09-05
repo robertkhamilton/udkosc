@@ -170,6 +170,9 @@ struct PlayerStateStruct
 	float bone1X;
 	float bone1Y;
 	float bone1Z;
+	float bone2X;
+	float bone2Y;
+	float bone2Z;
 };
 
 struct PawnStateStruct
