@@ -417,6 +417,16 @@ struct OSCFingerController
 	float f5on;
 };
 
+struct OSCScriptBoneCCDs
+{
+	float bone1x;
+	float bone1y;
+	float bone1z;
+	float bone2x;
+	float bone2y;
+	float bone2z;
+};
+
 //void	sendOSCmessage(int clientno, char *hostname, char *portnumber);
 __declspec(dllexport) void	sendOSCbundle(osc_client_vars currentClient);
 __declspec(dllexport) void	sendOSCmessage(osc_client_vars currentClient);
@@ -455,6 +465,7 @@ __declspec(dllexport) OSCScriptPlayermove getOSCScriptPlayermove();
 __declspec(dllexport) OSCScriptPlayermove getOSCScriptPawnmove();
 __declspec(dllexport) OSCScriptCameramove getOSCScriptCameramove();
 __declspec(dllexport) OSCScriptPlayerTeleport getOSCScriptPlayerTeleport();
+__declspec(dllexport) OSCScriptBoneCCDs getOSCScriptBoneCCDs();
 
 // OSC PawnBot calls
 __declspec(dllexport) OSCPawnBotStateValues* getOSCPawnBotStateValues(int* id);

@@ -37,7 +37,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IntDir>$(Configuration)\oscpack_1_0_2\</IntDir>
-    <OutDir>..\..\..\..\..\..\UDK\UDK-2012-07\Binaries\Win32\UserCode\</OutDir>
+    <OutDir>..\..\..\UDK\UDKOSC-2013-07\Binaries\Win32\UserCode</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>

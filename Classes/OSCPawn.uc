@@ -18,6 +18,9 @@ var SkelControl_CCD_IK OSCRightArm_CCD_IK;
 var SkelControl_CCD_IK RightWing_CCD_IK;
 var SkelControl_CCD_IK LeftWing_CCD_IK;
 
+var ParticleSystemComponent LeftWingTrail;
+var ParticleSystemComponent RightWingTrail;
+
 // state bools for skeletal mesh changing
 var bool isValkordia;
 var bool isTrumbruticus;
@@ -94,6 +97,7 @@ var float valkordiaAnimSpeed;
 var float baseAirSpeed;
 
 var int selectedPlayerMesh;
+
 
 struct MyPlayerStruct
 {
@@ -233,6 +237,7 @@ struct OSCScriptCameramoveStruct
     var float roll;
 };
 
+
 // OSC Camera data from Playercontroller
 var OSCScriptCameramoveStruct localOSCScriptCameramoveStruct;
 
@@ -271,12 +276,21 @@ var int waveTraceSetSize;
 var vector waveTraceStartLocation;
 
 var() ParticleSystemComponent PSC_CallEmitter;
+var() ParticleSystemComponent PSC_LeftWingEmitter;
+var() ParticleSystemComponent PSC_RightWingEmitter;
+
 var name                    ValkordiaTailSocket;
+var name                    ValkordiaWingLeftSocket;
+var name                    ValkordiaWingRightSocket;
+
 var vector pscOffset;
 
 // Player's "Call"
 var bool gCall;
 var float gSendCall;
+
+// Player Trails
+var bool bTrails;
 
 dllimport final function sendOSCpointClick(PointClickStruct a);    
 dllimport final function sendOSCPlayerState(PlayerStateStruct a);
@@ -447,11 +461,35 @@ function sendCall() {
     if(gCall) {
         gSendCall = 1;
         gCall = False;
+		//activateWingEmitter();
     } else {
         gSendCall = 0;
+		//deactivateWingEmitter();
     }
         
 }
+
+exec function Trails(bool val)
+{
+	bTrails = val;
+	sendTrails();
+}
+
+function sendTrails() {
+
+    //Check whether to activate or deactivate trails.
+    if(bTrails)
+    {
+		bTrails = False;
+		activateWingEmitter();
+    }
+    else
+    {
+		bTrails = True;
+		deactivateWingEmitter();
+    }
+}
+
 
 // Disable FeignDeath (from UTPawn)
 exec simulated function FeignDeath()
@@ -582,18 +620,27 @@ simulated exec function setGroundSpeed(float gs) {
 }
 
 simulated event PostBeginPlay() {
-
-    `log("In PostBeginPlay... OSCPawn");
     
     Super.PostBeginPlay();
     
+	// Set default mesh components
     self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics');
     self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01');
     self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
     
+	// set default Call values
     gCall = FALSE;
     gSendCall = 0.0;
     
+	bTrails = FALSE;
+	
+	// Set Trail components
+	//LeftWingTrail = WorldInfo.MyEmitterPool.SpawnEmitterMeshattachment(ParticleSystem'RainbowRibbonForSkelMeshes.RainbowSwordRibbon', Mesh, 'valkordia_01Lwing_front_4', false);
+	//RightWingTrail = WorldInfo.MyEmitterPool.SpawnEmitterMeshattachment(ParticleSystem'RainbowRibbonForSkelMeshes.RainbowSwordRibbon', Mesh, 'valkordia_01Rwing_front_4', false);
+
+    //LeftWingTrail.ActivateSystem();
+    //RightWingTrail.ActivateSystem();
+	
 }
 
 simulated event PreBeginPlay() {
@@ -842,33 +889,58 @@ simulated function showHitLocation()
 //    sendOSCPointClick(pcStruct);
 }
 
-exec function activateCallEmitter()
-{
-    PSC_CallEmitter.ActivateSystem();
-    
-//    PSC_CallEmitter.SetActive(bNowActive);
 
+exec function activateWingEmitter()
+{
+	attachWingEmitters();
+	
+    //PSC_CallEmitter.ActivateSystem();
+	PSC_LeftWingEmitter.ActivateSystem();
+	PSC_RightWingEmitter.ActivateSystem();
+
+	PSC_LeftWingEmitter.SetKillOnDeactivate(0,False);
+	PSC_RightWingEmitter.SetKillOnDeactivate(0,False);
 }
 
-exec function deactivateCallEmitter()
+exec function deactivateWingEmitter()
 {
-    PSC_CallEmitter.DeactivateSystem();
+    //PSC_CallEmitter.DeactivateSystem();
+	PSC_LeftWingEmitter.DeactivateSystem();
+	PSC_RightWingEmitter.DeactivateSystem();	
 }
 
-exec function attachEmitter()
+function attachWingEmitters()
 {
 
     // on bone: 'valkordia_01Tail2'
-    ValkordiaTailSocket = 'trail_socket_01';
+//    ValkordiaTailSocket = 'trail_socket_01';
     
-    // Attach Component...    ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Projectile'
+	ValkordiaWingLeftSocket = 'wing_socket_left_01';
+	ValkordiaWingRightSocket = 'wing_socket_right_01';
+
+/*	
+    // Attach Component...
     if (ValkordiaTailSocket != '') {
         if (Mesh != none && PSC_CallEmitter != none) {
             Mesh.AttachComponentToSocket(PSC_CallEmitter, ValkordiaTailSocket);
             PSC_CallEmitter.ActivateSystem();
         }
     }
+*/	
+    if (ValkordiaWingLeftSocket != '') {
+        if (Mesh != none && PSC_LeftWingEmitter != none) {
+            Mesh.AttachComponentToSocket(PSC_LeftWingEmitter, ValkordiaWingLeftSocket);
+            PSC_LeftWingEmitter.ActivateSystem();
+        }
+    }	
 
+	if (ValkordiaWingRightSocket != '') {
+        if (Mesh != none && PSC_RightWingEmitter != none) {
+            Mesh.AttachComponentToSocket(PSC_RightWingEmitter, ValkordiaWingRightSocket);
+            PSC_RightWingEmitter.ActivateSystem();
+        }
+    }	
+	
 /*    
     if (Mesh.GetSocketByName(ValkordiaTailSocket) != None)
 {
@@ -2338,10 +2410,34 @@ Begin Object Class=ParticleSystemComponent Name=CallEmitter
     bOwnerNoSee=false
     bAutoActivate=false
     //Translation=(X=21.0, Y=0.0, Z=-25.0)
-    Template=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Projectile'
+    //Template=ParticleSystem'WP_LinkGun.Effects.P_WP_Linkgun_Projectile'
+	Template=ParticleSystem'RainbowRibbonForSkelMeshes.RainbowSwordRibbon'
 End Object
 PSC_CallEmitter = CallEmitter
-Components.Add(CallEmitter)                                // If used, PSC not attaching to Socket?
+
+Components.Add(CallEmitter)
+
+Begin Object Class=ParticleSystemComponent Name=LeftWingEmitter
+    bOwnerNoSee=false
+    bAutoActivate=false
+	Template=ParticleSystem'RainbowRibbonForSkelMeshes.RainbowSwordRibbon'
+	SetKillOnDeactivate=false
+End Object
+PSC_LeftWingEmitter = LeftWingEmitter
+
+Components.Add(LeftWingEmitter)                          
+
+Begin Object Class=ParticleSystemComponent Name=RightWingEmitter
+    bOwnerNoSee=false
+    bAutoActivate=false
+	Template=ParticleSystem'RainbowRibbonForSkelMeshes.RainbowSwordRibbon'
+	SetKillOnDeactivate=false
+End Object
+PSC_RightWingEmitter = RightWingEmitter
+
+Components.Add(RightWingEmitter)                          
+
+
 //components.add(WPawnSkeletalMeshComponent)
 
 //Mesh=SkelMeshComp
@@ -2353,5 +2449,21 @@ Components.Add(CallEmitter)                                // If used, PSC not a
 
  CamOffset = (X=60, Y=0, Z= 0)
  // CamOffset = (X=camoffsetx, Y=camoffsety, Z=camoffsetz)
-  
+ 
+ /*
+    //Initialize the components and add them to the class' component array.
+    Begin Object Class=ParticleSystemComponent Name=ParticleSystemComponent1
+        Template=ParticleSystem'RainbowRibbonForSkelMeshes.RainbowSwordRibbon'
+    End Object
+
+    Components.Add(ParticleSystemComponent1)
+    LeftWingTrail= ParticleSystemComponent1
+
+    Begin Object Class=ParticleSystemComponent Name=ParticleSystemComponent2
+        Template=ParticleSystem'RainbowRibbonForSkelMeshes.RainbowSwordRibbon'
+    End Object
+
+    Components.Add(ParticleSystemComponent2)
+    RightWingTrail= ParticleSystemComponent2
+*/	
 }

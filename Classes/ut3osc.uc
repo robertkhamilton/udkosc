@@ -46,7 +46,7 @@ event PlayerController Login(string Portal, string Options, const UniqueNetID Un
 function initut3osc(PlayerController PC)
 {
 	`log("In initut3osc function in ut3osc.uc...");
-	PC.ConsoleCommand("ToggleHUD");	
+//	PC.ConsoleCommand("ToggleHUD");	
 //	PC.ConsoleCommand("HideWeapon");		
 //	PC.ConsoleCommand("ChangePlayerMesh 2");
 	PC.ConsoleCommand("BehindView");	
@@ -91,6 +91,9 @@ defaultproperties
  bDelayedStart=false
  
 // TimeLimit=0
+
+	bUseClassicHUD=true
+	HUDType=class'ut3osc.OSCHud'
  
 
  }

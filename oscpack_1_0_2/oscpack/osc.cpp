@@ -41,21 +41,23 @@ OSCGameParams OSCGameParamsStruct;
 static OSCFingerController OSCFingerControllerStruct;
 
 // Individual structs for pawn commands
-OSCScriptPlayermove OSCScriptPlayermoveStruct;
-OSCScriptCameramove OSCScriptCameramoveStruct;
-OSCConsoleCommand OSCConsoleCommandStruct;
-OSCScriptPlayerTeleport OSCScriptPlayerTeleportStruct;
+OSCScriptPlayermove				OSCScriptPlayermoveStruct;
+OSCScriptCameramove				OSCScriptCameramoveStruct;
+OSCConsoleCommand				OSCConsoleCommandStruct;
+OSCScriptPlayerTeleport			OSCScriptPlayerTeleportStruct;
 
-OSCScriptPlayermove OSCScriptPawnmoveStruct;
-OSCScriptPlayerTeleport OSCScriptPawnTeleportStruct;
+OSCScriptBoneCCDs				OSCScriptBoneCCDsStruct;
 
-static OSCPawnBotStateValues OSCPawnBotStateValuesStruct;
+OSCScriptPlayermove				OSCScriptPawnmoveStruct;
+OSCScriptPlayerTeleport			OSCScriptPawnTeleportStruct;
+
+static OSCPawnBotStateValues	OSCPawnBotStateValuesStruct;
 static OSCPawnBotDiscreteValues OSCPawnBotDiscreteValuesStruct;
 static OSCPawnBotTeleportValues OSCPawnBotTeleportValuesStruct;
 
-static OSCPlayerStateValues OSCPlayerStateValuesStruct;
-static OSCPlayerDiscreteValues OSCPlayerDiscreteValuesStruct;
-static OSCPlayerTeleportValues OSCPlayerTeleportValuesStruct;
+static OSCPlayerStateValues		OSCPlayerStateValuesStruct;
+static OSCPlayerDiscreteValues	OSCPlayerDiscreteValuesStruct;
+static OSCPlayerTeleportValues	OSCPlayerTeleportValuesStruct;
 
 OSCPawnBotState OSCPawnBotStateStruct;
 
@@ -501,10 +503,54 @@ protected:
                 float a1;
                 args >> a1 >> osc::EndMessage;
                 OSCConsoleCommandStruct.command = a1;
-            } else {
-					osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
-					float a1 = (arg++)->AsFloat();
-					std::cout <<"Else in PacketListener: " << a1 << std::endl;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/bone/1" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2, a3;
+                args >> a1 >> a2 >> osc::EndMessage;
+                OSCScriptBoneCCDsStruct.bone1x = a1;
+				OSCScriptBoneCCDsStruct.bone1y = a2;
+				OSCScriptBoneCCDsStruct.bone1z = a3;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/bone/1/x" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+                OSCScriptBoneCCDsStruct.bone1x = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/bone/1/y" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+                OSCScriptBoneCCDsStruct.bone1y = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/bone/1/z" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+                OSCScriptBoneCCDsStruct.bone1z = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/bone/2" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1, a2, a3;
+                args >> a1 >> a2 >> a3 >> osc::EndMessage;
+                OSCScriptBoneCCDsStruct.bone2x = a1;
+				OSCScriptBoneCCDsStruct.bone2y = a2;
+				OSCScriptBoneCCDsStruct.bone2z = a3;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/bone/2/x" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+                OSCScriptBoneCCDsStruct.bone2x = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/bone/2/y" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+                OSCScriptBoneCCDsStruct.bone2y = a1;
+			}else if( strcmp( m.AddressPattern(), "/udkosc/script/bone/2/z" ) == 0 ){
+                osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+                float a1;
+                args >> a1 >> osc::EndMessage;
+                OSCScriptBoneCCDsStruct.bone2z = a1;
+			} else {
+				osc::ReceivedMessage::const_iterator arg = m.ArgumentsBegin();
+				float a1 = (arg++)->AsFloat();
+				std::cout <<"Else in PacketListener: " << a1 << std::endl;
 			}
         }catch( osc::Exception& e ){
             // any parsing errors such as unexpected argument types, or 
@@ -770,6 +816,12 @@ _declspec(dllexport)OSCScriptCameramove getOSCScriptCameramove()
 {
 	return OSCScriptCameramoveStruct;
 }
+
+_declspec(dllexport)OSCScriptBoneCCDs getOSCScriptBoneCCDs()
+{
+	return OSCScriptBoneCCDsStruct;
+}
+
 /*
 _declspec(dllexport)OSCScriptPawnMoveX getOSCScriptPawnMoveX()
 {

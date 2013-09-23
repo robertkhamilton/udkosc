@@ -23,6 +23,9 @@ var float leftXOffset;
 var bool bDebugPose;
 var Rotator gPoseRotation;
 var int gCamx, gCamy, gCamz;
+var bool bOverridePosing;
+var vector gOverridePosingRight;
+var vector gOverridePosingLeft;
 
 var array< float > averagedTurn; // Array for averaging mouse move values for smoothing
 var array< float > averagedLookup; // Array for averaging mouse move values for smoothing
@@ -114,6 +117,10 @@ var float gTotalMousePitch;
 var int gCameraMode;
 var float gCameraDistance;
 var float gCameraOffsetX;
+
+var int gHUDX;
+var int gHUDY;
+var float gHUDAlpha;
 
 // borrowing this for multiparameter testing
 struct OSCFingerController
@@ -280,6 +287,19 @@ struct OSCPlayerDiscreteValuesStruct
     var float stop;
 };
 
+struct OSCScriptBoneCCDs
+{
+	var float bone1x;
+	var float bone1y;
+	var float bone1z;
+	var float bone2x;
+	var float bone2y;
+	var float bone2z;
+};
+
+// OSC Bone tracking data
+var OSCScriptBoneCCDs localOSCScriptBoneCCDsStruct;
+
 // OSC Script structs /**/
 var OSCScriptPlayermoveStruct localOSCScriptPlayermoveStruct;
 var OSCScriptCameramoveStruct localOSCScriptCameramoveStruct;
@@ -306,6 +326,7 @@ var float gSendCall;
 
 // Posing
 var bool bPosing;
+var bool bOSCPosing;
 
 dllimport final function sendOSCpointClick(PointClickStruct a);    
 dllimport final function OSCFingerController getOSCFingerController(); //borrowing this for multiparameter testing
@@ -313,6 +334,8 @@ dllimport final function OSCScriptPlayermoveStruct getOSCScriptPlayermove();
 dllimport final function OSCScriptCameramoveStruct getOSCScriptCameramove();
 dllimport final function float getOSCConsoleCommand();
 dllimport final function OSCScriptPlayerTeleportStruct getOSCScriptPlayerTeleport();
+dllimport final function OSCScriptBoneCCDs getOSCScriptBoneCCDs();
+
 
 dllimport final function OSCPawnBotStateValuesStruct getOSCPawnBotStateValues(int id);
 dllimport final function OSCPawnBotTeleportStruct getOSCPawnBotTeleportValues(int id);
@@ -408,20 +431,6 @@ simulated event PostBeginPlay()
     gCameraOffsetX = 0;
     
     bFlightInertia = TRUE;
-    
-//    gCall = FALSE;
-//    gSendCall = 0.0;
-    
-    // Hide weapon, came up again
-//    SkeletalMeshComponent(Pawn.Weapon.Mesh).SetOwnerNoSee(True);
-    
-    // REMOVE ALL WEAPONS
-//    Pawn.InvManager.DiscardInventory();
-    
-//    Pawn.Weapon.SetHidden(True);
-
-//    OSCPawn(Pawn).Weapon.SetHidden(True);
-    
 }
 
 simulated exec function hideWeapon()
@@ -1521,35 +1530,6 @@ exec function MouseLookOff() {
     bToggleMouseLook = FALSE;
 }
 
-/*
-// Trigger player's "Call"
-exec function Call(bool val) {
-
-    gCall = val;
-    
-    sendCall();
-    ClientMessage("gCall: "$gCall);
-}
-*/
-/*
-function sendCall() {
-
-    ClientMessage("gCall2: "$gCall);
-
-    if(gCall) {
-        gSendCall = 1;
-        gCall = False;
-    } else {
-        gSendCall = 0;
-    }
-    
-    
-    ClientMessage("gCall3: "$gCall);
-    ClientMessage("gsendCall: "$gSendCall);
-    
-}
-*/
-
 exec function setCameraDistance(float value) {
     gCameraDistance = value; 
 }
@@ -1629,6 +1609,13 @@ function setPlayerPose(bool val) {
 	}
 }
 
+exec function OSCPose(bool val) {
+	bOSCPosing = val;
+}
+
+exec function OverridePose(bool val) {
+	bOverridePosing = val;
+}
 
 state PlayerPosing
 {
@@ -1763,85 +1750,146 @@ state PlayerPosing
 		gPoseRotation.roll = roll * degToUnrRot;
 		
 		//gPoseRotation = Rot( pitch*DegToUnrRot , yaw*DegToUnrRot , roll*DegToUnrRot );
-		
+	}
+	exec function setPose(int bone, int x, int y, int z)
+	{
+		if(bone==1)
+		{
+			gOverridePosingRight.x = x;
+			gOverridePosingRight.y = y;
+			gOverridePosingRight.z = z;
+			
+		} else if(bone==2) {
+			
+			gOverridePosingLeft.x = x;
+			gOverridePosingLeft.y = y;
+			gOverridePosingLeft.z = z;
+		}
 	}
 	
     function UpdateRotation( float DeltaTime )
     {
 	  // Posing values
-      local vector ArmLocation_right, ArmLocation_left;
+      local vector ArmLocation_right, ArmLocation_left, tempArmLocation;
       local OSCPawn Utp;
 	  local rotator targetRotation;
 	  local int camx, camy, camz;
 	  
 	  local vector tempVectorLeft, tempVectorRight;
 	  
-	`log("gPoseRotation.pitch: "$gPoseRotation.pitch);
-	`log("gPoseRotation.yaw: "$gPoseRotation.yaw);
-	`log("gPoseRotation.roll: "$gPoseRotation.roll);
-	`log("gPoseRotation: "$gPoseRotation);
+	  //`log("gPoseRotation.pitch: "$gPoseRotation.pitch);
+	  //`log("gPoseRotation.yaw: "$gPoseRotation.yaw);
+	  //`log("gPoseRotation.roll: "$gPoseRotation.roll);
+	  //`log("gPoseRotation: "$gPoseRotation);
 	
-	// Rot(0, 0, (90*DegToUnrRot) )
-	targetRotation.pitch = gPoseRotation.pitch;
-	targetRotation.yaw = OSCPawn(Pawn).Rotation.yaw;
-	targetRotation.roll = OSCPawn(Pawn).Rotation.roll;
+	  // Rot(0, 0, (90*DegToUnrRot) )
+	  targetRotation.pitch = gPoseRotation.pitch;
+	  targetRotation.yaw = OSCPawn(Pawn).Rotation.yaw;
+	  targetRotation.roll = OSCPawn(Pawn).Rotation.roll;
 
+	  OSCPawn(Pawn).FaceRotation( RLerp( OSCPawn(Pawn).Rotation, targetRotation, 0.01), deltatime); 
 
-	 OSCPawn(Pawn).FaceRotation( RLerp( OSCPawn(Pawn).Rotation, targetRotation, 0.01), deltatime); 
+	  // Interp from CamOffset value to targetRotation
 
-	// Interp from CamOffset value to targetRotation
+	  // OSCPawn(Pawn).CamOffset.X; // 60,0,0	to 28,0,-40
+	  // OSCPawn(Pawn).CamOffset.X=Lerp(0.01, gCamx, 28);
+	  // OSCPawn(Pawn).CamOffset.Y=Lerp(0.01, gCamy, 0);
+	  // OSCPawn(Pawn).CamOffset.Z=Lerp(0.01, gCamz, -40);
 
-	
-	// OSCPawn(Pawn).CamOffset.X; // 60,0,0	to 28,0,-40
-	//OSCPawn(Pawn).CamOffset.X=Lerp(0.01, gCamx, 28);
-	//OSCPawn(Pawn).CamOffset.Y=Lerp(0.01, gCamy, 0);
-	//OSCPawn(Pawn).CamOffset.Z=Lerp(0.01, gCamz, -40);
-	
-	
-   
-	  //Rot(90,0,0)
-	  tempVectorLeft.X = scaleWingRotation(PlayerInput.RawJoyRight) + leftXOffset;
-	  tempVectorLeft.Y = leftYOffset;
-	  //tempVectorLeft.Y = scaleValueRange(PlayerInput.RawJoyRight, -1.0, 1.0, gWingRotationMin, gWingRotationMax, 0.4, 0.8) + leftYOffset;
-	  tempVectorLeft.Z = scaleWingRotation(PlayerInput.RawJoyUp) + leftZOffset;
-	  tempVectorLeft = tempVectorLeft >> Pawn.Rotation;
+	  Utp=OSCPawn(Pawn); //this simply gets our pawn so we can then point to our SkelControl
 	  
-	  tempVectorRight.X = scaleWingRotation(PlayerInput.RawJoyLookRight) + rightXOffset;
-	  tempVectorRight.Y = rightYOffset;
-	  tempVectorRight.Z = scaleWingRotation(PlayerInput.RawJoyLookUp) + rightZOffset;
-	  tempVectorRight = tempVectorRight >> Pawn.Rotation;	  
+	  // If taking OSC input from Pose Struct (OSCScriptBoneCCDs), override manual control
+      if(bOSCPosing) {
+	    
+		tempArmLocation.x = localOSCScriptBoneCCDsStruct.bone1x;
+		tempArmLocation.y = localOSCScriptBoneCCDsStruct.bone1y;
+		tempArmLocation.z = localOSCScriptBoneCCDsStruct.bone1z;
+		
+		tempArmLocation = tempArmLocation >> Pawn.Rotation;
+		
+		ArmLocation_right = Pawn.Location + tempArmLocation;
+		
+		//ArmLocation_right.x = Pawn.Location.x + localOSCScriptBoneCCDsStruct.bone1x;
+		//ArmLocation_right.y = Pawn.Location.y + localOSCScriptBoneCCDsStruct.bone1y;
+		//ArmLocation_right.z = Pawn.Location.z + localOSCScriptBoneCCDsStruct.bone1z;
+
+		tempArmLocation.x = localOSCScriptBoneCCDsStruct.bone2x;
+		tempArmLocation.y = localOSCScriptBoneCCDsStruct.bone2y;
+		tempArmLocation.z = localOSCScriptBoneCCDsStruct.bone2z;
+		
+		tempArmLocation = tempArmLocation >> Pawn.Rotation;
+		
+		ArmLocation_left = Pawn.Location + tempArmLocation;
+		
+		//ArmLocation_left.x = Pawn.Location.x + localOSCScriptBoneCCDsStruct.bone2x;
+		//ArmLocation_left.y = Pawn.Location.y + localOSCScriptBoneCCDsStruct.bone2y;
+		//ArmLocation_left.z = Pawn.Location.z + localOSCScriptBoneCCDsStruct.bone2z;
+		
+	    Utp.RightWing_CCD_IK.EffectorLocation=ArmLocation_right;
+		Utp.LeftWing_CCD_IK.EffectorLocation=ArmLocation_left;	
+		
+	  } else if(bOverridePosing) {
+
+	    tempArmLocation = gOverridePosingRight >> Pawn.Rotation;
+		
+		ArmLocation_right.x = Pawn.Location.x + tempArmLocation.x;
+		ArmLocation_right.y = Pawn.Location.y + tempArmLocation.y;
+		ArmLocation_right.z = Pawn.Location.z + tempArmLocation.z;
+
+		tempArmLocation = gOverridePosingLeft >> Pawn.Rotation;
+		
+		ArmLocation_left.x = Pawn.Location.x + tempArmLocation.x;
+		ArmLocation_left.y = Pawn.Location.y + tempArmLocation.y;
+		ArmLocation_left.z = Pawn.Location.z + tempArmLocation.z;
+		
+	    Utp.RightWing_CCD_IK.EffectorLocation=ArmLocation_right;
+		Utp.LeftWing_CCD_IK.EffectorLocation=ArmLocation_left;	
+		
+	  } else {
+	
+	    tempVectorLeft.X = scaleWingRotation(PlayerInput.RawJoyRight) + leftXOffset;
+	    tempVectorLeft.Y = leftYOffset;	 
+	    tempVectorLeft.Z = scaleWingRotation(PlayerInput.RawJoyUp) + leftZOffset;
+	    tempVectorLeft = tempVectorLeft >> Pawn.Rotation;
 	  
-	  ArmLocation_left = Pawn.Location + tempVectorLeft;
-	  ArmLocation_right = Pawn.Location + tempVectorRight; 
+	    tempVectorRight.X = scaleWingRotation(PlayerInput.RawJoyLookRight) + rightXOffset;
+	    tempVectorRight.Y = rightYOffset;
+	    tempVectorRight.Z = scaleWingRotation(PlayerInput.RawJoyLookUp) + rightZOffset;
+	    tempVectorRight = tempVectorRight >> Pawn.Rotation;	  
+	  
+	    ArmLocation_left = Pawn.Location + tempVectorLeft;
+	    ArmLocation_right = Pawn.Location + tempVectorRight; 
+
+	    
+
+        if(!Utp.isValkordia) {
+          // Utp.OSCRightArm_CCD_IK.EffectorLocation=Pawn.Location + ArmLocation_right; 
+        } else { 
+
+		  Utp.RightWing_CCD_IK.EffectorLocation=ArmLocation_right;
+		  Utp.LeftWing_CCD_IK.EffectorLocation=ArmLocation_left;
+		
+	    //`log("World ArmLocation_left.x: "$ArmLocation_left.x);
+	    //`log("World ArmLocation_left.y: "$ArmLocation_left.y);
+	    //`log("World ArmLocation_left.z: "$ArmLocation_left.z);
+	   
+	    //`log("Pawn.Location: "$Pawn.Location.X$", "$Pawn.Location.Y$", "$Pawn.Location.Z);
+	   
+	    // ArmLocation_left = ArmLocation_left - Pawn.Location;
+	   
+	    //`log("Local ArmLocation_left.x: "$ArmLocation_left.x);
+	    //`log("Local ArmLocation_left.y: "$ArmLocation_left.y);
+	    //`log("Local ArmLocation_left.z: "$ArmLocation_left.z);	  
+	  
+	  
+        }
+	  }
 	  
 	  if(bDebugPose) {
 	    DrawDebugSphere(ArmLocation_left, 10, 10, 255, 255, 0, false);
 	    DrawDebugSphere(ArmLocation_right, 10, 10, 0, 255, 0, false);
 	  }
 	  
-	  Utp=OSCPawn(Pawn); //this simply gets our pawn so we can then point to our SkelControl
-
-      if(!Utp.isValkordia) {
-        Utp.OSCRightArm_CCD_IK.EffectorLocation=Pawn.Location + ArmLocation_right; 
-      } else { 
-
-		Utp.RightWing_CCD_IK.EffectorLocation=ArmLocation_right;
-		Utp.LeftWing_CCD_IK.EffectorLocation=ArmLocation_left;
-		
-	  //`log("World ArmLocation_left.x: "$ArmLocation_left.x);
-	  //`log("World ArmLocation_left.y: "$ArmLocation_left.y);
-	  //`log("World ArmLocation_left.z: "$ArmLocation_left.z);
-	   
-	  //`log("Pawn.Location: "$Pawn.Location.X$", "$Pawn.Location.Y$", "$Pawn.Location.Z);
-	   
-	   //ArmLocation_left = ArmLocation_left - Pawn.Location;
-	   
-	  //`log("Local ArmLocation_left.x: "$ArmLocation_left.x);
-	  //`log("Local ArmLocation_left.y: "$ArmLocation_left.y);
-	  //`log("Local ArmLocation_left.z: "$ArmLocation_left.z);	  
-	  
-	  
-      }
 	}
 	
     function PlayerMove(float DeltaTime)
@@ -2945,6 +2993,7 @@ function showTargetInfo()
  */
 function DrawHUD( HUD H )
 {
+/*
     local float CrosshairSize;
     super.DrawHUD(H);
 
@@ -2956,6 +3005,7 @@ function DrawHUD( HUD H )
 
     H.Canvas.SetPos(H.CenterX, H.CenterY - CrosshairSize);
     H.Canvas.DrawRect(1, 2*CrosshairSize + 1);
+*/
 }
 
 /*
@@ -3034,7 +3084,24 @@ simulated function setOSCScriptPawnBotTeleportData(OSCScriptPlayerTeleportStruct
     OSCPawnController(P.Controller).setOSCScriptTeleportStruct(tStruct);
     
 }
-    
+
+simulated function setOSCScriptBoneCCDsData(OSCScriptBoneCCDs fstruct)
+{
+	localOSCScriptBoneCCDsStruct = fstruct;
+	
+	/*
+    // Set data for OSCPawn to use:
+    if(Pawn!=None) {
+        OSCPawn(Pawn).localOSCScriptBoneCCDsStruct.bone1x = localOSCScriptBoneCCDsStruct.bone1x;
+		OSCPawn(Pawn).localOSCScriptBoneCCDsStruct.bone1y = localOSCScriptBoneCCDsStruct.bone1y;
+		OSCPawn(Pawn).localOSCScriptBoneCCDsStruct.bone1z = localOSCScriptBoneCCDsStruct.bone1z;
+        OSCPawn(Pawn).localOSCScriptBoneCCDsStruct.bone2x = localOSCScriptBoneCCDsStruct.bone2x;
+		OSCPawn(Pawn).localOSCScriptBoneCCDsStruct.bone2y = localOSCScriptBoneCCDsStruct.bone2y;
+		OSCPawn(Pawn).localOSCScriptBoneCCDsStruct.bone2z = localOSCScriptBoneCCDsStruct.bone2z;
+    }
+	*/
+}
+
 simulated function setOSCScriptCameramoveData(OSCScriptCameramoveStruct fstruct)
 {
     localOSCScriptCameramoveStruct = fstruct;
@@ -3080,8 +3147,7 @@ simulated function callTeleport()
     }
 }
 
-simulated function setOSCPlayerData()
-{
+simulated function setOSCPlayerData() {
     if(Pawn !=None) {
         localOSCPlayerStateValuesStruct = getOSCPlayerStateValues(OSCPawn(Pawn).getUID());
       localOSCPlayerDiscreteValuesStruct = getOSCPlayerDiscreteValues(OSCPawn(Pawn).getUID());
@@ -3099,10 +3165,27 @@ simulated function setOSCPlayerData()
     `log("setOSCPlayerData::localOSCPlayerStateValuesStruct.Speed = "$localOSCPlayerStateValuesStruct.Speed);
     */
 }
-    
+
+// HUD FUNCTIONS
+exec function moveHUDCanvas(int x, int y, float alpha) {
+	gHUDX = x;
+	gHUDY = y;
+	gHUDAlpha = alpha;
+}
+
+function updateHUDCanvasPosition(float DeltaTime) 
+{
+	if(OSCHud(myHUD).slideStartX !=gHUDX) 
+		OSCHud(myHUD).slideStartX = Lerp(OSCHud(myHUD).slideStartX , gHUDX, gHUDAlpha);
+		
+	if(OSCHud(myHUD).slideStartY !=gHUDY) 
+		OSCHud(myHUD).slideStartY = Lerp(OSCHud(myHUD).slideStartY , gHUDY, gHUDAlpha);
+}
+
 event PlayerTick( float DeltaTime )
 {
-
+	updateHUDCanvasPosition(DeltaTime);
+	
     setOSCPlayerData();
     callConsoleCommand(getOSCConsoleCommand());
 
@@ -3118,6 +3201,10 @@ setPlayerSpeed();
 
     setOSCScriptCameramoveData(getOSCScriptCameramove());    
     
+	if(bOSCPosing) {
+	  setOSCScriptBoneCCDsData(getOSCScriptBoneCCDs());
+	}
+	
     if(oscmoving) {
         //localOSCFingerControllerStruct = getOSCFingerController();
         //setOSCFingerTouches(localOSCFingerControllerStruct);
