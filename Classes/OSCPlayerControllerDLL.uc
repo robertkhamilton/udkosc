@@ -3166,6 +3166,7 @@ simulated function setOSCPlayerData() {
     */
 }
 
+/*
 // HUD FUNCTIONS
 exec function moveHUDCanvas(int x, int y, float alpha) {
 	gHUDX = x;
@@ -3180,11 +3181,21 @@ function updateHUDCanvasPosition(float DeltaTime)
 		
 	if(OSCHud(myHUD).slideStartY !=gHUDY) 
 		OSCHud(myHUD).slideStartY = Lerp(OSCHud(myHUD).slideStartY , gHUDY, gHUDAlpha);
+
+}
+*/
+
+// FOR HUD SLIDE TRANSITIONS
+function setHUDDeltaTime(float DeltaTime) {
+	OSCHud(myHUD).currentDeltaTime = DeltaTime;
 }
 
 event PlayerTick( float DeltaTime )
 {
-	updateHUDCanvasPosition(DeltaTime);
+	//updateHUDCanvasPosition(DeltaTime);
+
+	// for slide transitions
+	setHUDDeltaTime(DeltaTime);
 	
     setOSCPlayerData();
     callConsoleCommand(getOSCConsoleCommand());
