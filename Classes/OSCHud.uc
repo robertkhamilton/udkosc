@@ -294,6 +294,12 @@ function DrawGameHud()
 		//Canvas.Font = class'Engine'.static.GetLargeFont();
 		//Canvas.Font = fontArial;
 		//Canvas.Font = fontArialMedium;
+		if(viewportWidth==1920)
+		{
+			Canvas.Font = fontSourceSansProMedium;		
+		} else {
+			Canvas.Font = fontSourceSansProSmall;		
+		}
 		Canvas.Font = fontSourceSansProMedium;
 		
 		
@@ -325,7 +331,7 @@ function DrawGameHud()
 			{
 			  Canvas.SetPos(footerImgX, footerImgY);
 			  Canvas.SetDrawColor(255,255,255,255);
-			  Canvas.DrawTexture(img_valkordia_grey_TEX, footerImgScale);
+			  Canvas.DrawTexture(img_valkordia_grey_TEX, footerImgScale * viewportWidth/1920.0);
 			}
 		}	
       }
