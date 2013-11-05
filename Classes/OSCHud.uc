@@ -20,6 +20,8 @@ var config String slide_1_text;
 var config int slide_1_x, slide_1_y;
 
 var String currentTitle;
+var Float currentTitleX;
+var Float currentTitleY;
 var String currentText;
 var Float currentX;
 var Float currentY;
@@ -44,6 +46,9 @@ var float slideImgX;
 var float slideImgY;
 var float slideImgScale;
 
+var float debugSlideImgX;		// DEBUG
+var float debugSlideImgY;		// DEBUG
+
 var int viewportWidth;			// current resolution pixel width
 var int viewportHeight;			// current resolution pixel height
 var vector viewportSize;
@@ -55,6 +60,7 @@ var FONT fontArialLarge;
 var FONT fontVerdanaSmall;
 var FONT fontVerdanaMedium;
 var FONT fontVerdanaLarge;
+var FONT fontSourceSansProTiny;
 var FONT fontSourceSansProSmall;
 var FONT fontSourceSansProMedium;
 var FONT fontSourceSansProLarge;
@@ -80,8 +86,10 @@ var int footerImgId;
 var float footerImgX;
 var float footerImgY;
 var float footerImgScale;
+
+var int fontSize;
 	
-var float tempVar1, tempVar2, tempVar3;
+var float tempVar1, tempVar2, tempVar3, tempVar4;
 
 struct Layout
 {
@@ -98,6 +106,7 @@ struct Layout
 	var int textColorB;
 	var int textColorA;
 	var float transitionTime;
+	var int fontSize;
 	var int Footer;			// default -1 means no Footer
 };
 
@@ -105,6 +114,8 @@ struct Slide
 {
 	var int layout;	
 	var String title;
+	var float titleX;
+	var float titleY;
 	var float titleScale;
 	var String text;
 	var float textX;
@@ -114,6 +125,7 @@ struct Slide
 	var float imgX;
 	var float imgY;
 	var float imgScale;
+	var string ccmd;		// console command string
 };
 
 struct Footer
@@ -132,11 +144,63 @@ struct Footer
 	var float imgScale;	
 };
 
+// Mirror struct from OSCPawn.uc
+
+struct PlayerStateStruct
+{
+    var string Hostname;
+    var int Port;
+    var int id;
+    var string PlayerName;
+    var float LocX;
+    var float LocY;
+    var float LocZ;
+    var int crouch;
+    var float Pitch;
+    var float Yaw;
+    var float Roll;
+    var float leftTrace; 
+    var float rightTrace;
+    var float downTrace;
+    var float sendCall;    // 1/0 Call is fired
+    var float bone1X;
+    var float bone1Y;
+    var float bone1Z;
+	var float bone2X;
+    var float bone2Y;
+    var float bone2Z;
+};
+
+struct Image
+{
+	var string type;
+	var string package;
+	var string name;
+};
+
 var config array<Slide> Slides;
 var config array<Layout> Layouts;
 var config array<Footer> Footers;
+var array<Texture2D> Images;
+var array<FONT> Fonts;
+var config array<String> Texts;
+
+var config array<Image> iniImages;
 
 var Texture2D d3_graph_1_TEX, img_valkordia_grey_TEX;
+
+var bool editSlide;
+var bool bShowOSCData;
+var bool bShowOSCTraceData;
+var bool bShowOSCBoneData;
+
+var PlayerStateStruct psStruct;
+
+
+exec function editSlides()
+{
+	editSlide=!editSlide;
+}
 
 exec function getCurrentResolution()
 {
@@ -144,29 +208,48 @@ exec function getCurrentResolution()
 }
 
 simulated function PostBeginPlay()
-{
+{	
 	super.PostBeginPlay();
 
-	slideCount=Slides.Length;
+	slideCount=Slides.Length;		
 }
+
+/*
+// Load images from .ini as Texture2Ds
+function loadImages()
+{
+	local int i;
+	local Texture2D currentTexture;
+	
+	for(i=0; i<iniImages.Length; i++)
+	{
+
+// Creates and initializes a new Texture2DDynamic with the requested settings
+// static native noexport final function Texture2DDynamic Create(int InSizeX, int InSizeY, optional EPixelFormat InFormat = PF_A8R8G8B8, optional bool InIsResolveTarget = FALSE);
+
+		Images[i] = Texture2D'iniImages[i].package $ 
+	}
+
+// 	Images[0] = Texture2D'udkosc.presentation.d3_wing_zoom_composite_small';
+}
+*/
 
 exec function setCurrentSlide(int var)
 {
 	slideNumber = var;
-	
-//	currentTitle = Slides[var].title;
-//	currentText = Slides[var].text;
-//	currentX = Slides[slideNumber].x;
-//	currentY = Slides[slideNumber].y;
 }
 
 exec function nextSlide()
 {
 	slideNumber = (slideNumber + 1) % slideCount;	
-//	currentTitle = Slides[slideNumber].title;
-//	currentText = Slides[slideNumber].text;
-//	currentX = Slides[slideNumber].x;
-//	currentY = Slides[slideNumber].y;
+}
+
+exec function prevSlide()
+{
+	slideNumber = (slideNumber - 1) % slideCount;
+
+	if(slideNumber < 0)
+		slideNumber = slideCount-1;
 }
 
 function buildSlide()
@@ -220,10 +303,37 @@ function buildSlide()
 	
 	// Set slide Text data and position...	
 	currentTitle = Slides[slideNumber].title;
+	currentTitleX = Slides[slideNumber].titleX * viewportWidth;
+	currentTitleY = Slides[slideNumber].titleY * viewportHeight;	
+	
+	if(editSlide)
+	{
+	  currentTitleX = tempVar1 * viewportWidth;
+	  currentTitleY = tempVar2 * viewportHeight;
+	}
+	
 	currentText = Slides[slideNumber].text;
+
+	if(bShowOSCData)
+	{
+		currentText = getOSCData();
+	} else if(bShowOSCTraceData) {	
+		currentText = getOSCTraceData();
+	} else if(bShowOSCBoneData) {
+		currentText = getOSCBoneData();
+	} else {
+		currentText = Slides[slideNumber].text;
+	}
+	
 	currentTextX = Slides[slideNumber].textX * viewportWidth;
 	currentTextY = Slides[slideNumber].textY * viewportHeight;
-
+	
+	if(editSlide)
+	{
+	  currentTextX = tempVar3 * viewportWidth;
+	  currentTextY = tempVar4 * viewportHeight;
+	}
+	
 	// Set slide Text color...
 	slideTextColorR = Layouts[Slides[slideNumber].layout].textColorR;
 	slideTextColorG = Layouts[Slides[slideNumber].layout].textColorG;
@@ -239,6 +349,19 @@ function buildSlide()
 	slideImgX = Slides[slideNumber].imgX * viewportWidth;
 	slideImgY = Slides[slideNumber].imgY * viewportHeight;
 	slideImgScale = Slides[slideNumber].imgScale;
+	
+	// DEBUG	
+	// Over-ride slide position with debug if debug values have been set...
+	if(editSlide)
+	{
+	  `log("debugSlideImgX: "$debugSlideImgX);
+	  if(debugSlideImgX > -1)
+		slideImgX = debugSlideImgX * viewportWidth;
+
+	  `log("debugSlideImgY: "$debugSlideImgY);
+	  if(debugSlideImgY > -1)
+		slideImgY = debugSlideImgY * viewportHeight;
+	}
 	
 	// Set slide footer data
 	footerNumber = Layouts[Slides[slideNumber].layout].footer;
@@ -257,6 +380,9 @@ function buildSlide()
 	  footerImgY = Footers[footerNumber].imgY * viewportHeight;
 	  footerImgScale = Footers[footerNumber].imgScale;
 	}
+	
+	if(Slides[slideNumber].ccmd != "")
+		executeConsoleCommand(Slides[slideNumber].ccmd);
 }
 
 exec function drawSlides(bool val)
@@ -269,11 +395,136 @@ exec function toggleSlides()
 	bDrawSlides = !bDrawSlides;
 }
 
+exec function hudConsoleCommand()
+{
+	PlayerOwner.ConsoleCommand("ToggleSlides");
+}
+
+exec function showOSCBoneData(bool val)
+{
+	bShowOSCBoneData=val;
+	if(val) {
+		PlayerOwner.ConsoleCommand("showOSCData FALSE");
+		PlayerOwner.ConsoleCommand("showOSCTraceData FALSE");
+	}
+}
+
+exec function showText()
+{
+	PlayerOwner.ConsoleCommand("showOSCData FALSE");
+	PlayerOwner.ConsoleCommand("showOSCTraceData FALSE");
+	PlayerOwner.ConsoleCommand("showOSCBoneData FALSE");
+	PlayerOwner.ConsoleCommand("debugPose FALSE");	
+}
+
+exec function showOSCData(bool val)
+{
+	bShowOSCData=val;	
+	if(val) {
+		PlayerOwner.ConsoleCommand("behindviewset 60 0 0");
+		PlayerOwner.ConsoleCommand("showOSCTraceData FALSE");
+		PlayerOwner.ConsoleCommand("showOSCBoneData FALSE");
+
+		//PlayerOwner.ConsoleCommand("debugPose FALSE");
+		//PlayerOwner.ConsoleCommand("togglePose FALSE");		
+	}
+}
+
+exec function showOSCTraceData(bool val)
+{
+	bShowOSCTraceData=val;
+	if(val) {
+		PlayerOwner.ConsoleCommand("showOSCData TRUE");
+		PlayerOwner.ConsoleCommand("showOSCBoneData FALSE");
+		PlayerOwner.ConsoleCommand("slideTrace TRUE");
+	} else {
+		PlayerOwner.ConsoleCommand("slideTrace FALSE");
+	}
+}
+
+exec function slideShowIK(bool val)
+{
+	if(val) {
+		PlayerOwner.ConsoleCommand("behindviewset 20 -30 -65");		
+		PlayerOwner.ConsoleCommand("debugPose TRUE");
+		bShowOSCData=TRUE;	
+		PlayerOwner.ConsoleCommand("showOSCTraceData FALSE");
+		PlayerOwner.ConsoleCommand("showOSCBoneData FALSE");		
+	} else
+	{
+		PlayerOwner.ConsoleCommand("behindviewset 60 0 0");
+		PlayerOwner.ConsoleCommand("debugPose FALSE");	
+	}
+	
+}
+
+function String getOSCData()
+{
+	local String result;
+	
+	result = "Location:" $ "\n";
+	result $= "      X: " $ psStruct.LocX $ "\n";
+	result $= "      Y: " $ psStruct.LocY $ "\n";
+	result $= "      Z: " $ psStruct.LocZ $ "\n";
+
+	result $= "\n" $ "Rotation:" $ "\n";
+	result $= "      Pitch: " $ psStruct.Pitch $ "\n";
+	result $= "      Yaw: " $ psStruct.Yaw $ "\n";
+	result $= "      Roll: " $ psStruct.Roll $ "\n";
+
+	result $= "\n" $ "Ray Trace Distances:" $ "\n";
+	result $= "       Left Trace: " $ psStruct.leftTrace $ "\n";
+	result $= "       Right Trace: " $ psStruct.rightTrace $ "\n";
+	result $= "       Down Trace: " $ psStruct.downTrace $ "\n";
+	
+	result $= "\n" $ "Bone Location (Local):" $ "\n";
+	result $= "      Right X: " $ psStruct.bone1X $ "\n";
+	result $= "      Right Y: " $ psStruct.bone1Y $ "\n";
+	result $= "      Right Z: " $ psStruct.bone1Z $ "\n";
+	result $= "      Left X: " $ psStruct.bone2X $ "\n";
+	result $= "      Left Y: " $ psStruct.bone2Y $ "\n";
+	result $= "      Left Z: " $ psStruct.bone2Z;
+	
+	return result;
+}
+
+function String getOSCTraceData()
+{
+	local String result;
+	
+	result = "Ray Trace Distances:" $ "\n";
+	result $= "       Left Trace: " $ psStruct.leftTrace $ "\n";
+	result $= "       Right Trace: " $ psStruct.rightTrace $ "\n";
+	result $= "       Down Trace: " $ psStruct.downTrace $ "\n";
+
+	return result;
+}
+
+function String getOSCBoneData()
+{
+	local String result;
+	
+	result = "Bone Location (Local):" $ "\n";
+	result $= "      Right X: " $ psStruct.bone1X $ "\n";
+	result $= "      Right Y: " $ psStruct.bone1Y $ "\n";
+	result $= "      Right Z: " $ psStruct.bone1Z $ "\n";
+	result $= "      Left X: " $ psStruct.bone2X $ "\n";
+	result $= "      Left Y: " $ psStruct.bone2Y $ "\n";
+	result $= "      Left Z: " $ psStruct.bone2Z;
+
+	return result;
+}
+
+function executeConsoleCommand(string val)
+{
+	PlayerOwner.ConsoleCommand(val);
+}
+
 function DrawGameHud()
 {
 	if(bDrawSlides)
 	{
-//	`log("Current Resolution: "$Canvas.SizeX$", "$Canvas.SizeY);
+	`log("Current Resolution: "$Canvas.SizeX$", "$Canvas.SizeY);
 	
 	  viewportWidth = Canvas.SizeX;
 	  viewportHeight = Canvas.SizeY;	
@@ -289,33 +540,42 @@ function DrawGameHud()
 		// draw slide's background rectangle...
 		Canvas.SetDrawColor(slideColorR,slideColorG,slideColorB,slideColorA);
 		Canvas.DrawRect(slideWidth, slideHeight);
-	
-		// draw slide's text...
-		//Canvas.Font = class'Engine'.static.GetLargeFont();
-		//Canvas.Font = fontArial;
-		//Canvas.Font = fontArialMedium;
-		if(viewportWidth==1920)
-		{
-			Canvas.Font = fontSourceSansProMedium;		
-		} else {
-			Canvas.Font = fontSourceSansProSmall;		
-		}
-		Canvas.Font = fontSourceSansProMedium;
-		
-		
-		Canvas.setDrawColor(slideTextColorR,slideTextColorG,slideTextColorB,slideTextColorA);
-		Canvas.SetPos(slideStartX + currentTextX, slideStartY + currentTextY);
-	  	Canvas.DrawText(currentTitle, TRUE, titleScale, titleScale);
-	  	Canvas.DrawText(currentText, TRUE, textScale, textScale);
-	  		  
+
 	  	// draw image...
 		if(slideImgId > -1)
 		{
 		  Canvas.SetPos(slideStartX + slideImgX, slideStartY + slideImgY);
 	  	  Canvas.SetDrawColor(255,255,255,255);
-	  	  Canvas.DrawTexture(d3_graph_1_TEX, slideImgScale);
+	  	  Canvas.DrawTexture(Images[slideImgId], slideImgScale);
 		}
+				
+		// draw slide's text...
+
+//		if(Layouts[Slides[slideNumber].layout].fontSize == -1)
+//		{
+		/*
+		  if(viewportWidth==1920)
+		  {
+			Canvas.Font = fontSourceSansProMedium;		
+			`log("Canvas.Font is fontSourceSansProMedium");	
+		  } else if(viewportWidth < 1280) {
+			Canvas.Font = fontSourceSansProTiny;		
+			`log("Canvas.Font is fontSourceSansProTiny");
+		  } else {
+			Canvas.Font = fontSourceSansProSmall;		
+			`log("Canvas.Font is fontSourceSansProSmall");
+		  } */
+/*		} else { */
+			Canvas.Font = Fonts[Layouts[Slides[slideNumber].layout].fontSize];
+//		}		
 		
+		Canvas.setDrawColor(slideTextColorR,slideTextColorG,slideTextColorB,slideTextColorA);
+		Canvas.SetPos(slideStartX + currentTextX, slideStartY + currentTextY);	  	
+	  	Canvas.DrawText(currentText, TRUE, textScale, textScale);		
+		Canvas.SetPos(slideStartX + currentTitleX, slideStartY + currentTitleY);	  		  	
+		Canvas.DrawText(currentTitle, TRUE, titleScale, titleScale);		
+		
+
 		// draw footer...
 		if(footerNumber > -1)
 		{
@@ -346,11 +606,35 @@ exec function drawHudRect(int lposx, int lposy, int lendx, int lendy)
 	slideHeight=lendy;
 }
 
-exec function slideDebugVar(float val1, float val2,float val3)
+exec function debugSlideImgPosition(float x, float y)
+{
+	debugSlideImgX = x;
+	debugSlideImgY = y;
+}
+
+exec function slideDebugVar(float val1, float val2,float val3, float val4)
 {
 	tempVar1 = val1;
 	tempVar2 = val2;
 	tempVar3 = val3;	
+	tempVar4 = val4;		
+}
+
+exec function slideTrace(bool val)
+{
+	if(val) {
+	  PlayerOwner.ConsoleCommand("testtrace 1");
+	} else {
+  	  PlayerOwner.ConsoleCommand("testtrace 0");	
+	}
+}
+
+exec function splashScreen()
+{
+	PlayerOwner.ConsoleCommand("hideweapon");
+	PlayerOwner.ConsoleCommand("teleportpawn -45800 -10650 14300");
+	PlayerOwner.ConsoleCommand("FlyWalk");
+	PlayerOwner.ConsoleCommand("Setut3osccameramode 1");
 }
 
 function setCanvasLocation(int x, int y)
@@ -382,16 +666,49 @@ defaultproperties
 	fontVerdanaSmall = Font'udkosc.Fonts.verdana_24'
 	fontVerdanaMedium = Font'udkosc.Fonts.verdana_36'	
 	fontVerdanaLarge = Font'udkosc.Fonts.verdana_48'
+	fontSourceSansProTiny = Font'udkosc.Fonts.source_sans_pro_12'
 	fontSourceSansProSmall = Font'udkosc.Fonts.source_sans_pro_24'
 	fontSourceSansProMedium = Font'udkosc.Fonts.source_sans_pro_36'
 	fontSourceSansProLarge = Font'udkosc.Fonts.source_sans_pro_48'
 	
+	Fonts[0] = Font'udkosc.Fonts.source_sans_pro_12';
+	Fonts[1] = Font'udkosc.Fonts.source_sans_pro_24'
+	Fonts[2] = Font'udkosc.Fonts.source_sans_pro_36'
+	Fonts[3] = Font'udkosc.Fonts.source_sans_pro_48'
+	
 	footerNumber=-1
 	
-	tempVar1 = 1.0
-	tempVar2 = 1.0
-	tempVar3 = 1.0	
+	tempVar1 = 0.0
+	tempVar2 = 0.0
+	tempVar3 = 0.0	
+	tempVar4 = 0.0	
 	
 	d3_graph_1_TEX=Texture2D'udkosc.presentation.d3_wing_zoom_composite_small'
+	
+	Images[0] = Texture2D'udkosc.presentation.d3_wing_zoom_composite_small';
+	Images[1] = Texture2D'udkosc.presentation.d3_wing_xyz_bw_large_font_legend';
+	Images[2] = Texture2D'udkosc.presentation.gnuplot_xyz_2048';
+	Images[3] = Texture2D'udkosc.presentation.sc_lighthouse_1024';
+	Images[4] = Texture2D'udkosc.presentation.sc_screetch_512';
+	Images[5] = Texture2D'udkosc.presentation.sc_sidetrace_512';
+	Images[6] = Texture2D'udkosc.presentation.sc_wing_sines_512';
+	Images[7] = Texture2D'udkosc.presentation.System_2048';
+	Images[8] = Texture2D'udkosc.presentation.3birds_2048';
+	Images[9] = Texture2D'udkosc.presentation.mvw_2048';
+	Images[10] = Texture2D'udkosc.presentation.skel_mesh_trum_val_2048';
+	Images[11] = Texture2D'udkosc.presentation.overview1';
+	Images[12] = Texture2D'udkosc.presentation.overview2';
+	Images[13] = Texture2D'udkosc.presentation.overview3';
+	Images[14] = Texture2D'udkosc.presentation.overview4';
+	Images[15] = Texture2D'udkosc.presentation.overview5';
+	Images[16] = Texture2D'udkosc.presentation.overview6';
+	Images[17] = Texture2D'udkosc.presentation.overview7';
+	Images[18] = Texture2D'udkosc.presentation.overview8';
+	Images[19] = Texture2D'udkosc.presentation.rift_2048';
+	Images[20] = Texture2D'udkosc.presentation.space_1024';
+	
 	img_valkordia_grey_TEX=Texture2D'udkosc.presentation.valkordia-grey'
+	
+	debugSlideImgX = -1.0
+	debugSlideImgY = -1.0
 }

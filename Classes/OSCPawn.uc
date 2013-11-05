@@ -784,8 +784,28 @@ psStruct.Port = OSCParameters.getOSCPort();
     }
 
     if(sendOSC)
+	{
         sendOSCPlayerState(psStruct);
 
+		//OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct = psStruct;
+		
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.LocX = psStruct.LocX;
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.LocY = psStruct.LocY;
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.LocZ = psStruct.LocZ;
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.Pitch = psStruct.Pitch;		
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.Yaw = psStruct.Yaw;		
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.Roll = psStruct.Roll;		
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.leftTrace = psStruct.leftTrace;		
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.rightTrace = psStruct.rightTrace;		
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.downTrace = psStruct.downTrace;	
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.bone1X = psStruct.bone1X;	
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.bone1Y = psStruct.bone1Y;	
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.bone1Z = psStruct.bone1Z;			
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.bone2X = psStruct.bone2X;	
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.bone2Y = psStruct.bone2Y;	
+		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.bone2Z = psStruct.bone2Z;			
+	}
+	
     // update last xyz coordinates
     lastX = Location.X;
     lastY = Location.Y;
@@ -1882,7 +1902,9 @@ simulated function sideTracer(int rval)
 //        localLeft = vect(0, rval, 0);
         end = Location + (localLeft*gtracelength >> Rotation);        
         traceHit = trace(loc, norm, end, startTrace, true,, hitInfo);
-        //DrawDebugLine(startTrace, end, 255, 0, 0, false);
+		
+		if(gtesttrace==1)
+          DrawDebugLine(startTrace, end, 255, 0, 0, false);
 //    }
     
     /*
@@ -1954,7 +1976,8 @@ simulated function downTrace()
 //    `log("********************************************:  IN PAWNTRACE *************** AFTER CHECK: trace_distance "$trace_distance);
 //    `log("********************************************:  IN PAWNTRACE *************** AFTER CHECK: gdowntracelength "$gdowntracelength);
     
-    //sDrawDebugLine(Location, end, 255,0,0,false);
+	if(gtesttrace==1)
+      DrawDebugLine(Location, end, 255,0,0,false);
     
     /*
     if (traceHit == none)

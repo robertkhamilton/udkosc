@@ -1617,6 +1617,11 @@ exec function OverridePose(bool val) {
 	bOverridePosing = val;
 }
 
+exec function debugPose(bool val)
+{
+	bDebugPose = val;
+}
+
 state PlayerPosing
 {
 
@@ -1643,10 +1648,10 @@ state PlayerPosing
 //		PopState();
 	}
 	
-	exec function debugPose(bool val)
-	{
-		bDebugPose = val;
-	}
+//	exec function debugPose(bool val)
+//	{
+//		bDebugPose = val;
+//	}
 	
 	exec function setInputScaler(float val)
 	{
@@ -1825,9 +1830,10 @@ state PlayerPosing
 		//ArmLocation_left.y = Pawn.Location.y + localOSCScriptBoneCCDsStruct.bone2y;
 		//ArmLocation_left.z = Pawn.Location.z + localOSCScriptBoneCCDsStruct.bone2z;
 		
-	    Utp.RightWing_CCD_IK.EffectorLocation=ArmLocation_right;
-		Utp.LeftWing_CCD_IK.EffectorLocation=ArmLocation_left;	
-		
+		if(Utp.RightWing_CCD_IK != none) {
+  	      Utp.RightWing_CCD_IK.EffectorLocation=ArmLocation_right;
+		  Utp.LeftWing_CCD_IK.EffectorLocation=ArmLocation_left;	
+		}
 	  } else if(bOverridePosing) {
 
 	    tempArmLocation = gOverridePosingRight >> Pawn.Rotation;
@@ -1841,10 +1847,11 @@ state PlayerPosing
 		ArmLocation_left.x = Pawn.Location.x + tempArmLocation.x;
 		ArmLocation_left.y = Pawn.Location.y + tempArmLocation.y;
 		ArmLocation_left.z = Pawn.Location.z + tempArmLocation.z;
-		
-	    Utp.RightWing_CCD_IK.EffectorLocation=ArmLocation_right;
-		Utp.LeftWing_CCD_IK.EffectorLocation=ArmLocation_left;	
-		
+
+		if(Utp.RightWing_CCD_IK != none) {		
+	      Utp.RightWing_CCD_IK.EffectorLocation=ArmLocation_right;
+		  Utp.LeftWing_CCD_IK.EffectorLocation=ArmLocation_left;	
+		}
 	  } else {
 	
 	    tempVectorLeft.X = scaleWingRotation(PlayerInput.RawJoyRight) + leftXOffset;
@@ -1866,22 +1873,10 @@ state PlayerPosing
           // Utp.OSCRightArm_CCD_IK.EffectorLocation=Pawn.Location + ArmLocation_right; 
         } else { 
 
-		  Utp.RightWing_CCD_IK.EffectorLocation=ArmLocation_right;
-		  Utp.LeftWing_CCD_IK.EffectorLocation=ArmLocation_left;
-		
-	    //`log("World ArmLocation_left.x: "$ArmLocation_left.x);
-	    //`log("World ArmLocation_left.y: "$ArmLocation_left.y);
-	    //`log("World ArmLocation_left.z: "$ArmLocation_left.z);
-	   
-	    //`log("Pawn.Location: "$Pawn.Location.X$", "$Pawn.Location.Y$", "$Pawn.Location.Z);
-	   
-	    // ArmLocation_left = ArmLocation_left - Pawn.Location;
-	   
-	    //`log("Local ArmLocation_left.x: "$ArmLocation_left.x);
-	    //`log("Local ArmLocation_left.y: "$ArmLocation_left.y);
-	    //`log("Local ArmLocation_left.z: "$ArmLocation_left.z);	  
-	  
-	  
+		  if(Utp.RightWing_CCD_IK != none) {	
+		    Utp.RightWing_CCD_IK.EffectorLocation=ArmLocation_right;
+		    Utp.LeftWing_CCD_IK.EffectorLocation=ArmLocation_left;
+		  }	  
         }
 	  }
 	  
