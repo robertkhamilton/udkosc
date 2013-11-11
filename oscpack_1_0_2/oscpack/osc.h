@@ -383,6 +383,9 @@ struct OSCScriptCameramove
 	float pitch;
 	float yaw;
 	float roll;
+	float setpitch;
+	float setyaw;
+	float setroll;
 };
 
 struct OSCTriggerStruct
@@ -443,6 +446,8 @@ __declspec(dllexport) void sendOSCBotState(BotStateStruct* pState);
 __declspec(dllexport) void sendOSCProjectileState(ProjectileStateStruct* pState);
 __declspec(dllexport) void sendOSCMeshState(MeshStateStruct* mState);
 __declspec(dllexport) void sendOSCPlayerTrace(DownTraceStruct* a);
+__declspec(dllexport) void sendOSCStart(PlayerStateStruct* pState);
+__declspec(dllexport) void sendOSCEnd(PlayerStateStruct* pState);
 
 __declspec(dllexport) void testt(float x);
 
@@ -479,14 +484,6 @@ __declspec(dllexport) OSCPlayerDiscreteValues* getOSCPlayerDiscreteValues(int* i
 
 __declspec(dllexport) OSCSinglePawnBotStateValues getOSCSinglePawnBotStateValues();
 __declspec(dllexport) OSCPawnBotState getOSCPawnBotState();
-/*
-__declspec(dllexport) OSCScriptPawnMoveX getOSCScriptPawnMoveX();
-__declspec(dllexport) OSCScriptPawnMoveY getOSCScriptPawnMoveY();
-__declspec(dllexport) OSCScriptPawnMoveZ getOSCScriptPawnMoveZ();
-__declspec(dllexport) OSCScriptPawnMoveJump getOSCScriptPawnMoveJump();
-__declspec(dllexport) OSCScriptPawnMoveSpeed getOSCScriptPawnMoveSpeed();
-__declspec(dllexport) OSCScriptPawnMoveStop getOSCScriptPawnMoveStop();
-*/
 
 // OSC Console Command call
 __declspec(dllexport) float getOSCConsoleCommand();

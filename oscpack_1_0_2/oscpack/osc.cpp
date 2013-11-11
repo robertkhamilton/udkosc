@@ -498,6 +498,24 @@ protected:
                 float a1;
                 args >> a1 >> osc::EndMessage;
 				OSCScriptCameramoveStruct.roll = a1;
+			}
+			else if (strcmp(m.AddressPattern(), "/udkosc/script/cameramove/setpitch") == 0){
+				osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+				float a1;
+				args >> a1 >> osc::EndMessage;
+				OSCScriptCameramoveStruct.setpitch = a1;
+			}
+			else if (strcmp(m.AddressPattern(), "/udkosc/script/cameramove/setyaw") == 0){
+				osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+				float a1;
+				args >> a1 >> osc::EndMessage;
+				OSCScriptCameramoveStruct.setyaw = a1;
+			}
+			else if (strcmp(m.AddressPattern(), "/udkosc/script/cameramove/setroll") == 0){
+				osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
+				float a1;
+				args >> a1 >> osc::EndMessage;
+				OSCScriptCameramoveStruct.setroll = a1;
             }else if( strcmp( m.AddressPattern(), "/udkosc/script/console" ) == 0 ){
                 osc::ReceivedMessageArgumentStream args = m.ArgumentStream();
                 float a1;
@@ -814,7 +832,26 @@ _declspec(dllexport)OSCScriptPlayermove getOSCScriptPlayermove()
 
 _declspec(dllexport)OSCScriptCameramove getOSCScriptCameramove()
 {
-	return OSCScriptCameramoveStruct;
+	static OSCScriptCameramove localStruct;
+	localStruct = OSCScriptCameramoveStruct;
+
+	if (localStruct.setpitch != 0.0)
+	{
+		OSCScriptCameramoveStruct.setpitch = 0.0;
+	}
+
+	if (localStruct.setyaw != 0.0)
+	{
+		OSCScriptCameramoveStruct.setyaw = 0.0;
+	}
+
+	if (localStruct.setroll != 0.0)
+	{
+		OSCScriptCameramoveStruct.setroll = 0.0;
+	}
+
+//	return OSCScriptCameramoveStruct;
+	return localStruct;
 }
 
 _declspec(dllexport)OSCScriptBoneCCDs getOSCScriptBoneCCDs()
@@ -1012,13 +1049,42 @@ UdpTransmitSocket socket( IpEndpointName( WcharToChar(1, pState->Hostname.Data),
    
 }
 
+__declspec(dllexport)void sendOSCStart(PlayerStateStruct* pState)
+{
+	char buffer[OUTPUT_BUFFER_SIZE];
+	osc::OutboundPacketStream p(buffer, OUTPUT_BUFFER_SIZE);
+	UdpTransmitSocket socket(IpEndpointName(WcharToChar(1, pState->Hostname.Data), pState->Port));
+	p.Clear();
+
+	p << osc::BeginMessage("/start")
+		<< 1
+		<< osc::EndMessage;
+
+	if (p.IsReady()){ socket.Send(p.Data(), p.Size()); }
+}
+
+__declspec(dllexport)void sendOSCEnd(PlayerStateStruct* pState)
+{
+	char buffer[OUTPUT_BUFFER_SIZE];
+	osc::OutboundPacketStream p(buffer, OUTPUT_BUFFER_SIZE);
+	UdpTransmitSocket socket(IpEndpointName(WcharToChar(1, pState->Hostname.Data), pState->Port));
+	p.Clear();
+
+	p << osc::BeginMessage("/end")
+		<< 1
+		<< osc::EndMessage;
+
+	if (p.IsReady()){ socket.Send(p.Data(), p.Size()); }
+}
+
 __declspec(dllexport)void sendOSCPlayerState(PlayerStateStruct* pState)
 {
    char buffer[OUTPUT_BUFFER_SIZE];
    osc::OutboundPacketStream p( buffer, OUTPUT_BUFFER_SIZE );
   //UdpTransmitSocket socket( IpEndpointName( CURRENTHOST, CURRENTPORT ));
   UdpTransmitSocket socket( IpEndpointName( WcharToChar(1, pState->Hostname.Data), pState->Port ));
-   p.Clear();
+  UdpTransmitSocket socket2(IpEndpointName(WcharToChar(1, pState->Hostname.Data), 7000));
+  p.Clear();
 
 	p << osc::BeginMessage( "/player" )
 //		<< WcharToChar(1, pState->PlayerName.Data)
@@ -1042,7 +1108,12 @@ __declspec(dllexport)void sendOSCPlayerState(PlayerStateStruct* pState)
 		<< (float)pState->bone2Z
 	  << osc::EndMessage;
 	
-   if(p.IsReady()){ socket.Send( p.Data(), p.Size() );}
+	if (p.IsReady()){ socket.Send(p.Data(), p.Size());  socket2.Send(p.Data(), p.Size()); }
+
+   // Send 2nd message to recording port (for script recording use only)
+   //UdpTransmitSocket socket2(IpEndpointName(WcharToChar(1, pState->Hostname.Data), 7000));
+   //if (p.IsReady()){ socket2.Send(p.Data(), p.Size()); }
+
 }
 
 __declspec(dllexport)void sendOSCProjectileState(ProjectileStateStruct* pState)
@@ -1379,7 +1450,7 @@ char* WcharToChar(int mode, wchar_t* val)
     size_t convertedChars = 0;
 	char char_result[newsize];
     wcstombs_s(&convertedChars, char_result, origsize, val, _TRUNCATE);
-	std::cout << "char_result: " << char_result << std::endl;
+	//std::cout << "char_result: " << char_result << std::endl;
    return char_result;
 
 }
