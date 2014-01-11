@@ -173,6 +173,15 @@ struct PlayerStateStruct
 	float bone2X;
 	float bone2Y;
 	float bone2Z;
+	float playerSpeed;
+};
+
+struct StartEndStruct
+{
+	FString Hostname;
+	int Port;
+	int start;
+	int end;
 };
 
 struct PawnStateStruct
@@ -446,8 +455,8 @@ __declspec(dllexport) void sendOSCBotState(BotStateStruct* pState);
 __declspec(dllexport) void sendOSCProjectileState(ProjectileStateStruct* pState);
 __declspec(dllexport) void sendOSCMeshState(MeshStateStruct* mState);
 __declspec(dllexport) void sendOSCPlayerTrace(DownTraceStruct* a);
-__declspec(dllexport) void sendOSCStart(PlayerStateStruct* pState);
-__declspec(dllexport) void sendOSCEnd(PlayerStateStruct* pState);
+__declspec(dllexport) void sendOSCStart(StartEndStruct* pState);
+__declspec(dllexport) void sendOSCEnd(StartEndStruct* pState);
 
 __declspec(dllexport) void testt(float x);
 

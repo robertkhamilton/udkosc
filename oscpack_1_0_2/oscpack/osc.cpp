@@ -1049,7 +1049,7 @@ UdpTransmitSocket socket( IpEndpointName( WcharToChar(1, pState->Hostname.Data),
    
 }
 
-__declspec(dllexport)void sendOSCStart(PlayerStateStruct* pState)
+__declspec(dllexport)void sendOSCStart(StartEndStruct* pState)
 {
 	char buffer[OUTPUT_BUFFER_SIZE];
 	osc::OutboundPacketStream p(buffer, OUTPUT_BUFFER_SIZE);
@@ -1057,13 +1057,13 @@ __declspec(dllexport)void sendOSCStart(PlayerStateStruct* pState)
 	p.Clear();
 
 	p << osc::BeginMessage("/start")
-		<< 1
+		<< (int)pState->start //1
 		<< osc::EndMessage;
 
 	if (p.IsReady()){ socket.Send(p.Data(), p.Size()); }
 }
 
-__declspec(dllexport)void sendOSCEnd(PlayerStateStruct* pState)
+__declspec(dllexport)void sendOSCEnd(StartEndStruct* pState)
 {
 	char buffer[OUTPUT_BUFFER_SIZE];
 	osc::OutboundPacketStream p(buffer, OUTPUT_BUFFER_SIZE);
@@ -1071,7 +1071,7 @@ __declspec(dllexport)void sendOSCEnd(PlayerStateStruct* pState)
 	p.Clear();
 
 	p << osc::BeginMessage("/end")
-		<< 1
+		<< (int)pState->end //1
 		<< osc::EndMessage;
 
 	if (p.IsReady()){ socket.Send(p.Data(), p.Size()); }
@@ -1086,33 +1086,32 @@ __declspec(dllexport)void sendOSCPlayerState(PlayerStateStruct* pState)
   UdpTransmitSocket socket2(IpEndpointName(WcharToChar(1, pState->Hostname.Data), 7000));
   p.Clear();
 
-	p << osc::BeginMessage( "/player" )
-//		<< WcharToChar(1, pState->PlayerName.Data)
-        << (int)pState->id
-        << (float)pState->LocX
-		<< (float)pState->LocY
-		<< (float)pState->LocZ
-		<< (int)pState->crouch
-		<< (float)pState->Pitch
-		<< (float)pState->Yaw
-		<< (float)pState->Roll
-		<< (float)pState->leftTrace
-		<< (float)pState->rightTrace
-		<< (float)pState->downTrace
-		<< (float)pState->sendCall
-		<< (float)pState->bone1X
-		<< (float)pState->bone1Y
-		<< (float)pState->bone1Z
-		<< (float)pState->bone2X
-		<< (float)pState->bone2Y
-		<< (float)pState->bone2Z
+  p << osc::BeginMessage("/player")
+	  //		<< WcharToChar(1, pState->PlayerName.Data)
+	  << (int)pState->id
+	  << (float)pState->LocX
+	  << (float)pState->LocY
+	  << (float)pState->LocZ
+	  << (int)pState->crouch
+	  << (float)pState->Pitch
+	  << (float)pState->Yaw
+	  << (float)pState->Roll
+	  << (float)pState->leftTrace
+	  << (float)pState->rightTrace
+	  << (float)pState->downTrace
+	  << (float)pState->sendCall
+	  << (float)pState->bone1X
+	  << (float)pState->bone1Y
+	  << (float)pState->bone1Z
+	  << (float)pState->bone2X
+	  << (float)pState->bone2Y
+	  << (float)pState->bone2Z
+	  << (float)pState->playerSpeed
 	  << osc::EndMessage;
-	
+
+	// Send 2nd message to recording port (for script recording use only)
 	if (p.IsReady()){ socket.Send(p.Data(), p.Size());  socket2.Send(p.Data(), p.Size()); }
 
-   // Send 2nd message to recording port (for script recording use only)
-   //UdpTransmitSocket socket2(IpEndpointName(WcharToChar(1, pState->Hostname.Data), 7000));
-   //if (p.IsReady()){ socket2.Send(p.Data(), p.Size()); }
 
 }
 

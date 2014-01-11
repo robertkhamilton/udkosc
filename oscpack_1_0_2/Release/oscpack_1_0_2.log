@@ -1,4 +1,4 @@
-﻿Build started 11/11/2013 1:09:03 PM.
+﻿Build started 1/7/2014 7:02:36 AM.
      1>Project "C:\git\udkosc\oscpack_1_0_2\oscpack_1_0_2.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oy- /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D OSCPACK_1_0_2_EXPORTS /D _WINDLL /D _UNICODE /D UNICODE /Gm- /EHsc /MD /Zp4 /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt oscpack\includes\stdafx.cpp oscpack\ip\IpEndpointName.cpp oscpack\ip\win32\NetworkingUtils.cpp oscpack\ip\win32\UdpSocket.cpp oscpack\osc.cpp oscpack\osc\OscOutboundPacketStream.cpp oscpack\osc\OscPrintReceivedElements.cpp oscpack\osc\OscReceivedElements.cpp oscpack\osc\OscTypes.cpp
@@ -33,8 +33,8 @@
      1>oscpack\osc.cpp(455): warning C4244: '=' : conversion from 'int' to 'float', possible loss of data
      1>oscpack\osc.cpp(770): warning C4101: 'tempStruct' : unreferenced local variable
      1>oscpack\osc.cpp(794): warning C4101: 'tempStruct' : unreferenced local variable
-     1>oscpack\osc.cpp(1344): warning C4800: 'const wchar_t *' : forcing value to bool 'true' or 'false' (performance warning)
-     1>oscpack\osc.cpp(1454): warning C4172: returning address of local variable or temporary
+     1>oscpack\osc.cpp(1343): warning C4800: 'const wchar_t *' : forcing value to bool 'true' or 'false' (performance warning)
+     1>oscpack\osc.cpp(1453): warning C4172: returning address of local variable or temporary
          OscOutboundPacketStream.cpp
      1>oscpack\osc\OscOutboundPacketStream.cpp(339): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
                  C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\string.h(112) : see declaration of 'strcpy'
@@ -73,4 +73,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:04.91
+Time Elapsed 00:00:05.45
