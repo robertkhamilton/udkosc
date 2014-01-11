@@ -20,7 +20,17 @@ var float rightXOffset;
 var float leftZOffset;
 var float leftYOffset;
 var float leftXOffset;
+var float rightWingZOffset;
+var float rightWingYOffset;
+var float rightWingXOffset;
+var float leftWingZOffset;
+var float leftWingYOffset;
+var float leftWingXOffset;
+var float trunkZOffset;
+var float trunkYOffset;
+var float trunkXOffset;
 var bool bDebugPose;
+var bool bSideScroller;
 var Rotator gPoseRotation;
 var int gCamx, gCamy, gCamz;
 var bool bOverridePosing;
@@ -122,6 +132,10 @@ var int gHUDX;
 var int gHUDY;
 var float gHUDAlpha;
 
+// Trunk
+var float gTrunkMinRotation;
+var float gTrunkMaxRotation;
+
 // borrowing this for multiparameter testing
 struct OSCFingerController
 {
@@ -211,6 +225,9 @@ struct OSCScriptCameramoveStruct
     var float pitch;
     var float yaw;
     var float roll;
+    var float setpitch;
+    var float setyaw;
+    var float setroll;
 };
 
 struct OSCConsoleCommandStruct
@@ -327,6 +344,12 @@ var float gSendCall;
 // Posing
 var bool bPosing;
 var bool bOSCPosing;
+var int lastPawnMesh;
+
+
+// Arm CCD_IK testing
+var int gNumBones;
+var bool gStartFromTail;
 
 dllimport final function sendOSCpointClick(PointClickStruct a);    
 dllimport final function OSCFingerController getOSCFingerController(); //borrowing this for multiparameter testing
@@ -345,6 +368,12 @@ dllimport final function OSCPlayerStateValuesStruct getOSCPlayerStateValues(int 
 dllimport final function OSCPlayerTeleportStruct getOSCPlayerTeleportValues(int id);
 dllimport final function OSCPlayerDiscreteValuesStruct getOSCPlayerDiscreteValues(int id);
 
+// test function
+simulated event spawnTestPickup()
+{
+
+
+}
 
 // borrowing this for multiparameter testing
 simulated event PreBeginPlay()
@@ -389,7 +418,7 @@ simulated exec function trunkmove(float valx, float valy, float valz)
     TrunkLocation.X = valz;
     TrunkLocation.Y = valy;
     Utp=OscPawn(Pawn); //this simply gets our pawn so we can then point to our SkelControl
-    Utp.TrunkMover.EffectorLocation=Pawn.Location + TrunkLocation; 
+    Utp.Trunk_CCD_IK.EffectorLocation=Pawn.Location + TrunkLocation; 
 }
 
 //simulated event PostBeginPlay()
@@ -518,7 +547,7 @@ function SpawnOSCBots()
     // GROUPING CURRENTLY IS SET IN OSCAICONTROLLER Follow state
     `log("OSCBots length: "$OSCBots.length);
     
-    if(OSCBots.length>=12)
+    if(OSCBots.length>=112)
         ClearTimer('SpawnOSCBots');
 
     // Spawn lead and 5 followers
@@ -543,7 +572,7 @@ function callConsoleCommand(int cmd)
                 command = "OSCMove";            
                 break;
             case 3:                    
-                command = "BehindView    ";
+                command = "BehindView";
                 break;
             case 4:
                 command = "setOSCFreeCamera 1";
@@ -567,9 +596,45 @@ function callConsoleCommand(int cmd)
                 command = "OSCSetBehindCamera 1";
                 break;
             case 11:
-                command = "OSCSetBehindCamera 2";
+                command = "OSCSetBehindCamera 0";
                 break;
-            default:
+            case 12:
+                command = "OSCSetFollowCamera 1";
+                break;
+            case 13:
+                command = "OSCSetFollowCamera 0";
+                break;				
+            case 14:
+                command = "OSCSetFollowLockCamera 1";
+                break;
+            case 15:
+                command = "OSCSetFollowLockCamera 0";
+                break;								
+            case 16:
+                command = "OSCSetFollowLockVertCamera 1";
+                break;
+            case 17:
+                command = "OSCSetFollowLockVertCamera 0";
+                break;								
+			case 18: 
+				command = "OSCSetStart";
+				break;
+			case 19:
+				command = "OSCSetEnd";
+				break;
+			case 20: 
+				command = "OSCSetStartValue 1";
+				break;
+			case 21:
+				command = "OSCSetStartValue 0";
+				break;				
+			case 22: 
+				command = "OSCSetEndValue 1";
+				break;
+			case 23:
+				command = "OSCSetEndValue 0";
+				break;				
+			default:
                 `log("***> INVALID Console Command: "$cmd);
                 break;
         }
@@ -1537,7 +1602,7 @@ exec function setCameraDistance(float value) {
 exec function IncrementCameraMode() {
     
     gCameraMode = gCameraMode + 1;
-    if(gCameraMode > 3)
+    if(gCameraMode > 4)
         gCameraMode = 0;
     
     // 0:  Dynamic player-facing camera; mouse controlled camera around player
@@ -1552,7 +1617,7 @@ exec function DecrementCameraMode() {
 
     gCameraMode = gCameraMode - 1;
     if(gCameraMode < 0)
-        gCameraMode = 3;
+        gCameraMode = 4;
 
     // 0:  Dynamic player-facing camera; mouse controlled camera around player
     // 1:  Static camera: no Location or Rotation change    
@@ -1594,9 +1659,9 @@ exec function posePlayer(bool val) {
 }
 
 function setPlayerPose(bool val) {
-	//local OSCPawn CurrentPawn;
 	
-	//CurrentPawn=OSCPawn(Pawn);
+	
+	
 	
     bPosing = val;
 	
@@ -1605,7 +1670,7 @@ function setPlayerPose(bool val) {
 	} else {
 	  flying = True;
 	  GotoState('PlayerFlying');
-	  OscPawn(Pawn).SetPawnMesh(2);
+	  OscPawn(Pawn).SetPawnMesh(lastPawnMesh); //2
 	}
 }
 
@@ -1622,60 +1687,238 @@ exec function debugPose(bool val)
 	bDebugPose = val;
 }
 
+exec function toggleSideScroller()
+{
+	GoToState('SideScroller');
+	OSCPawn(Pawn).GoToState('SideScroller');
+//	bSideScroller = val;
+//	OSCPawn(Pawn).bSideScroller = val;
+}
+
+state SideScroller
+{
+ignores SeePlayer, HearNoise, Bump;
+
+
+	function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, rotator DeltaRot)
+	{
+		local Rotator tempRot;
+
+		if( Pawn == None )
+		{
+			return;
+		}
+
+		if (Role == ROLE_Authority)
+		{
+			// Update ViewPitch for remote clients
+			Pawn.SetRemoteViewPitch( Rotation.Pitch );
+		}
+
+		Pawn.Acceleration.X = -1 * PlayerInput.aStrafe * DeltaTime * 100 * PlayerInput.MoveForwardSpeed;
+		Pawn.Acceleration.Y = 0;
+		Pawn.Acceleration.Z = 0;
+      
+		tempRot.Pitch = Pawn.Rotation.Pitch;
+		tempRot.Roll = 0;
+		if(Normal(Pawn.Acceleration) Dot Vect(1,0,0) > 0)
+		{
+			tempRot.Yaw = 0;
+			Pawn.SetRotation(tempRot);
+		}
+		else if(Normal(Pawn.Acceleration) Dot Vect(1,0,0) < 0)
+		{
+			tempRot.Yaw = 32768;
+			Pawn.SetRotation(tempRot);
+		}
+
+		//CheckJumpOrDuck();
+	}
+
+
+	function UpdateRotation( float DeltaTime )
+	{
+		local Rotator   DeltaRot, ViewRotation;
+
+		ViewRotation = Rotation;
+
+		// Calculate Delta to be applied on ViewRotation
+		DeltaRot.Yaw = Pawn.Rotation.Yaw;
+		DeltaRot.Pitch   = PlayerInput.aLookUp;
+
+		ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
+		SetRotation(ViewRotation);
+	}   
+	
+
+/*	
+    function UpdateRotation( float DeltaTime )
+    {
+    
+        local Rotator    DeltaRot, newRotation, ViewRotation;
+        local float smoothTurn, smoothLookUp, strafedRoll;        
+        local float strafe;
+
+        // Posing values
+        local vector ArmLocation;
+        local OSCPawn Utp;
+        
+		bForceNetUpdate = TRUE; // Force replication
+        
+        ViewRotation = Rotation;
+        if (Pawn!=none)
+        {
+        }
+        
+        // Smooth aTurn and aLookup Values
+       // SmootherLookUp(PlayerInput.aLookUp, smoothLookUp);
+
+        if(PlayerInput.aStrafe > 0) {
+            strafe = 1;
+        }  else if(PlayerInput.aStrafe < 0) {
+            strafe = -1;
+        } else {
+            strafe = 0;
+        }
+                
+        //SmootherTurn(PlayerInput.aTurn, strafe, smoothTurn);
+
+        DeltaRot.Yaw    = smoothTurn;
+        
+        DeltaRot.Pitch = smoothLookUp;
+
+        ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
+        SetRotation(ViewRotation);
+        
+        ViewShake( deltaTime );
+
+        NewRotation = ViewRotation;
+        //NewRotation.Roll = Rotation.Roll;
+        
+        // Add Strafe as an input towards Pawn roll
+ //      NewRotation = pawnRotate(NewRotation, DeltaTime);
+        
+//        if ( Pawn != None )
+//            OSCPawn(Pawn).FaceRotation(NewRotation, deltatime);
+
+
+//            DeltaRot.Yaw = PlayerInput.aTurn;
+            DeltaRot.Pitch = PlayerInput.aLookUp;
+            
+//            gMouseRotation += DeltaRot;
+//            gDeltaMouseYaw = PlayerInput.aTurn;
+            gDeltaMousePitch = PlayerInput.aLookUp;
+
+//            gTotalMouseYaw += PlayerInput.aTurn;
+            gTotalMousePitch += PlayerInput.aLookUp;
+
+            if(gTotalMousePitch > DegToUnrRot * 90.f) {
+                gTotalMousePitch = DegToUnrRot * 90.f;
+            } else if(gTotalMousePitch < DegToUnrRot * -90.f) {
+                gTotalMousePitch = DegToUnrRot * -90.f;        
+            }            
+    
+    }
+*/
+	
+	
+	
+
+    function PlayerMove(float DeltaTime)
+    {
+    
+        local vector X,Y,Z;
+        local float flyingGravity;
+    
+		bForceNetUpdate = TRUE; // Force replication
+        
+        GetAxes(Rotation,X,Y,Z);
+        
+        //Pawn.Acceleration = PlayerInput.aForward*X + PlayerInput.aStrafe*Y + PlayerInput.aUp*vect(0,0,1); 
+
+		Pawn.Acceleration = PlayerInput.aStrafe*Y + PlayerInput.aUp*vect(0,0,1); 
+
+        if(!bIgnoreGravity) {
+        
+            // add some gravity back in?
+            flyingGravity = getGravityZ();// vect(0,0,-1);
+            Pawn.Acceleration.Z = (Pawn.Acceleration.Z + flyingGravity) * 1.1;//1.00001;
+        }
+        
+        Pawn.Acceleration = Pawn.AccelRate * Normal(Pawn.Acceleration);
+
+
+        if ( bCheatFlying && (Pawn.Acceleration == vect(0,0,0)) )
+            Pawn.Velocity = vect(0,0,0);
+            
+        // Update rotation.
+        UpdateRotation( DeltaTime );
+
+        if ( Role < ROLE_Authority ) // then save this move and replicate it
+        {
+            OSCPawn(Pawn).baseAirSpeed = 2500;
+            ReplicateMove(DeltaTime, Pawn.Acceleration, DCLICK_None, rot(0,0,0));
+        }
+        else 
+            ProcessMove(DeltaTime, Pawn.Acceleration, DCLICK_None, rot(0,0,0));
+    }
+}
+
 state PlayerPosing
 {
 
 	event BeginState(Name PreviousStateName)
 	{
   	  `log("Beginning State PlayerPosing...");
-	  //(OSCPawn(Pawn).isValkordia==true) {
+	  
+	  if(OSCPawn(Pawn).isValkordia==true) {
 	    OSCPawn(Pawn).SetPawnMesh(6);
-		
-		//OSCPawn(Pawn).FaceRotation(Rot<, deltatime);
-		
-		
-	  //}
+	  } else {
+	    OSCPawn(Pawn).SetPawnMesh(1);	  
+	  }
 	}
 	
-	event EndState(Name NextStateName)
-	{
-		//(OSCPawn(Pawn).isValkordia==true) {
-		  OSCPawn(Pawn).setRotation( Rot(0,0,0));
-		  OSCPawn(Pawn).SetPawnMesh(2);
-		  GoToState('PlayerFlying');
-		//}
+	event EndState(Name NextStateName) {
+	
+		OSCPawn(Pawn).setRotation( Rot(0,0,0));
 		
-//		PopState();
+		if(OSCPawn(Pawn).isValkordia==true) {
+			//OSCPawn(Pawn).SetPawnMesh(2);
+			OSCPawn(Pawn).SetPawnMesh(2);
+		} else {
+			OSCPawn(Pawn).SetPawnMesh(lastPawnMesh);
+		}
+		
+		GoToState('PlayerFlying');
 	}
 	
-//	exec function debugPose(bool val)
-//	{
-//		bDebugPose = val;
-//	}
-	
-	exec function setInputScaler(float val)
-	{
+	exec function setInputScaler(float val) {
 		gWingRotationScaler = val;
 	}
 	
-	exec function setInputMaxMin(float max, float min)
-	{
+	exec function setInputMaxMin(float max, float min) {
 		gWingRotationMin = min;
 		gWingRotationMax = max;
 	}
 	
-	exec function setInputOffsets(float rzoff, float ryoff, float rxoff, float lzoff, float lyoff, float lxoff)
-	{
-		rightZOffset = rzoff;
-		rightXOffset = rxoff;
-		rightYOffset = ryoff;
-		leftYOffset = lyoff;
-		leftZOffset = lzoff;
-		leftXOffset = lxoff;
+	exec function setWingInputOffsets(float rzoff, float ryoff, float rxoff, float lzoff, float lyoff, float lxoff) {
+		rightWingZOffset = rzoff;
+		rightWingXOffset = rxoff;
+		rightWingYOffset = ryoff;
+		leftWingYOffset = lyoff;
+		leftWingZOffset = lzoff;
+		leftWingXOffset = lxoff;
+	}
+
+	exec function setTrunkInputOffsets(float xoff, float yoff, float zoff, float min, float max) {
+		trunkZOffset = zoff;
+		trunkXOffset = xoff;
+		trunkYOffset = yoff;
+		gTrunkMinRotation = min;
+		gTrunkMaxRotation = max;
 	}
 	
-	function float scaleWingRotation(float currentValue)
-	{
+	function float scaleWingRotation(float currentValue) {
 		local float a, b, min, max, rValue;
 		b = gWingRotationMin;
 		a = gWingRotationMax;
@@ -1684,12 +1927,22 @@ state PlayerPosing
 		
 		rValue = ( ((b - a)*(currentValue - min) ) / (max - min) ) + a;
 		
-		return rValue;
+		return rValue;	
+	}
+
+	function float scaleTrunkRotation(float currentValue) {
+		local float a, b, min, max, rValue;
+		b = gTrunkMinRotation;
+		a = gTrunkMaxRotation;
+		min = -1.0;
+		max = 1.0;
 		
+		rValue = ( ((b - a)*(currentValue - min) ) / (max - min) ) + a;
+		
+		return rValue;	
 	}
 	
-	function float scaleValue(float value, float inMin, float inMax, float outMin, float outMax)
-	{
+	function float scaleValue(float value, float inMin, float inMax, float outMin, float outMax) {
 		local float a, b, min, max, rValue;
 		b = outMin;
 		a = outMax;
@@ -1804,7 +2057,7 @@ state PlayerPosing
 	  Utp=OSCPawn(Pawn); //this simply gets our pawn so we can then point to our SkelControl
 	  
 	  // If taking OSC input from Pose Struct (OSCScriptBoneCCDs), override manual control
-      if(bOSCPosing) {
+	if(bOSCPosing) {
 	    
 		tempArmLocation.x = localOSCScriptBoneCCDsStruct.bone1x;
 		tempArmLocation.y = localOSCScriptBoneCCDsStruct.bone1y;
@@ -1818,22 +2071,25 @@ state PlayerPosing
 		//ArmLocation_right.y = Pawn.Location.y + localOSCScriptBoneCCDsStruct.bone1y;
 		//ArmLocation_right.z = Pawn.Location.z + localOSCScriptBoneCCDsStruct.bone1z;
 
-		tempArmLocation.x = localOSCScriptBoneCCDsStruct.bone2x;
-		tempArmLocation.y = localOSCScriptBoneCCDsStruct.bone2y;
-		tempArmLocation.z = localOSCScriptBoneCCDsStruct.bone2z;
+		if(!Utp.isValkordia) {
+			tempArmLocation.x = localOSCScriptBoneCCDsStruct.bone2x;
+			tempArmLocation.y = localOSCScriptBoneCCDsStruct.bone2y;
+			tempArmLocation.z = localOSCScriptBoneCCDsStruct.bone2z;
 		
-		tempArmLocation = tempArmLocation >> Pawn.Rotation;
+			tempArmLocation = tempArmLocation >> Pawn.Rotation;
 		
-		ArmLocation_left = Pawn.Location + tempArmLocation;
-		
-		//ArmLocation_left.x = Pawn.Location.x + localOSCScriptBoneCCDsStruct.bone2x;
-		//ArmLocation_left.y = Pawn.Location.y + localOSCScriptBoneCCDsStruct.bone2y;
-		//ArmLocation_left.z = Pawn.Location.z + localOSCScriptBoneCCDsStruct.bone2z;
+			ArmLocation_left = Pawn.Location + tempArmLocation;
+		}
 		
 		if(Utp.RightWing_CCD_IK != none) {
   	      Utp.RightWing_CCD_IK.EffectorLocation=ArmLocation_right;
 		  Utp.LeftWing_CCD_IK.EffectorLocation=ArmLocation_left;	
 		}
+		
+		if(Utp.Trunk_CCD_IK != none) {
+  	      Utp.Trunk_CCD_IK.EffectorLocation=ArmLocation_right;		
+		}
+		
 	  } else if(bOverridePosing) {
 
 	    tempArmLocation = gOverridePosingRight >> Pawn.Rotation;
@@ -1844,45 +2100,89 @@ state PlayerPosing
 
 		tempArmLocation = gOverridePosingLeft >> Pawn.Rotation;
 		
-		ArmLocation_left.x = Pawn.Location.x + tempArmLocation.x;
-		ArmLocation_left.y = Pawn.Location.y + tempArmLocation.y;
-		ArmLocation_left.z = Pawn.Location.z + tempArmLocation.z;
-
+		if(Utp.isValkordia) {
+			ArmLocation_left.x = Pawn.Location.x + tempArmLocation.x;
+			ArmLocation_left.y = Pawn.Location.y + tempArmLocation.y;
+			ArmLocation_left.z = Pawn.Location.z + tempArmLocation.z;
+		}
+		
 		if(Utp.RightWing_CCD_IK != none) {		
 	      Utp.RightWing_CCD_IK.EffectorLocation=ArmLocation_right;
 		  Utp.LeftWing_CCD_IK.EffectorLocation=ArmLocation_left;	
 		}
+		
+		if(Utp.Trunk_CCD_IK != none) {
+  	      Utp.Trunk_CCD_IK.EffectorLocation=ArmLocation_right;		
+		}
+		
 	  } else {
-	
-	    tempVectorLeft.X = scaleWingRotation(PlayerInput.RawJoyRight) + leftXOffset;
-	    tempVectorLeft.Y = leftYOffset;	 
-	    tempVectorLeft.Z = scaleWingRotation(PlayerInput.RawJoyUp) + leftZOffset;
-	    tempVectorLeft = tempVectorLeft >> Pawn.Rotation;
-	  
-	    tempVectorRight.X = scaleWingRotation(PlayerInput.RawJoyLookRight) + rightXOffset;
-	    tempVectorRight.Y = rightYOffset;
-	    tempVectorRight.Z = scaleWingRotation(PlayerInput.RawJoyLookUp) + rightZOffset;
-	    tempVectorRight = tempVectorRight >> Pawn.Rotation;	  
-	  
-	    ArmLocation_left = Pawn.Location + tempVectorLeft;
-	    ArmLocation_right = Pawn.Location + tempVectorRight; 
 
+		if(Utp.isValkordia) {
+			tempVectorLeft.X = scaleWingRotation(PlayerInput.RawJoyRight) + leftWingXOffset;
+			tempVectorLeft.Y = leftWingYOffset;	 
+			tempVectorLeft.Z = scaleWingRotation(PlayerInput.RawJoyUp) + leftWingZOffset;
+			tempVectorLeft = tempVectorLeft >> Pawn.Rotation;
+	  
+			tempVectorRight.X = scaleWingRotation(PlayerInput.RawJoyLookRight) + rightWingXOffset;
+			tempVectorRight.Y = rightWingYOffset;
+			tempVectorRight.Z = scaleWingRotation(PlayerInput.RawJoyLookUp) + rightWingZOffset;
+			tempVectorRight = tempVectorRight >> Pawn.Rotation;	  
+		
+			ArmLocation_left = Pawn.Location + tempVectorLeft;
+			ArmLocation_right = Pawn.Location + tempVectorRight; 
+		} else if(Utp.isTrumbruticus) {
+			tempVectorRight.X = scaleTrunkRotation(PlayerInput.RawJoyLookRight) + trunkXOffset;
+			tempVectorRight.Y = trunkYOffset;
+			tempVectorRight.Z = scaleTrunkRotation(PlayerInput.RawJoyLookUp) + trunkZOffset;
+			tempVectorRight = tempVectorRight >> Pawn.Rotation;	  
+		
+			ArmLocation_right = Pawn.Location + tempVectorRight;
+		
+		} else {
+		
+			// THIS IS ONLY IN PLAYER POSING, NEED ARMATURE MAN STATIC ARMS IN REGULAR STATE AS WELL
+			
+			// Armature man static arms
+			tempVectorLeft.X = 500;
+			tempVectorLeft.Y = -100;
+			tempVectorLeft.Z = 0;
+			tempVectorLeft = tempVectorLeft >> Pawn.Rotation;
+			ArmLocation_left = Pawn.Location + tempVectorLeft;
+			
+			tempVectorRight.X = 500;
+			tempVectorRight.Y = 100;
+			tempVectorRight.Z = 0;
+			tempVectorRight = tempVectorRight >> Pawn.Rotation;
+			ArmLocation_right = Pawn.Location + tempVectorRight;
+		}
 	    
-
-        if(!Utp.isValkordia) {
+        if(Utp.isTrumbruticus) {
           // Utp.OSCRightArm_CCD_IK.EffectorLocation=Pawn.Location + ArmLocation_right; 
-        } else { 
+		    Utp.Trunk_CCD_IK.EffectorLocation=ArmLocation_right;
+        } else if (Utp.isValkordia) { 
 
 		  if(Utp.RightWing_CCD_IK != none) {	
 		    Utp.RightWing_CCD_IK.EffectorLocation=ArmLocation_right;
 		    Utp.LeftWing_CCD_IK.EffectorLocation=ArmLocation_left;
 		  }	  
-        }
+        } else {
+			//Utp.RightArmIK.EffectorLocation=ArmLocation_right;
+			//Utp.LeftArmIK.EffectorLocation=ArmLocation_left;
+		}
 	  }
 	  
 	  if(bDebugPose) {
-	    DrawDebugSphere(ArmLocation_left, 10, 10, 255, 255, 0, false);
-	    DrawDebugSphere(ArmLocation_right, 10, 10, 0, 255, 0, false);
+
+        if(Utp.isTrumbruticus) {
+			DrawDebugSphere(ArmLocation_right, 10, 10, 0, 255, 0, false);
+		} else if(Utp.isValkordia) {
+			DrawDebugSphere(ArmLocation_left, 10, 10, 255, 255, 0, false);
+			DrawDebugSphere(ArmLocation_right, 10, 10, 0, 255, 0, false);
+		} else {
+			// armature man
+			DrawDebugSphere(ArmLocation_left, 10, 10, 255, 255, 0, false);
+			DrawDebugSphere(ArmLocation_right, 10, 10, 0, 255, 0, false);		
+		}
 	  }
 	  
 	}
@@ -1894,18 +2194,162 @@ state PlayerPosing
 	}	
 	
 	Begin:
-	  OSCPawn(Pawn).SetPawnMesh(6);
-	
+	  //OSCPawn(Pawn).SetPawnMesh(6);
+	  if(OSCPawn(Pawn).isValkordia==true) {
+	    OSCPawn(Pawn).SetPawnMesh(6);
+	  } else {
+	    OSCPawn(Pawn).SetPawnMesh(1);	  
+	  }	
+	  
 	End:
 	  //PopState();
 	  
 	
 }
 
+state PlayerWalking
+{
+
+	function float scaleTrunkRotation(float currentValue) {
+		local float a, b, min, max, rValue;
+		b = gTrunkMinRotation;
+		a = gTrunkMaxRotation;
+		min = -1.0;
+		max = 1.0;
+		
+		rValue = ( ((b - a)*(currentValue - min) ) / (max - min) ) + a;
+		
+		return rValue;	
+	}
+
+	exec function setArms(int bone, int x, int y, int z)
+	{
+		if(bone==1)
+		{
+			gOverridePosingRight.x = x;
+			gOverridePosingRight.y = y;
+			gOverridePosingRight.z = z;
+			
+		} else if(bone==2) {
+			
+			gOverridePosingLeft.x = x;
+			gOverridePosingLeft.y = y;
+			gOverridePosingLeft.z = z;
+		}
+	}
+	
+    function UpdateRotation( float DeltaTime )
+    {
+	  // Posing values
+      local vector ArmLocation_right, ArmLocation_left, tempArmLocation;
+      local OSCPawn Utp;
+	  local rotator targetRotation;
+	  local int camx, camy, camz;
+	  
+	  local vector tempVectorLeft, tempVectorRight;
+	
+	  Super.UpdateRotation(DeltaTime);
+	  
+	  // Rot(0, 0, (90*DegToUnrRot) )
+	  targetRotation.pitch = gPoseRotation.pitch;
+	  targetRotation.yaw = OSCPawn(Pawn).Rotation.yaw;
+	  targetRotation.roll = OSCPawn(Pawn).Rotation.roll;
+
+	  OSCPawn(Pawn).FaceRotation( RLerp( OSCPawn(Pawn).Rotation, targetRotation, 0.01), deltatime); 
+
+	  Utp=OSCPawn(Pawn); //this simply gets our pawn so we can then point to our SkelControl
+
+		if(bOverridePosing) {
+
+			tempArmLocation = gOverridePosingRight >> Pawn.Rotation;	
+			ArmLocation_right.x = Pawn.Location.x + tempArmLocation.x;
+			ArmLocation_right.y = Pawn.Location.y + tempArmLocation.y;
+			ArmLocation_right.z = Pawn.Location.z + tempArmLocation.z;
+
+			tempArmLocation = gOverridePosingLeft >> Pawn.Rotation;
+			ArmLocation_left.x = Pawn.Location.x + tempArmLocation.x;
+			ArmLocation_left.y = Pawn.Location.y + tempArmLocation.y;
+			ArmLocation_left.z = Pawn.Location.z + tempArmLocation.z;
+
+		
+			if(Utp.Trunk_CCD_IK != none) {
+				Utp.Trunk_CCD_IK.EffectorLocation=ArmLocation_right;		
+			}
+		
+		} else {
+	  
+			if(Utp.isTrumbruticus) {
+				tempVectorRight.X = scaleTrunkRotation(PlayerInput.RawJoyLookRight) + trunkXOffset;
+				tempVectorRight.Y = trunkYOffset;
+				tempVectorRight.Z = scaleTrunkRotation(PlayerInput.RawJoyLookUp) + trunkZOffset;
+				tempVectorRight = tempVectorRight >> Pawn.Rotation;	  
+		
+				ArmLocation_right = Pawn.Location + tempVectorRight;
+		
+			} else if(Utp.isArmature){
+			
+				// Armature man static arms
+				tempVectorLeft.X = 500;
+				tempVectorLeft.Y = -100;
+				tempVectorLeft.Z = 0;
+				tempVectorLeft = tempVectorLeft >> Pawn.Rotation;
+				ArmLocation_left = Pawn.Location + tempVectorLeft;
+			
+				tempVectorRight.X = 500;
+				tempVectorRight.Y = 100;
+				tempVectorRight.Z = 0;
+				tempVectorRight = tempVectorRight >> Pawn.Rotation;
+				ArmLocation_right = Pawn.Location + tempVectorRight;
+			}
+	    }
+		
+		if(Utp.isTrumbruticus) {
+			// Utp.OSCRightArm_CCD_IK.EffectorLocation=Pawn.Location + ArmLocation_right; 
+			Utp.Trunk_CCD_IK.EffectorLocation=ArmLocation_right;
+		} else if(Utp.isArmature){
+			if(Utp.LeftArmIK!=None) {
+
+				Utp.RightArmIK.bStartFromTail=gStartFromTail;
+				Utp.RightArmIK.NumBones=gNumBones;
+				
+				Utp.LeftArmIK.bStartFromTail=gStartFromTail;
+				Utp.RightArmIK.NumBones=gNumBones;
+
+				Utp.RightArmIK.EffectorLocation=ArmLocation_right;
+				Utp.LeftArmIK.EffectorLocation=ArmLocation_left;
+			}
+		}
+	
+		if(bDebugPose) {
+
+			if(Utp.isTrumbruticus) {
+				DrawDebugSphere(ArmLocation_right, 10, 10, 0, 255, 0, false);
+			} else if(Utp.isArmature){
+				// armature man
+				DrawDebugSphere(ArmLocation_left, 10, 10, 255, 255, 0, false);
+				DrawDebugSphere(ArmLocation_right, 10, 10, 0, 255, 0, false);		
+			}
+		}
+	}
+	
+	exec function setArmParams(float numbones, bool startfromtail)
+	{
+		gNumBones = numbones;
+		gStartFromTail = startfromtail;
+	}
+	
+    function PlayerMove(float DeltaTime)
+    {
+		UpdateRotation(DeltaTime);
+		Super.PlayerMove( DeltaTime);
+	}	
+	
+}
+
 state PlayerFlying
 {
-  /**/
-    // Called by Tick; data is populated by key presses
+  
+  // Called by Tick; data is populated by key presses
     simulated function setPlayerSpeed()
     {
 
@@ -1917,15 +2361,9 @@ state PlayerFlying
 
         arrayLength = 0;
         arrayLength = airSpeedHistory.Length;
-    
-//        `log("arrayLength: "$arrayLength);
-//        `log("speedArraySizeMax: "$speedArraySizeMax);
-        
-        // bChangingPlayerSpeed
         
         if(arrayLength > speedArraySizeMax)
         {
-//            `log("Removing...");
             airSpeedHistory.Remove(0, 1);
         }
         
@@ -1935,13 +2373,7 @@ state PlayerFlying
         } else {
             airSpeedHistory.addItem(0);            
         }
-
-//        `log("Just Added: airSpeedHistory.Length: "$airSpeedHistory.Length);
-                
-        // Flush last key-bind -added value
-//        if(Pawn!=None)
-//            currentAirSpeedIncrement = 0;
-        
+		
         for(i=0; i< arrayLength; i++)
         {
                 //`log("airSpeedHistory["$i$"]: "$airSpeedHistory[i]);
@@ -1949,7 +2381,6 @@ state PlayerFlying
                 totalValue += airSpeedHistory[i];
         }
         
-//        `log("arrayLength: "$arrayLength);
         if(arrayLength > 0)
             totalValue = totalValue / arrayLength; //speedArraySizeMax;
         
@@ -1961,10 +2392,7 @@ state PlayerFlying
         
         // average out 
         OSCPawn(Pawn).AirSpeed = OSCPawn(Pawn).baseAirSpeed + totalValue; // / speedArraySizeMax;
-        
-//        `log("totalValue: "$totalValue);
-//        `log("Changing AirSpeed: "$OSCPawn(Pawn).AirSpeed);
-        
+                
     }
 
     reliable server  function Server_changePlayerSpeed(float value)
@@ -2021,7 +2449,6 @@ state PlayerFlying
         interpMouseYTarget = val;
     }
     
-    
     exec function setInterpUpAmount(int val)
     {
         interpUpAmount = val  * DegToUnrRot;
@@ -2058,8 +2485,7 @@ state PlayerFlying
         local vector X,Y,Z;
         local float flyingGravity;
     
-
-    bForceNetUpdate = TRUE; // Force replication
+		bForceNetUpdate = TRUE; // Force replication
         
         GetAxes(Rotation,X,Y,Z);
         
@@ -2127,14 +2553,13 @@ state PlayerFlying
     
     function SmootherMouseX(float value, out float averagedValue)
     {
-    
-//    var array< float > averagedMouseX;
         local int arrayLength;
         local int i;
         
         if(bUseMouseTurn)
             value = 0.f;
-        arrayLength = averagedMouseX.Length;
+
+		arrayLength = averagedMouseX.Length;
     
         totalMouseX -= averagedMouseX[0];
         averagedMouseX.Remove(0, 1); // remove 1st item in array    
@@ -2142,13 +2567,11 @@ state PlayerFlying
         totalMouseX+=value;
         averagedMouseX.addItem(value);
 
-        averagedValue = totalMouseX / arrayLength;
-        
+        averagedValue = totalMouseX / arrayLength;        
     }
     
     function SmootherLookUp(float value, out float averagedValue)
     {
-    
         local int arrayLength;
         local int i;
         
@@ -2181,8 +2604,7 @@ state PlayerFlying
     }
 
     function float SmoothPawnUp()
-    {
-    
+    {    
         local float pitchVal;
     
         pitchVal = 1;
@@ -2217,8 +2639,7 @@ state PlayerFlying
     
     
     function float SmoothPawnRoll()
-    {
-    
+    {    
         local float rollVal, localTurn;
     
         localTurn = PlayerInput.aTurn;
@@ -2255,8 +2676,7 @@ state PlayerFlying
             }
         }
         
-        return interpRollCurrent;
-        
+        return interpRollCurrent;       
     }
 
 
@@ -2404,30 +2824,15 @@ state PlayerFlying
         // Posing values
         local vector ArmLocation;
         local OSCPawn Utp;
- /*   
-        // Rotate Arm/Wing
-        if(bPosing) {
-            
-            ArmLocation.Z += PlayerInput.aLookup*10+100; //giant multiplier so we extend the arm more.
-            ArmLocation.X += PlayerInput.aTurn*10; 
-            Utp=OSCPawn(Pawn); //this simply gets our pawn so we can then point to our SkelControl
-            
-            if(!Utp.isValkordia) {
-              Utp.OSCRightArm_CCD_IK.EffectorLocation=Pawn.Location + ArmLocation; 
-            } else { 
-              Utp.RightWing_CCD_IK.EffectorLocation=Pawn.Location + ArmLocation;
-            }
-        }
-*/
         
-    bForceNetUpdate = TRUE; // Force replication
+		bForceNetUpdate = TRUE; // Force replication
         
         ViewRotation = Rotation;
-        if (Pawn!=none)
-        {
-//            Pawn.SetDesiredRotation(ViewRotation, FALSE, FALSE, 100.f);
-        }
         
+		
+		
+		
+		
         // Smooth aTurn and aLookup Values
         SmootherLookUp(PlayerInput.aLookUp, smoothLookUp);
 
@@ -2443,20 +2848,10 @@ state PlayerFlying
 //        `log("PlayerInput.aMouseX: "$PlayerInput.aMouseX);
         
         SmootherTurn(PlayerInput.aTurn, strafe, smoothTurn);
-
-        // Override mouse yaw if forward and strafe pressed; bBehindView from UTPlayerController, so only do this in "BehindView" modes
-//        if(PlayerInput.aTurn !=0 && PlayerInput.aStrafe !=0 && bBehindView)
-//        {
-            // do nothing
-//        } else {
-            DeltaRot.Yaw    = smoothTurn;
-//        }
         
+		DeltaRot.Yaw    = smoothTurn;
+		
         DeltaRot.Pitch = smoothLookUp;
-
-        // Calculate Delta to be applied on ViewRotation
-//        DeltaRot.Yaw    = PlayerInput.aTurn;
-//        DeltaRot.Pitch    = PlayerInput.aLookUp;
 
         ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
         SetRotation(ViewRotation);
@@ -2476,10 +2871,7 @@ state PlayerFlying
         if(!bUseMouseTurn)
         {
             DeltaRot.Yaw = PlayerInput.aTurn;
-            DeltaRot.Pitch = PlayerInput.aLookUp;
-            
-//            ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
-            
+            DeltaRot.Pitch = PlayerInput.aLookUp;            
 
             gMouseRotation += DeltaRot;
             gDeltaMouseYaw = PlayerInput.aTurn;
@@ -2792,70 +3184,7 @@ state OSCPlayerMoving
         }
     }
     
-/*
-//    function UpdateRotation( float DeltaTime )
-//    {
-//        local Rotator    DeltaRot, ViewRotation;
-//        
-//        ViewRotation = Rotation;
-//        If (Pawn !=none )
-//        {
-//            Pawn.SetDesiredRotation(ViewRotation);    
-//        }
-//        
-//        //Calculate Delta to be appled of VIewRotation
-//        DeltaRot.Yaw = 0;
-//        DeltaRot.Pitch = PlayerInput.aLookUp;
-//        ProcessViewRotation ( DeltaTime, ViewRotation, DeltaRot);
-//        SetRotation(ViewRotation);    
-//    }
-    
 
-
-    function UpdateRotation( float DeltaTime )
-    {
-        local Rotator DeltaRot, newRotation, ViewRotation;
-        local float OSCPitch, OSCYaw, OSCRoll;
-        
-        OSCPitch = localOSCPlayerStateValuesStruct.pitch;
-        OSCYaw  = localOSCPlayerStateValuesStruct.yaw;
-        OSCRoll = localOSCPlayerStateValuesStruct.roll;
-        
-        ViewRotation = Rotation;
-        if (Pawn!=none)
-        {
-            Pawn.SetDesiredRotation(ViewRotation);
-        }
-
-        // Calculate Delta to be applied on ViewRotation
-        DeltaRot.Yaw = OSCYaw;
-        DeltaRot.Pitch = OSCPitch;
-        DeltaRot.Roll = OSCRoll;
-        
-        ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
-
-                // Testing follow functions
-        if ( OSCPawnBot(Pawn).follow==true )
-        {
-            ViewRotation = OSCPawnBot(Pawn).targetRotation;
-            `log("                *****************                       ******************* PawnController");
-        }        
-
-        SetRotation(ViewRotation);
-
-        ViewShake( deltaTime );
-
-        NewRotation = ViewRotation;
-        NewRotation.Roll = Rotation.Roll;
-        
-        if ( Pawn != None )
-        {
-            Pawn.FaceRotation(NewRotation, deltatime);
-        }
-        
-        
-    }
-*/
 }    
 
 
@@ -3109,6 +3438,9 @@ simulated function setOSCScriptCameramoveData(OSCScriptCameramoveStruct fstruct)
         OSCPawn(Pawn).localOSCScriptCameramoveStruct.Pitch = localOSCScriptCameramoveStruct.Pitch;
         OSCPawn(Pawn).localOSCScriptCameramoveStruct.Yaw = localOSCScriptCameramoveStruct.Yaw;
         OSCPawn(Pawn).localOSCScriptCameramoveStruct.Roll = localOSCScriptCameramoveStruct.Roll;
+        OSCPawn(Pawn).localOSCScriptCameramoveStruct.setPitch = localOSCScriptCameramoveStruct.setPitch;
+        OSCPawn(Pawn).localOSCScriptCameramoveStruct.setYaw = localOSCScriptCameramoveStruct.setYaw;
+        OSCPawn(Pawn).localOSCScriptCameramoveStruct.setRoll = localOSCScriptCameramoveStruct.setRoll;		
         OSCPawn(Pawn).localOSCScriptCameramoveStruct.Speed = localOSCScriptCameramoveStruct.Speed;
     }
 
@@ -3283,13 +3615,20 @@ defaultproperties
 	//gPoseRotation.yaw = 0;
 	//gPoseRotation.roll = 0;
 	
-	rightZOffset=-200;
-	rightYOffset=100;
-	rightXOffset=0;
-	leftZOffset=-200;
-	leftYOffset=-100;
-	leftXOffset=0;
+	rightWingZOffset=-200;
+	rightWingYOffset=100;
+	rightWingXOffset=0;
+	leftWingZOffset=-200;
+	leftWingYOffset=-100;
+	leftWingXOffset=0;
 
+	trunkZOffset=-200;
+	trunkYOffset=0;
+	trunkXOffset=-100;
+	
+	gTrunkMinRotation = -300.0;
+	gTrunkMaxRotation = 300.0;
+	
     maxAirSpeed = 4000.0;                    // total speed (increment +- base air speed)
     minAirSpeed = 0.0;                            
     speedArraySizeMax = 40;                // size of averaging array for AirSpeed

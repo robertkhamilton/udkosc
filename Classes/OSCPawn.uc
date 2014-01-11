@@ -10,20 +10,27 @@ class OSCPawn extends UTPawn
  notplaceable
  DLLBind(oscpack_1_0_2);
 
+ // Materials for meshes
+ var MaterialInterface defaultMaterial0;
+ var MaterialInterface defaultMaterial1;
+ 
+ 
  // vars for moving trumbruticus trunk in code
 var(NPC) SkeletalMeshComponent CurrentMesh;
-var SkelControl_CCD_IK TrunkMover;
+var SkelControl_CCD_IK Trunk_CCD_IK;
 
 var SkelControl_CCD_IK OSCRightArm_CCD_IK;
 var SkelControl_CCD_IK RightWing_CCD_IK;
 var SkelControl_CCD_IK LeftWing_CCD_IK;
 
+var SkelControl_CCD_IK RightArmIK;
+var SkelControl_CCD_IK LeftArmIK;
+
 var ParticleSystemComponent LeftWingTrail;
 var ParticleSystemComponent RightWingTrail;
 
 // state bools for skeletal mesh changing
-var bool isValkordia;
-var bool isTrumbruticus;
+var bool isValkordia, isTrumbruticus, isArmature;
 
 // array of bones for tracking
 var array <name> currentBones;
@@ -64,7 +71,7 @@ var vector object5;
 // vals for setting offsets and min/max for incoming XYZ co-ords
 var vector OSCFingerOffsets;
 var vector OSCFingerWorldMin;
-var vector OSCFIngerWorldMax;
+var vector OSCFingerWorldMax;
 var vector OSCFingerSourceMax;
 var vector OSCFingerSourceMin;
 var bool OSCUseFingerTouches;
@@ -84,6 +91,7 @@ var bool OSCAttachedCamera;            // OSC Controlled rotating camera attache
 var bool OSCFollowCamera;                // OSC moving camera which always targets pawn as its view target
 var bool OSCFollowLockCamera;        // OSC controlled camera which always targets pawn as its view target
 var bool OSCBehindCamera;
+var bool OSCFollowLockVertCamera;
 
 var int gRotatorOffset;  // 1177
 
@@ -98,6 +106,12 @@ var float baseAirSpeed;
 
 var int selectedPlayerMesh;
 
+// SideScroller vars
+var bool bSideScroller;
+var float CamOffsetDistance; //Position on Y-axis to lock SideScroller camera to
+
+// debug Sphere
+var bool bDebugSphere;
 
 struct MyPlayerStruct
 {
@@ -143,6 +157,15 @@ struct PlayerStateStruct
 	var float bone2X;
     var float bone2Y;
     var float bone2Z;
+	var float playerSpeed;		// ADDING PLAYERSPEED TO PLAYER OUTPUT
+};
+
+struct StartEndStruct
+{
+    var string Hostname;
+    var int Port;
+    var int Start;
+    var int End;	
 };
 
 var vector gBone1;
@@ -235,6 +258,10 @@ struct OSCScriptCameramoveStruct
     var float pitch;
     var float yaw;
     var float roll;
+    var float setPitch;
+    var float setYaw;
+    var float setRoll;
+	
 };
 
 
@@ -303,6 +330,8 @@ dllimport final function OSCFingerController getOSCFingerController();
 dllimport final function vector getOSCFinger1();
 dllimport final function initOSCReceiver();
 dllimport final function OSCScriptPlayerRotationStruct getOSCScriptPlayerRotation();
+dllimport final function sendOSCStart(StartEndStruct a);
+dllimport final function sendOSCEnd(StartEndStruct a);
 
 //dllimport final function sendOSCPlayerStateTEST(PlayerStateStructTEST a);
 //dllimport final function sendMotionState(string currState, vector loc);
@@ -333,7 +362,11 @@ simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 	LeftWing_CCD_IK  = SkelControl_CCD_IK( mesh.FindSkelControl('LeftWing_CCD_IK') );
 	
     // For Trumbruticus trunk moving demo
-    //TrunkMover = SkelControl_CCD_IK(Mesh.FindSkelControl('TrunkMover'));
+    Trunk_CCD_IK = SkelControl_CCD_IK(mesh.FindSkelControl('Trunk_CCD_IK'));
+	
+	// For Armature Man
+	RightArmIK = SkelControl_CCD_IK(mesh.FindSkelControl('RightArmIK'));
+	LeftArmIK = SkelControl_CCD_IK(mesh.FindSkelControl('LeftArmIK'));
 }
 
 simulated exec function setRotatorOffset(int val)
@@ -352,7 +385,12 @@ simulated function setPawnMesh(int a)
 //server reliable function setPawnMesh(int a)
 {
     //local AnimNode temp;
-
+	// hack
+	if(a == 2 || a == 5 || a == 6) {
+		OSCPlayerControllerDLL(Controller).lastPawnMesh = 2;	
+	} else {
+		OSCPlayerControllerDLL(Controller).lastPawnMesh = a;
+	}
     selectedPlayerMesh = a;
     
     if(a==1)
@@ -360,16 +398,17 @@ simulated function setPawnMesh(int a)
         self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01');
         self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Physics');
         self.Mesh.AnimSets[0]=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims';
-        self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.trumbruticus.CHA_trumbruticus_AnimTree_spawntest');
+        self.Mesh.SetAnimTreeTemplate(AnimTree'OSCthesis_characters.trumbruticus.CHA_trumbruticus_AnimTree');
 
         //self.Mesh.GlobalAnimRateScale=self.GroundSpeed/440.0;
         //`log("Groundspeed = "$self.GroundSpeed);
-        
-//        Weapon.SetHidden(True);
-        
-        //Pawn.GroundSpeed
+
         isValkordia=false;
         isTrumbruticus=true;
+		isArmature=false;
+		
+		currentBones.Length = 0;            // Clear the array
+		currentBones.addItem('Horsetrunk5');
         
         } else if(a==2) {
         self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01');
@@ -382,70 +421,115 @@ simulated function setPawnMesh(int a)
         
         currentBones.addItem('valkordia_01Lwing_front_4');
         currentBones.addItem('valkordia_01Rwing_front_4');       
-		
-                    
-//        Weapon.SetHidden(True);
         
          // Search for the animation node blend list by name.
         //temp = self.Mesh.FindAnimNode('UDKAnimBlendByFlying');
         
         isValkordia=true;
         isTrumbruticus=false;
-        
+        isArmature=false;
+		
+		//currentBones.Length = 0;            // Clear the array
+		//currentBones.addItem('Horsetrunk5');
+		
         self.Mesh.ForceSkelUpdate();
         
     } else if(a==3) {    
         self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_LIAM_Cathode.Mesh.SK_CH_LIAM_Cathode');
         self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
         self.Mesh.AnimSets[0]=AnimSet'CH_AnimHuman.Anims.K_AnimHuman_BaseMale';
-        // self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
-        self.Mesh.SetAnimTreeTemplate(AnimTree'OSC_AnimHuman_Tree.AT_CH_Human');
+        self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
+        //self.Mesh.SetAnimTreeTemplate(AnimTree'OSC_AnimHuman_Tree.AT_CH_Human');
+		
+		//CharacterTeamHeadMaterials[0]=MaterialInterface'CH_Corrupt_Male.Materials.MI_CH_Corrupt_MBody01_VRed'
+		//CharacterTeamBodyMaterials[0]=MaterialInterface'CH_Corrupt_Male.Materials.MI_CH_Corrupt_MHead01_VRed'		
         
         isValkordia=false;
         isTrumbruticus=false;
-        
+        isArmature=false;
+		
     } else if(a==4) {
-        self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_IronGuard_Male.Mesh.SK_CH_IronGuard_MaleA');
-        self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
+	
+        //self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_IronGuard_Male.Mesh.SK_CH_IronGuard_MaleA');
+//        self.Mesh.SetSkeletalMesh(SkeletalMesh'test_human_02.armature_man_01');
+//		self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_Armature.Mesh.Armature');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_Armature.Mesh.Armature_Physics');
+		//self.Mesh.SetMaterial(0,defaultMaterial);
         self.Mesh.AnimSets[0]=AnimSet'CH_AnimHuman.Anims.K_AnimHuman_BaseMale';
-        // self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
-        self.Mesh.SetAnimTreeTemplate(AnimTree'OSC_AnimHuman_Tree.AT_CH_Human');
+        
+		self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
+		
+		// THIS IS THE OSC ARM ANIMTREE
+		//self.Mesh.SetAnimTreeTemplate(AnimTree'OSCthesis_characters.armature.OSC_CH_Human');
+		
+		//self.Mesh.SetAnimTreeTemplate(AnimTree'OSCthesis_characters.Female.Human_Athletic_AnimTree_Orig');
+        //self.Mesh.SetAnimTreeTemplate(AnimTree'OSC_AnimHuman_Tree.AT_CH_Human');
         
         isValkordia=false;
         isTrumbruticus=false;
+		isArmature=true;
+		
+        self.Mesh.ForceSkelUpdate();
         
     } else if(a==5) {
-        self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_IronGuard_Male.Mesh.SK_CH_IronGuard_MaleA');
-        self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
+	
+		//DUMMY EVENT
+		
+        //self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_IronGuard_Male.Mesh.SK_CH_IronGuard_MaleA');
+        self.Mesh.SetSkeletalMesh(SkeletalMesh'test_human_02.armature_man_02');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics');
         self.Mesh.AnimSets[0]=AnimSet'CH_AnimHuman.Anims.K_AnimHuman_BaseMale';
-        // self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
-        self.Mesh.SetAnimTreeTemplate(AnimTree'OSC_AnimHuman_Tree.AT_CH_Human');
+        self.Mesh.SetAnimTreeTemplate(AnimTree'CH_AnimHuman_Tree.AT_CH_Human');
+        //self.Mesh.SetAnimTreeTemplate(AnimTree'OSC_AnimHuman_Tree.AT_CH_Human');
 
-        isValkordia=false;
+        isValkordia=true;
         isTrumbruticus=false;
-        
+        isArmature=false;
+		
     }  else if(a==6) {
         self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01');
         self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics');
         self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
         //self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01');    
         self.Mesh.SetAnimTreeTemplate(AnimTree'OSCthesis_characters.valkordia.CHA_valkordia_AnimTree_01');
-        // Add bones to array for tracking /* */
+        
+		// Add bones to array for tracking /* */
         currentBones.Length = 0;            // Clear the array
-        
         currentBones.addItem('valkordia_01Lwing_front_4');
-        currentBones.addItem('valkordia_01Rwing_front_4');        
-                    
-//        Weapon.SetHidden(True);
-        
+        currentBones.addItem('valkordia_01Rwing_front_4');
+                            
          // Search for the animation node blend list by name.
         //temp = self.Mesh.FindAnimNode('UDKAnimBlendByFlying');
         
         isValkordia=true;
         isTrumbruticus=false;
-        
+        isArmature=false;
+		
         //self.Mesh.ForceSkelUpdate();
-    }
+    } else if(a==7) {
+		// from: http://forums.epicgames.com/archive/index.php/t-739482.html
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'OSCthesis_characters.Female.Human_Athletic');
+        self.Mesh.SetPhysicsAsset(PhysicsAsset'OSCthesis_characters.Female.Human_Athletic_Physics');
+        self.Mesh.AnimSets[0]=AnimSet'OSCthesis_characters.Female.Human_Athletic_AnimSet';
+        //self.Mesh.SetAnimTreeTemplate(AnimTree'OSCthesis_characters.Female.Human_Athletic_AnimTree_Orig');
+		self.Mesh.SetAnimTreeTemplate(AnimTree'OSCthesis_characters.Female.Human_Athletic_AnimTree');	
+self.Mesh.SetMaterial(0, defaultMaterial0);
+self.Mesh.SetMaterial(0, defaultMaterial1);
+        isValkordia=false;
+        isTrumbruticus=false;
+        isArmature=false;
+
+	} else if(a==8) {	
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'GA_shelltapper_class.shelltapper_class');
+        self.Mesh.SetPhysicsAsset(PhysicsAsset'GA_shelltapper_class.shelltapper_class_Physics');
+        self.Mesh.AnimSets[0]=AnimSet'GA_shelltapper_class.shelltapper_class_Anims';
+        self.Mesh.SetAnimTreeTemplate(AnimTree'GA_shelltapper_class.GA_shelltapper_class_AnimTree');		
+
+        isValkordia=false;
+        isTrumbruticus=false;
+        isArmature=false;
+	}
 }
 
 /* " */
@@ -762,15 +846,21 @@ simulated function sendPlayerState()
     psStruct.bone1X = currentBoneLocations[0].X; //gBone1.X;
     psStruct.bone1Y = currentBoneLocations[0].Y;
     psStruct.bone1Z = currentBoneLocations[0].Z;
-    psStruct.bone2X = currentBoneLocations[1].X;;
-    psStruct.bone2Y = currentBoneLocations[1].Y;;
-    psStruct.bone2Z = currentBoneLocations[1].Z;;    
-    
-OSCHostname = OSCParameters.getOSCHostname();
-OSCPort = OSCParameters.getOSCPort();
-psStruct.Hostname = OSCParameters.getOSCHostname();
-psStruct.Port = OSCParameters.getOSCPort();
+	
+	if(isValkordia) {
+		psStruct.bone2X = currentBoneLocations[1].X;;
+		psStruct.bone2Y = currentBoneLocations[1].Y;;
+		psStruct.bone2Z = currentBoneLocations[1].Z;;    
+	}
+	
+	OSCHostname = OSCParameters.getOSCHostname();
+	OSCPort = OSCParameters.getOSCPort();
+	psStruct.Hostname = OSCParameters.getOSCHostname();
+	psStruct.Port = OSCParameters.getOSCPort();
 
+	// Calculated in Player Controller
+	psStruct.playerSpeed = OSCPlayerControllerDLL(Controller).currentSpeed;
+	
     // HACK TO QUICK FIX OSCParameters going haywire!!!?!?!??!
 //    psStruct.Hostname = "10.0.1.20";
 //    psStruct.Port = 57120;
@@ -786,7 +876,7 @@ psStruct.Port = OSCParameters.getOSCPort();
     if(sendOSC)
 	{
         sendOSCPlayerState(psStruct);
-
+		
 		//OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct = psStruct;
 		
 		OSCHud(OSCPlayerControllerDLL(Controller).myHUD).psStruct.LocX = psStruct.LocX;
@@ -1006,6 +1096,75 @@ simulated exec function OSCStopOutput() {
     sendingOSC = false;
 }
 
+// Send a "START" marker OSC message to output (for tracking)
+simulated exec function OSCSetStart() {
+
+    local StartEndStruct psStruct;    
+
+	psStruct.Hostname = OSCParameters.getOSCHostname();
+	psStruct.Port = OSCParameters.getOSCPort();
+	psStruct.start = 1;
+	
+	`log("Sending START message*************************");
+
+	// call dll function here to send START osc message to output
+	sendOSCStart(psStruct);
+	bDebugSphere = TRUE;
+}
+
+// Send a "START" marker OSC message to output (for tracking)
+simulated exec function OSCSetStartValue(int val) {
+
+    local StartEndStruct psStruct;    
+
+	psStruct.Hostname = OSCParameters.getOSCHostname();
+	psStruct.Port = OSCParameters.getOSCPort();
+	psStruct.start = val;
+	
+	`log("Sending START message*************************");
+
+	if(val == 1) {
+		bDebugSphere = TRUE;	
+	} else {
+		bDebugSphere = FALSE;	
+	}
+	
+	// call dll function here to send START osc message to output
+	sendOSCStart(psStruct);
+}
+
+// Send a "END" marker OSC message to output (for tracking)
+simulated exec function OSCSetEnd() {
+
+    local StartEndStruct psStruct;    
+
+	psStruct.Hostname = OSCParameters.getOSCHostname();
+	psStruct.Port = OSCParameters.getOSCPort();
+	psStruct.end = 1;
+	
+	`log("Sending END message*************************");
+	
+	bDebugSphere = FALSE;	
+	
+	// call dll function here to send END osc message to output
+	sendOSCEnd(psStruct);
+}
+
+// Send a "END" marker OSC message to output (for tracking)
+simulated exec function OSCSetEndValue(int val) {
+
+    local StartEndStruct psStruct;    
+
+	psStruct.Hostname = OSCParameters.getOSCHostname();
+	psStruct.Port = OSCParameters.getOSCPort();
+	psStruct.end = val;
+	
+	`log("Sending END message*************************");
+	
+	// call dll function here to send END value osc message to output
+	sendOSCEnd(psStruct);
+}
+
 // Toggle whether OSC sends in continuous mode or only on Deltas
 simulated exec function OSCSendDeltas() {
     if(sendDeltaOSC) {
@@ -1213,27 +1372,46 @@ function setOSCCamera(vector val) {
     
 }
 
-simulated exec function OSCSetFollowLockCamera(bool val) {
-    OSCFollowLockCamera = val;
-
-    if(val) {
+simulated exec function OSCSetFollowLockCamera(int val) {
+    
+    if(val == 0) {
+		OSCFollowLockCamera = false;
+	} else {	
         OSCBehindCamera=false;
         OSCAttachedCamera=false;
         OSCFreeCamera=false;
         OSCBehindCamera=false;
         OSCFollowCamera = false;
+		OSCFollowLockVertCamera=false;
+		OSCFollowLockCamera=true;
     }
-    
 }
 
-simulated exec function OSCSetFollowCamera(bool val) {
-    OSCFollowCamera = val;
-    if(val) {
+simulated exec function OSCSetFollowLockVertCamera(int val) {
+    
+    if(val == 0) {
+		OSCFollowLockVertCamera = false;
+	} else {	
         OSCBehindCamera=false;
         OSCAttachedCamera=false;
         OSCFreeCamera=false;
         OSCBehindCamera=false;
+        OSCFollowCamera = false;
+		OSCFollowLockVertCamera=true;
+		OSCFollowLockCamera=false;
+    }
+}
+simulated exec function OSCSetFollowCamera(int val) {
+    
+	if(val == 0) {
+		OSCFollowCamera = false;
+	} else {
+        OSCBehindCamera=false;
+        OSCAttachedCamera=false;
+        OSCFreeCamera=false;
         OSCFollowLockCamera=false;
+		OSCFollowLockVertCamera=false;
+		OSCFollowCamera=true;
     }
     
 }
@@ -1246,7 +1424,8 @@ simulated exec function OSCSetBehindCamera(int val) {
         OSCAttachedCamera=false;
         OSCFreeCamera=false;
         OSCFollowCamera=false;
-        OSCFollowLockCamera=false;        
+        OSCFollowLockCamera=false;   
+		OSCFollowLockVertCamera=false;		
         OSCBehindCamera = true;
     }
 }
@@ -1265,9 +1444,11 @@ simulated exec function setOSCAttachedCamera(int val) {
     } else {
         OSCAttachedCamera=true;
         OSCFollowCamera=false;        
-        OSCFollowLockCamera=false;        
+        OSCFollowLockCamera=false;    
+		OSCFollowLockVertCamera=false;		
         OSCFreeCamera=false;
-    }
+        OSCBehindCamera=false;
+	}
 }
 
 simulated exec function OSCSetFreeCamera() {
@@ -1285,8 +1466,11 @@ simulated exec function setOSCFreeCamera(int val) {
     } else {
         OSCFreeCamera=true;
         OSCFollowCamera=false;        
-        OSCFollowLockCamera=false;        
-    }
+        OSCFollowLockCamera=false;    
+		OSCFollowLockVertCamera=false;
+		OSCAttachedCamera=false;		
+        OSCBehindCamera=false;
+	}
 }
 
 /*
@@ -1424,7 +1608,15 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
             // don't change camera location/leave it where it is        
             out_CamLoc = gCamLoc;
             out_CamLoc.X += CamDistanceX;
-        } else {
+        } else if ( OSCPlayerControllerDLL(Controller).gCameraMode == 4) {
+			
+			// SIDE SCROLLER CAMERA
+			out_CamLoc.X = Location.X;
+			out_CamLoc.Y = Location.Y + 1000;
+			out_CamLoc.Z = Location.Z;
+            out_CamRot = rotator(Location - out_CamLoc);					
+			
+		} else {
             out_CamLoc.X = (Location.X  ) - Sin(OSCPlayerControllerDLL(Controller).gMouseRotation.Yaw * 0.0001) * (1000.0 + CamDistance);
             out_CamLoc.Y = (Location.Y  )  - Cos(OSCPlayerControllerDLL(Controller).gMouseRotation.Yaw * 0.0001) * (1000.0 + CamDistance);
             out_CamLoc.Z = (Location.Z ) + ATan(OSCPlayerControllerDLL(Controller).gTotalMousePitch * -0.0001) * (1000.0 + CamDistance);     
@@ -1465,14 +1657,119 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
     return true;
 }
 
+/*
+simulated event Rotator GetBaseAimRotation()
+{
+   local rotator   POVRot;
+
+	if(bSideScroller)
+	{
+		POVRot = Rotation;
+		if( (Rotation.Yaw % 65535 > 16384 && Rotation.Yaw % 65535 < 49560) ||
+			(Rotation.Yaw % 65535 < -16384 && Rotation.Yaw % 65535 > -49560) )
+		{
+			POVRot.Yaw = 0;
+		}
+		else
+		{
+			POVRot.Yaw = 32768;
+		}
+ 
+//		if( POVRot.Pitch == 0 )
+//		{
+//			POVRot.Pitch = RemoteViewPitch << 8;
+//		}
+ 
+		return POVRot;
+
+	} else {
+		Super.GetBaseAimRotation();
+	}
+
+}
+*/
+state SideScroller {
+
+	simulated function Tick(float DeltaTime)
+	{
+        local vector tmpLocation;
+		super.Tick(DeltaTime);
+        tmpLocation = Location;
+        tmpLocation.Y = 500;
+        SetLocation(tmpLocation);
+		
+		if(sendingOSC)
+		{
+			sendPlayerState();
+		}		
+	}
+ 
+	function bool Dodge(eDoubleClickDir DoubleClickMove)
+	{
+		return false;
+	}
+	
+	simulated event BecomeViewTarget( PlayerController PC )
+	{
+		local OSCPlayerControllerDLL UTPC;
+
+		Super.BecomeViewTarget(PC);
+
+		if (LocalPlayer(PC.Player) != None)
+		{
+			UTPC = OSCPlayerControllerDLL(PC);
+			if (UTPC != None)
+			{
+				//set player controller to behind view and make mesh visible
+				UTPC.SetBehindView(true);
+				SetMeshVisibility(UTPC.bBehindView);
+				UTPC.bNoCrosshair = true;
+			}
+		}
+	}
+
+	simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot, out float out_FOV )
+	{
+		out_CamLoc = Location;
+		out_CamLoc.Y = CamOffsetDistance;
+
+		out_CamRot.Pitch = 0;
+		out_CamRot.Yaw = 16384;
+		out_CamRot.Roll = 0;
+		return true;
+	}
+
+	simulated singular event Rotator GetBaseAimRotation()
+	{
+		local rotator   POVRot;
+
+		POVRot = Rotation;
+		if( (Rotation.Yaw % 65535 > 16384 && Rotation.Yaw % 65535 < 49560) ||
+			(Rotation.Yaw % 65535 < -16384 && Rotation.Yaw % 65535 > -49560) )
+		{
+			POVRot.Yaw = 32768;
+		}
+		else
+		{
+			POVRot.Yaw = 0;
+		}
+   
+		if( POVRot.Pitch == 0 )
+		{
+			POVRot.Pitch = RemoteViewPitch << 8;
+		}
+
+		return POVRot;
+
+	}   
+
+}
 
 state OSCPlayerMoving {
 
     exec function oscplayermoveTEST2()
     {
-    
         `log("PAWN: IN OSCPLAYERMOVING");
-    
     }
 
     exec function oscRotate(float xval, float yval, float zval)
@@ -1485,19 +1782,14 @@ state OSCPlayerMoving {
         OSCRotation.Pitch=xval;
         OSCRotation.Roll=yval;
         OSCRotation.Yaw=zval;
-    
-    
-        UpdatePawnRotation(Rotator(locVect));
-        `log("OSCROTATETEST *******************: "$xval);
-    
+        
+        UpdatePawnRotation(Rotator(locVect));    
     }
     
     simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot, out float out_FOV )
     {
         local string command;
-    /**/
-//        `log("IN OSCPAWN::CalcCamera");
-    
+
         if(OSCFreeCamera) 
         {
         
@@ -1508,29 +1800,32 @@ state OSCPlayerMoving {
         out_CamRot.Pitch = localOSCScriptCameramoveStruct.pitch;
         out_CamRot.Yaw = localOSCScriptCameramoveStruct.yaw;
         out_CamRot.Roll = localOSCScriptCameramoveStruct.roll;        
-        
-        //out_CamLoc = Location;
-//            out_CamLoc.X = OSCCamera.X;
-//            out_CamLoc.Y = OSCCamera.Y;  //1800;
-//            out_CamLoc.Z = OSCCamera.Z;  //128;
+
         } else {
     
-            if(OSCAttachedCamera)
-            {
-//            `log("IN HERE");
-            
-            out_CamLoc = Location;                        
-            out_CamLoc.X += localOSCScriptCameramoveStruct.x;
-            out_CamLoc.Y += localOSCScriptCameramoveStruct.y;
-            out_CamLoc.Z += localOSCScriptCameramoveStruct.z;    
-                
-            out_CamRot = Rotation;
-//            out_CamRot = rotator(Location - out_CamLoc);
-            out_CamRot.Pitch += localOSCScriptCameramoveStruct.pitch;
-            out_CamRot.Yaw += localOSCScriptCameramoveStruct.yaw;
-            out_CamRot.Roll += localOSCScriptCameramoveStruct.roll;
-            
-            } else if (OSCFollowCamera) {
+            if(OSCAttachedCamera) {
+
+				out_CamLoc = Location;                        
+				out_CamLoc.X += localOSCScriptCameramoveStruct.x;
+				out_CamLoc.Y += localOSCScriptCameramoveStruct.y;
+				out_CamLoc.Z += localOSCScriptCameramoveStruct.z;    
+
+				// if setPitch, setYaw or setRoll is received, set camera direction absolutely; else update rotation inherited from Pawn
+				if( (localOSCScriptCameramoveStruct.setPitch > 0) || (localOSCScriptCameramoveStruct.setYaw > 0) || (localOSCScriptCameramoveStruct.setRoll > 0) ){			
+	
+					out_CamRot.Pitch = localOSCScriptCameramoveStruct.setPitch;
+					out_CamRot.Yaw = localOSCScriptCameramoveStruct.setYaw;
+					out_CamRot.Roll = localOSCScriptCameramoveStruct.setRoll;
+				
+				} else {
+				
+					out_CamRot = Rotation;
+					out_CamRot.Pitch += localOSCScriptCameramoveStruct.pitch;
+					out_CamRot.Yaw += localOSCScriptCameramoveStruct.yaw;
+					out_CamRot.Roll += localOSCScriptCameramoveStruct.roll;
+				}
+
+			} else if (OSCFollowCamera) {
 
                 out_CamLoc = Location;                        
                 out_CamLoc.X += localOSCScriptCameramoveStruct.x;
@@ -1546,7 +1841,16 @@ state OSCPlayerMoving {
                 out_CamLoc.Z = localOSCScriptCameramoveStruct.z;        
 
                 out_CamRot = rotator(Location - out_CamLoc);
-                
+
+            } else if(OSCFollowLockVertCamera) {
+            
+                out_CamLoc.X = localOSCScriptCameramoveStruct.x;
+                out_CamLoc.Y = localOSCScriptCameramoveStruct.y;
+                out_CamLoc.Z = localOSCScriptCameramoveStruct.z;        
+
+                out_CamRot = rotator(Location - out_CamLoc);
+				out_CamRot.Pitch = localOSCScriptCameramoveStruct.pitch;
+				
             } else {
 /*                if(OSCBehindCamera )
                 {
@@ -1580,89 +1884,23 @@ state OSCPlayerMoving {
         `log("CalcCamera::out_CamRot.Yaw = "$out_CamRot.Yaw);
         `log("CalcCamera::out_CamRot.Roll = "$out_CamRot.Roll);
 */        
-        // Testing camera rotation fixes
-//        out_CamRot = Rot(0,0,0);
-        
-//        out_CamRot.Pitch = 0;
-//        out_CamRot.Yaw = -16384;
-//        out_CamRot.Roll = 0;
 
         return true;
-
     }    
 
-/*    
-    simulated function setOSCScriptPlayerRotationData(OSCScriptPlayerRotationStruct fstruct)
-    {
-        localOSCScriptPlayerRotationStruct = fstruct;
-    }
-
-    simulated function setOSCRotation()
-    {
-        local vector localPawnRotation;
-        
-                
-    //    localPawnRotation.X = localOSCScriptPlayerRotationStruct.Pitch;
-    //    localPawnRotation.Y = localOSCScriptPlayerRotationStruct.Yaw;
-    //    localPawnRotation.Z = localOSCScriptPlayerRotationStruct.Roll;
-        
-        // Causes problems with PawnBots using OSCPawn
-        localPawnRotation.X = OSCPlayerControllerDLL(Controller).localOSCPlayerStateValuesStruct.Pitch;
-        localPawnRotation.Y = OSCPlayerControllerDLL(Controller).localOSCPlayerStateValuesStruct.Yaw;
-        localPawnRotation.Z = OSCPlayerControllerDLL(Controller).localOSCPlayerStateValuesStruct.Roll;
-
-        `log("localPawnRotation.X: "$localPawnRotation.X );
-        `log("localPawnRotation.Y: "$localPawnRotation.Y );
-        `log("localPawnRotation.Z: "$localPawnRotation.Z );
-        
-        UpdatePawnRotation(Rotator(localPawnRotation));
-        
-    }
-    */
-    simulated function Tick(float DeltaTime)
-    {
+    simulated function Tick(float DeltaTime) {
         local string command;
 
-    //`log("**************************** OSCPAWN::OSCPlayerMoving:Tick::SENDING OSC: "$sendingOSC);
-
-    if(sendingOSC)
-        sendPlayerState();
-    
-
-
-    
-/*    
- if(OSCBehindCamera) {
-            camoffsetx = localOSCScriptCameramoveStruct.x;
-    camoffsety = localOSCScriptCameramoveStruct.y;
-    camoffsetz = localOSCScriptCameramoveStruct.z;
-    CamOffset.X = localOSCScriptCameramoveStruct.x;
-    CamOffset.Y = localOSCScriptCameramoveStruct.y;
-    CamOffset.Z = localOSCScriptCameramoveStruct.z;
-*/    
-//                command = "BehindViewSet "$localOSCScriptCameramoveStruct.x$" "$localOSCScriptCameramoveStruct.y$" "$localOSCScriptCameramoveStruct.z;
-                // relative camera motion (relative to pawn)
-//                OSCPlayerControllerDLL(Controller).ConsoleCommand(command); //$localOSCScriptCameramoveStruct.x" "$localOSCScriptCameramoveStruct.y" "$localOSCScriptCameramoveStruct.z);
-//                `log("Calling Command: "$command);
-//    }
-    // DO I NEED TO SEND THESE HERE TOO???
-/*
-    if(pawnDowntrace) {
-        downTrace();
-    }
-    
-    if(pawnSidetrace) {
-        psideTrace();    
-    }
-*/    
-//        THESE AREN'T VALID ANYMORE: don't do anything right now
-
-        //setOSCScriptPlayerRotationData(getOSCScriptPlayerRotation());
-        
-        //setOSCRotation();
-    }
-    
-}
+		if(sendingOSC)
+			sendPlayerState();
+			
+		if(bDebugSphere)
+			DrawDebugSphere(Location, 100, 100, 0, 255, 0, false);
+			
+		}
+		
+		
+	}
 
 exec function setAnimScale(int val, float speed)
 {
@@ -1678,40 +1916,26 @@ simulated function setPawnAnimSpeed()
     
     if(OSCPlayerControllerDLL(Controller)!=None) {
     
-      if(isTrumbruticus) {
-        self.Mesh.GlobalAnimRateScale=self.GroundSpeed / 440.0;
-      } else if(isValkordia) {
-        if(OSCPlayerControllerDLL(Controller).flying)
-        {
-//        if(self.AirSpeed < 440.0) {
-//            self.Mesh.GlobalAnimRateScale=OSCPlayerControllerDLL(Controller).currentSpeed / 7.0;
-//        } else {
-            //self.Mesh.GlobalAnimRateScale=self.AirSpeed / valkordiaAnimSpeed;// 440.0;
-            currentRate = loge(OSCPlayerControllerDLL(Controller).currentSpeed) -1.0;
-            if(currentRate > 1.8) {
-                currentRate = 1.8;
-            } else if(currentRate < 0.70) {
-                currentRate = 0.70;
-            }
-            
+		if(isTrumbruticus) {
+			self.Mesh.GlobalAnimRateScale=self.GroundSpeed / 440.0;
+		}	else if(isValkordia) {
+			if(OSCPlayerControllerDLL(Controller).flying)
+			{
+				currentRate = loge(OSCPlayerControllerDLL(Controller).currentSpeed) -1.0;
+				if(currentRate > 1.8) {
+					currentRate = 1.8;
+				} else if(currentRate < 0.70) {
+					currentRate = 0.70;
+				}
             self.Mesh.GlobalAnimRateScale= currentRate;
-//            `log("GlobalAnimRateScale = "$self.Mesh.GlobalAnimRateScale);
-            //        }
-        }
-      }
-    
+			}
+		}
     }
-//    `log("Groundspeed = "$self.GroundSpeed);
 }
 
 simulated event BecomeViewTarget( PlayerController PC )
 {
     Super.BecomeViewTarget(PC);
-    
-//    if (Weapon.Mesh != None )
-//    {
-//        Weapon.Mesh.SetOwnerNoSee(True);
-//    }
 }
 
 function drawWaveTraces()
@@ -1815,6 +2039,10 @@ simulated function Tick(float DeltaTime)
     // Testing bone location
     if(currentBones.Length > 0)
         GetBoneLocations();
+		
+	if(bDebugSphere)
+		DrawDebugSphere(Location, 100, 100, 0, 255, 0, false);
+
     
 }
 
@@ -2419,7 +2647,8 @@ AnimTreeTemplate=AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01'
 End Object
 */
 
-
+/*
+// USE THIS FOR BIRD AT STARTUP
 Begin Object Name=WPawnSkeletalMeshComponent
 //Begin Object Class=SkeletalMeshComponent Name=SkelMeshComp
     bHasPhysicsAssetInstance=true
@@ -2428,7 +2657,19 @@ Begin Object Name=WPawnSkeletalMeshComponent
     AnimTreeTemplate=AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01'
     AnimSets(0)=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims'
 End Object
+*/
 
+/*
+// USE THIS FOR ARMATURE MAN AT STARTUP
+Begin Object Name=WPawnSkeletalMeshComponent
+    bHasPhysicsAssetInstance=true
+    PhysicsAsset=PhysicsAsset'CH_AnimCorrupt.Mesh.SK_CH_Corrupt_Male_Physics'
+    SkeletalMesh=SkeletalMesh'test_human_02.armature_man_02'
+    AnimTreeTemplate=AnimTree'CH_AnimHuman_Tree.AT_CH_Human'
+    AnimSets(0)==AnimSet'CH_AnimHuman.Anims.K_AnimHuman_BaseMale'
+End Object
+*/
+		
 Begin Object Class=ParticleSystemComponent Name=CallEmitter
     bOwnerNoSee=false
     bAutoActivate=false
@@ -2489,4 +2730,11 @@ Components.Add(RightWingEmitter)
     Components.Add(ParticleSystemComponent2)
     RightWingTrail= ParticleSystemComponent2
 */	
+
+	CamOffsetDistance=0.0
+	
+	defaultMaterial0=Material'thesis_characters.valkordia.CHA_valkordia_MAT'
+	defaultMaterial1=Material'thesis_characters.valkordia.CHA_valkordia_MAT'
+	
+	
 }

@@ -1,9 +1,0 @@
-OSCTrigger extends Trigger
-	placeable;
-	
-/** called when this trigger has successfully been used to activate a Kismet event */
-function NotifyTriggered()
-{
-	Super.NotifyTriggered();
-	
-}
