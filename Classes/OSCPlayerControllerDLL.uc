@@ -29,6 +29,13 @@ var float leftWingXOffset;
 var float trunkZOffset;
 var float trunkYOffset;
 var float trunkXOffset;
+var float trunkXmultiplier;
+var float trunkZmultiplier;
+var float neckZOffset;
+var float neckYOffset;
+var float neckXOffset;
+var float neckXmultiplier;
+var float neckZmultiplier;
 var bool bDebugPose;
 var bool bSideScroller;
 var Rotator gPoseRotation;
@@ -135,6 +142,8 @@ var float gHUDAlpha;
 // Trunk
 var float gTrunkMinRotation;
 var float gTrunkMaxRotation;
+var float gNeckMinRotation;
+var float gNeckMaxRotation;
 
 // borrowing this for multiparameter testing
 struct OSCFingerController
@@ -1668,8 +1677,13 @@ function setPlayerPose(bool val) {
 	if(bPosing) {
       PushState('PlayerPosing'); 
 	} else {
-	  flying = True;
-	  GotoState('PlayerFlying');
+	  if(OscPawn(Pawn).isValkordia) {
+	    flying = True;
+	    GotoState('PlayerFlying');
+	  } else {
+	    flying = False;
+		GotoState('PlayerWalking');
+	  }
 	  OscPawn(Pawn).SetPawnMesh(lastPawnMesh); //2
 	}
 }
@@ -1695,6 +1709,16 @@ exec function toggleSideScroller()
 //	OSCPawn(Pawn).bSideScroller = val;
 }
 
+	function setTrunkOffsets(float xoff, float yoff, float zoff, float min, float max, float xmult, float zmult) {
+		trunkZOffset = zoff;
+		trunkXOffset = xoff;
+		trunkYOffset = yoff;
+		gTrunkMinRotation = min;
+		gTrunkMaxRotation = max;
+		trunkXmultiplier = xmult;
+		trunkZmultiplier = zmult;
+	}
+	
 state SideScroller
 {
 ignores SeePlayer, HearNoise, Bump;
@@ -1874,10 +1898,20 @@ state PlayerPosing
 	  if(OSCPawn(Pawn).isValkordia==true) {
 	    OSCPawn(Pawn).SetPawnMesh(6);
 	  } else {
-	    OSCPawn(Pawn).SetPawnMesh(1);	  
+	  if(OSCPawn(Pawn).isTrumbruticus==true) {
+	    OSCPawn(Pawn).SetPawnMesh(9);
+	  } else {
+	    OSCPawn(Pawn).SetPawnMesh(0);	  
 	  }
-	}
+	  //OSCPawn(Pawn).SetPawnMesh(1);	  
+	  }
+
+
+
+
+  }
 	
+	  
 	event EndState(Name NextStateName) {
 	
 		OSCPawn(Pawn).setRotation( Rot(0,0,0));
@@ -1885,11 +1919,12 @@ state PlayerPosing
 		if(OSCPawn(Pawn).isValkordia==true) {
 			//OSCPawn(Pawn).SetPawnMesh(2);
 			OSCPawn(Pawn).SetPawnMesh(2);
+			GoToState('PlayerFlying');			
 		} else {
 			OSCPawn(Pawn).SetPawnMesh(lastPawnMesh);
 		}
 		
-		GoToState('PlayerFlying');
+
 	}
 	
 	exec function setInputScaler(float val) {
@@ -1910,14 +1945,25 @@ state PlayerPosing
 		leftWingXOffset = lxoff;
 	}
 
-	exec function setTrunkInputOffsets(float xoff, float yoff, float zoff, float min, float max) {
+	exec function setTrunkInputOffsets(float xoff, float yoff, float zoff, float min, float max, float xmult, float zmult) {
 		trunkZOffset = zoff;
 		trunkXOffset = xoff;
 		trunkYOffset = yoff;
 		gTrunkMinRotation = min;
 		gTrunkMaxRotation = max;
+		trunkXmultiplier = xmult;
+		trunkZmultiplier = zmult;
 	}
 	
+	exec function setNeckInputOffsets(float xoff, float yoff, float zoff, float min, float max, float xmult, float zmult) {
+		neckZOffset = zoff;
+		neckXOffset = xoff;
+		neckYOffset = yoff;
+		gNeckMinRotation = min;
+		gNeckMaxRotation = max;
+		neckXmultiplier = xmult;
+		neckZmultiplier = zmult;
+	}	
 	function float scaleWingRotation(float currentValue) {
 		local float a, b, min, max, rValue;
 		b = gWingRotationMin;
@@ -1941,7 +1987,18 @@ state PlayerPosing
 		
 		return rValue;	
 	}
-	
+
+	function float scaleNeckRotation(float currentValue) {
+		local float a, b, min, max, rValue;
+		b = gNeckMinRotation;
+		a = gNeckMaxRotation;
+		min = -1.0;
+		max = 1.0;
+		
+		rValue = ( ((b - a)*(currentValue - min) ) / (max - min) ) + a;
+		
+		return rValue;	
+	}	
 	function float scaleValue(float value, float inMin, float inMax, float outMin, float outMax) {
 		local float a, b, min, max, rValue;
 		b = outMin;
@@ -2045,16 +2102,11 @@ state PlayerPosing
 	  targetRotation.yaw = OSCPawn(Pawn).Rotation.yaw;
 	  targetRotation.roll = OSCPawn(Pawn).Rotation.roll;
 
-	  OSCPawn(Pawn).FaceRotation( RLerp( OSCPawn(Pawn).Rotation, targetRotation, 0.01), deltatime); 
-
-	  // Interp from CamOffset value to targetRotation
-
-	  // OSCPawn(Pawn).CamOffset.X; // 60,0,0	to 28,0,-40
-	  // OSCPawn(Pawn).CamOffset.X=Lerp(0.01, gCamx, 28);
-	  // OSCPawn(Pawn).CamOffset.Y=Lerp(0.01, gCamy, 0);
-	  // OSCPawn(Pawn).CamOffset.Z=Lerp(0.01, gCamz, -40);
-
 	  Utp=OSCPawn(Pawn); //this simply gets our pawn so we can then point to our SkelControl
+	  
+	  if(Utp.isValkordia) {
+	    OSCPawn(Pawn).FaceRotation( RLerp( OSCPawn(Pawn).Rotation, targetRotation, 0.01), deltatime); 
+	  }
 	  
 	  // If taking OSC input from Pose Struct (OSCScriptBoneCCDs), override manual control
 	if(bOSCPosing) {
@@ -2090,7 +2142,7 @@ state PlayerPosing
   	      Utp.Trunk_CCD_IK.EffectorLocation=ArmLocation_right;		
 		}
 		
-	  } else if(bOverridePosing) {
+	} else if(bOverridePosing) {
 
 	    tempArmLocation = gOverridePosingRight >> Pawn.Rotation;
 		
@@ -2115,7 +2167,7 @@ state PlayerPosing
   	      Utp.Trunk_CCD_IK.EffectorLocation=ArmLocation_right;		
 		}
 		
-	  } else {
+	  } else {    // Manual Control over Pose state
 
 		if(Utp.isValkordia) {
 			tempVectorLeft.X = scaleWingRotation(PlayerInput.RawJoyRight) + leftWingXOffset;
@@ -2131,12 +2183,21 @@ state PlayerPosing
 			ArmLocation_left = Pawn.Location + tempVectorLeft;
 			ArmLocation_right = Pawn.Location + tempVectorRight; 
 		} else if(Utp.isTrumbruticus) {
-			tempVectorRight.X = scaleTrunkRotation(PlayerInput.RawJoyLookRight) + trunkXOffset;
+		    
+			`log("OSCPlayerControllerDLL - utp is trumbruticus.......");
+			
+			tempVectorRight.X = scaleTrunkRotation(PlayerInput.RawJoyLookRight) * trunkXmultiplier + trunkXOffset;
 			tempVectorRight.Y = trunkYOffset;
-			tempVectorRight.Z = scaleTrunkRotation(PlayerInput.RawJoyLookUp) + trunkZOffset;
+			tempVectorRight.Z = scaleTrunkRotation(PlayerInput.RawJoyLookUp) * trunkZmultiplier + trunkZOffset;
 			tempVectorRight = tempVectorRight >> Pawn.Rotation;	  
-		
+
+			tempVectorLeft.X = scaleNeckRotation(PlayerInput.RawJoyRight) + neckXOffset;
+			tempVectorLeft.Y = neckYOffset;	 
+			tempVectorLeft.Z = scaleNeckRotation(PlayerInput.RawJoyUp) + neckZOffset;
+			tempVectorLeft = tempVectorLeft >> Pawn.Rotation;
+			
 			ArmLocation_right = Pawn.Location + tempVectorRight;
+			ArmLocation_left = Pawn.Location + tempVectorLeft;
 		
 		} else {
 		
@@ -2159,6 +2220,9 @@ state PlayerPosing
         if(Utp.isTrumbruticus) {
           // Utp.OSCRightArm_CCD_IK.EffectorLocation=Pawn.Location + ArmLocation_right; 
 		    Utp.Trunk_CCD_IK.EffectorLocation=ArmLocation_right;
+			Utp.Neck_CCD_IK.EffectorLocation=ArmLocation_left;
+			//`log("EffectorLocationX: "$Utp.Trunk_CCD_IK.EffectorLocation.X);
+			
         } else if (Utp.isValkordia) { 
 
 		  if(Utp.RightWing_CCD_IK != none) {	
@@ -2174,7 +2238,9 @@ state PlayerPosing
 	  if(bDebugPose) {
 
         if(Utp.isTrumbruticus) {
+			DrawDebugSphere(ArmLocation_left, 10, 10, 255, 255, 0, false);		
 			DrawDebugSphere(ArmLocation_right, 10, 10, 0, 255, 0, false);
+			//`log("DrawingDebugSpheres...");
 		} else if(Utp.isValkordia) {
 			DrawDebugSphere(ArmLocation_left, 10, 10, 255, 255, 0, false);
 			DrawDebugSphere(ArmLocation_right, 10, 10, 0, 255, 0, false);
@@ -2198,9 +2264,16 @@ state PlayerPosing
 	  if(OSCPawn(Pawn).isValkordia==true) {
 	    OSCPawn(Pawn).SetPawnMesh(6);
 	  } else {
-	    OSCPawn(Pawn).SetPawnMesh(1);	  
-	  }	
 	  
+		if(OSCPawn(Pawn).isTrumbruticus==true) {
+			OSCPawn(Pawn).SetPawnMesh(9);
+		} else {
+			OSCPawn(Pawn).SetPawnMesh(0);	  
+		}
+		//OSCPawn(Pawn).SetPawnMesh(1);	  
+	  }	
+
+		  
 	End:
 	  //PopState();
 	  
@@ -3622,12 +3695,21 @@ defaultproperties
 	leftWingYOffset=-100;
 	leftWingXOffset=0;
 
-	trunkZOffset=-200;
+	trunkZOffset=100;
 	trunkYOffset=0;
-	trunkXOffset=-100;
+	trunkXOffset=1330;	
+	trunkXmultiplier=-1.0;
+	trunkZmultiplier=1.0;
+	gTrunkMinRotation = -1200.0;
+	gTrunkMaxRotation = 1200.0;
 	
-	gTrunkMinRotation = -300.0;
-	gTrunkMaxRotation = 300.0;
+	neckXOffset=930;
+	neckYOffset=-100;
+	neckZOffset=1100;	
+	neckXmultiplier=-1.0;
+	neckZmultiplier=-1.0;
+	gNeckMinRotation = -1200.0;
+	gNeckMaxRotation = 1200.0;
 	
     maxAirSpeed = 4000.0;                    // total speed (increment +- base air speed)
     minAirSpeed = 0.0;                            

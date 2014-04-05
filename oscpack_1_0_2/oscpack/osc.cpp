@@ -1054,13 +1054,16 @@ __declspec(dllexport)void sendOSCStart(StartEndStruct* pState)
 	char buffer[OUTPUT_BUFFER_SIZE];
 	osc::OutboundPacketStream p(buffer, OUTPUT_BUFFER_SIZE);
 	UdpTransmitSocket socket(IpEndpointName(WcharToChar(1, pState->Hostname.Data), pState->Port));
+	UdpTransmitSocket socket2(IpEndpointName(WcharToChar(1, pState->Hostname.Data), 7000));
 	p.Clear();
 
 	p << osc::BeginMessage("/start")
 		<< (int)pState->start //1
 		<< osc::EndMessage;
 
-	if (p.IsReady()){ socket.Send(p.Data(), p.Size()); }
+//	if (p.IsReady()){ socket.Send(p.Data(), p.Size()); }
+	// Send 2nd message to recording port (for script recording use only)
+	if (p.IsReady()){ socket.Send(p.Data(), p.Size());  socket2.Send(p.Data(), p.Size()); }
 }
 
 __declspec(dllexport)void sendOSCEnd(StartEndStruct* pState)
@@ -1068,13 +1071,17 @@ __declspec(dllexport)void sendOSCEnd(StartEndStruct* pState)
 	char buffer[OUTPUT_BUFFER_SIZE];
 	osc::OutboundPacketStream p(buffer, OUTPUT_BUFFER_SIZE);
 	UdpTransmitSocket socket(IpEndpointName(WcharToChar(1, pState->Hostname.Data), pState->Port));
+	UdpTransmitSocket socket2(IpEndpointName(WcharToChar(1, pState->Hostname.Data), 7000));
+
 	p.Clear();
 
 	p << osc::BeginMessage("/end")
 		<< (int)pState->end //1
 		<< osc::EndMessage;
 
-	if (p.IsReady()){ socket.Send(p.Data(), p.Size()); }
+//	if (p.IsReady()){ socket.Send(p.Data(), p.Size()); }
+	// Send 2nd message to recording port (for script recording use only)
+	if (p.IsReady()){ socket.Send(p.Data(), p.Size());  socket2.Send(p.Data(), p.Size()); }
 }
 
 __declspec(dllexport)void sendOSCPlayerState(PlayerStateStruct* pState)

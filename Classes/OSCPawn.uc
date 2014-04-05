@@ -13,11 +13,15 @@ class OSCPawn extends UTPawn
  // Materials for meshes
  var MaterialInterface defaultMaterial0;
  var MaterialInterface defaultMaterial1;
+ var MaterialInterface shelltapperMaterial;
+ var MaterialInterface trumbruticusMaterial;
+ var MaterialInterface valkordiaMaterial;
  
  
  // vars for moving trumbruticus trunk in code
 var(NPC) SkeletalMeshComponent CurrentMesh;
 var SkelControl_CCD_IK Trunk_CCD_IK;
+var SkelControl_CCD_IK Neck_CCD_IK;  //JT_Neck4
 
 var SkelControl_CCD_IK OSCRightArm_CCD_IK;
 var SkelControl_CCD_IK RightWing_CCD_IK;
@@ -48,6 +52,18 @@ var float gLeftTrace;
 var float gRightTrace;
 var float gDownTrace;
 var int gtesttrace;
+
+var float sizeValkordia;
+var float sizeTrumbruticus;
+var float sizeShelltapper;
+var float sizeGeneric;
+var float gCurrentSize;
+var float gTargetSize;
+var bool isGrowingLarger;
+var bool isGrowingSmaller;
+var bool isGrowing;
+var float growIncrement;
+
 
 /**/
 // OSC Mode value for toggling pawn and controller modes
@@ -363,6 +379,8 @@ simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 	
     // For Trumbruticus trunk moving demo
     Trunk_CCD_IK = SkelControl_CCD_IK(mesh.FindSkelControl('Trunk_CCD_IK'));
+    Neck_CCD_IK = SkelControl_CCD_IK(mesh.FindSkelControl('Neck_CCD_IK'));
+	
 	
 	// For Armature Man
 	RightArmIK = SkelControl_CCD_IK(mesh.FindSkelControl('RightArmIK'));
@@ -381,6 +399,28 @@ exec function ChangePlayerMesh(int a)
     SetPawnMesh(a);
 }
 
+
+exec function swapCharacter()
+{
+
+   if(isValkordia) {
+    setPawnMesh(1);
+   } else {
+     setPawnMesh(2);
+   }
+   /*
+	if(selectedPlayerMesh == 1 || selectedPlayerMesh == 9)
+	{
+		setPawnMesh(2);
+	} else if(selectedPlayerMesh == 2 || selectedPlayerMesh == 5 || selectedPlayerMesh == 6)
+	{
+		setPawnMesh(1);
+	} else {
+		setPawnMesh(2);
+	}
+	*/
+}
+
 simulated function setPawnMesh(int a)
 //server reliable function setPawnMesh(int a)
 {
@@ -389,32 +429,43 @@ simulated function setPawnMesh(int a)
 	if(a == 2 || a == 5 || a == 6) {
 		OSCPlayerControllerDLL(Controller).lastPawnMesh = 2;	
 	} else {
-		OSCPlayerControllerDLL(Controller).lastPawnMesh = a;
+	
+	  if(a == 1 || a == 9) {
+	    OSCPlayerControllerDLL(Controller).lastPawnMesh = 1;
+	  }
+		
+	  OSCPlayerControllerDLL(Controller).lastPawnMesh = a;
+	  
 	}
-    selectedPlayerMesh = a;
     
     if(a==1)
     {
-        self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01');
-        self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Physics');
-        self.Mesh.AnimSets[0]=AnimSet'thesis_characters.trumbruticus.CHA_trumbruticus_skel_01_Anims';
-        self.Mesh.SetAnimTreeTemplate(AnimTree'OSCthesis_characters.trumbruticus.CHA_trumbruticus_AnimTree');
-
-        //self.Mesh.GlobalAnimRateScale=self.GroundSpeed/440.0;
-        //`log("Groundspeed = "$self.GroundSpeed);
-
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'trumbruticus.Trumbrutticus_baseMesh');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'trumbruticus.Trumbrutticus_baseMesh_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'trumbruticus.Trumbrutticus_baseMesh_Anims';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'trumbruticus.Trumbrutticus_baseMesh_AnimTree');
+		self.Mesh.SetMaterial(0, trumbruticusMaterial);
+		
+		setBehindView(300, 0, 0);
+		OSCPlayerControllerDLL(Controller).setTrunkOffsets(1330.0, 0.0, 100, -1200.0, 1200.0, -1.0, 1.0 );
+		
         isValkordia=false;
         isTrumbruticus=true;
 		isArmature=false;
 		
 		currentBones.Length = 0;            // Clear the array
-		currentBones.addItem('Horsetrunk5');
+		currentBones.addItem('JT_Trunk10');
         
         } else if(a==2) {
-        self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01');
-        self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics');
-        self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
-        self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01');    
+        
+			self.Mesh.SetSkeletalMesh(SkeletalMesh'thesis_characters.valkordia.CHA_valkordia_skel_01');
+			self.Mesh.SetPhysicsAsset(PhysicsAsset'thesis_characters.valkordia.CHA_valkordia_skel_01_Physics');
+			self.Mesh.AnimSets[0]=AnimSet'thesis_characters.valkordia.CHA_valkordia_skel_01_Anims';
+			self.Mesh.SetAnimTreeTemplate(AnimTree'thesis_characters.valkordia.CHA_valkordia_AnimTree_01');    
+			self.Mesh.SetMaterial(0, valkordiaMaterial);
+		
+			setBehindView(60, 0, 0);
+		
         //self.Mesh.SetAnimTreeTemplate(AnimTree'OSCthesis_characters.valkordia.CHA_valkordia_AnimTree_01');
         // Add bones to array for tracking /* */
         currentBones.Length = 0;            // Clear the array
@@ -433,6 +484,8 @@ simulated function setPawnMesh(int a)
 		//currentBones.addItem('Horsetrunk5');
 		
         self.Mesh.ForceSkelUpdate();
+		
+		
         
     } else if(a==3) {    
         self.Mesh.SetSkeletalMesh(SkeletalMesh'CH_LIAM_Cathode.Mesh.SK_CH_LIAM_Cathode');
@@ -521,14 +574,33 @@ self.Mesh.SetMaterial(0, defaultMaterial1);
         isArmature=false;
 
 	} else if(a==8) {	
-		self.Mesh.SetSkeletalMesh(SkeletalMesh'GA_shelltapper_class.shelltapper_class');
-        self.Mesh.SetPhysicsAsset(PhysicsAsset'GA_shelltapper_class.shelltapper_class_Physics');
-        self.Mesh.AnimSets[0]=AnimSet'GA_shelltapper_class.shelltapper_class_Anims';
-        self.Mesh.SetAnimTreeTemplate(AnimTree'GA_shelltapper_class.GA_shelltapper_class_AnimTree');		
-
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'shelltapper.Shelltapper_baseMesh');
+        self.Mesh.SetPhysicsAsset(PhysicsAsset'shelltapper.Shelltapper_baseMesh_Physics');
+        self.Mesh.AnimSets[0]=AnimSet'shelltapper.Shelltapper_baseMesh_Anims';
+        self.Mesh.SetAnimTreeTemplate(AnimTree'shelltapper.Shelltapper_baseMesh_AnimTree');		
+self.Mesh.SetMaterial(0, shelltapperMaterial);
         isValkordia=false;
         isTrumbruticus=false;
         isArmature=false;
+		self.GroundSpeed=50;   //self.GroundSpeed/440.0;
+	} else if(a==9) {
+		self.Mesh.SetSkeletalMesh(SkeletalMesh'trumbruticus.Trumbrutticus_baseMesh');
+		self.Mesh.SetPhysicsAsset(PhysicsAsset'trumbruticus.Trumbrutticus_baseMesh_Physics');
+		self.Mesh.AnimSets[0]=AnimSet'trumbruticus.Trumbrutticus_baseMesh_Anims';
+		self.Mesh.SetAnimTreeTemplate(AnimTree'OSCtrumbruticus.Trumbrutticus_baseMesh_AnimTree');
+		self.Mesh.SetMaterial(0, trumbruticusMaterial);
+		
+		setBehindView(700, 0, 400);
+		OSCPlayerControllerDLL(Controller).setTrunkOffsets(1330.0, 0.0, 100, -1200.0, 1200.0, -1.0, 1.0 );
+		
+        isValkordia=false;
+        isTrumbruticus=true;
+		isArmature=false;
+		
+		currentBones.Length = 0;            // Clear the array
+		currentBones.addItem('JT_Trunk10');	
+	
+	
 	}
 }
 
@@ -851,6 +923,11 @@ simulated function sendPlayerState()
 		psStruct.bone2X = currentBoneLocations[1].X;;
 		psStruct.bone2Y = currentBoneLocations[1].Y;;
 		psStruct.bone2Z = currentBoneLocations[1].Z;;    
+	} else if(isTrumbruticus) {
+		// hack to know its a trumbrut in Supercollider (for now)
+		psStruct.bone2X = 99999;
+		psStruct.bone2Y = 99999;
+		psStruct.bone2Z = 99999;    	
 	}
 	
 	OSCHostname = OSCParameters.getOSCHostname();
@@ -1108,7 +1185,8 @@ simulated exec function OSCSetStart() {
 	`log("Sending START message*************************");
 
 	// call dll function here to send START osc message to output
-	sendOSCStart(psStruct);
+	if(sendingOSC)
+		sendOSCStart(psStruct);
 	bDebugSphere = TRUE;
 }
 
@@ -1130,7 +1208,8 @@ simulated exec function OSCSetStartValue(int val) {
 	}
 	
 	// call dll function here to send START osc message to output
-	sendOSCStart(psStruct);
+	if(sendingOSC)
+		sendOSCStart(psStruct);
 }
 
 // Send a "END" marker OSC message to output (for tracking)
@@ -1147,7 +1226,8 @@ simulated exec function OSCSetEnd() {
 	bDebugSphere = FALSE;	
 	
 	// call dll function here to send END osc message to output
-	sendOSCEnd(psStruct);
+	if(sendingOSC)
+		sendOSCEnd(psStruct);
 }
 
 // Send a "END" marker OSC message to output (for tracking)
@@ -1162,7 +1242,8 @@ simulated exec function OSCSetEndValue(int val) {
 	`log("Sending END message*************************");
 	
 	// call dll function here to send END value osc message to output
-	sendOSCEnd(psStruct);
+	if(sendingOSC)
+		sendOSCEnd(psStruct);
 }
 
 // Toggle whether OSC sends in continuous mode or only on Deltas
@@ -1968,8 +2049,52 @@ function drawWaveTraces()
     }
 }
 
+exec function Grow(float targetSize)
+{
+	// if we're going to grow larger...
+	if(targetSize > gCurrentSize) {
+		isGrowingLarger=True;
+		isGrowingSmaller=False;
+		isGrowing = True;
+	} else if(targetSize < gCurrentSize) {
+		isGrowingSmaller=True;
+		isGrowingLarger=False;
+		isGrowing = True;
+	} 
+	gTargetSize = targetSize;
+}
+
+
+
 simulated function Tick(float DeltaTime)
 {
+	if(isGrowing) {
+		if(isGrowingLarger && gCurrentSize<gTargetSize) {
+		
+			// interpolate towards targetsize
+			gCurrentSize = gCurrentSize + growIncrement;
+			setSize_local(gCurrentSize);
+			
+			// move camera back
+			CamOffset.X = CamOffset.X + growIncrement*growIncrement*CamOffset.X;
+			CamOffsetx = CamOffsetx + growIncrement*growIncrement*CamOffsetx;
+			
+		} else if (isGrowingSmaller && gCurrentSize > gTargetSize) {
+		
+			// interpolate towards targetsize
+			gCurrentSize = gCurrentSize - growIncrement;
+			setSize_local(gCurrentSize);			
+			
+			// move camera back
+			CamOffset.X = CamOffset.X - growIncrement*growIncrement*CamOffset.X;
+			CamOffsetx = CamOffsetx - growIncrement*growIncrement*CamOffsetx;
+			
+		} else {
+			isGrowing = False;
+		}
+		
+	}
+	
     //SetMeshVisibility(true);
     //local OSCMessageStruct localOSCMessageStruct;
     
@@ -2476,7 +2601,15 @@ simulated exec function behindviewset(int _x, int _y, int _z)
 	//OSCPlayerControllerDLL(Controller).camz = CamOffset.Z;
 	
 }
-
+function setBehindView(int _x, int _y, int _z)
+{
+    camoffsetx = _x;
+    camoffsety = _y;
+    camoffsetz = _z;
+    CamOffset.X = _x;
+    CamOffset.Y = _y;
+    CamOffset.Z = _z;//= (X=camoffsetx, Y=camoffsety, Z=camoffsetz)		
+}
 
 
 
@@ -2589,10 +2722,38 @@ exec function setParticleOffset(float X, float Y, float Z)
     PSC_CallEmitter.Translation.Z = Z;
 }
 */
+exec function setSize(float F)
+{
+	setSize_local(F);
+}
+
+exec function setSize_local(float F)
+{
+	gCurrentSize = F;
+	
+	CylinderComponent.SetCylinderSize( Default.CylinderComponent.CollisionRadius * F, Default.CylinderComponent.CollisionHeight * F );
+	SetDrawScale(F);
+	SetLocation(Location);
+	
+	if(isValkordia) {
+		sizeValkordia = F;
+	} else if (isTrumbruticus) {
+		sizeTrumbruticus = F;
+	} else {
+		sizeGeneric = F;
+	}
+}
 
 
 defaultproperties
 {
+	sizeValkordia = 1;
+	sizeTrumbruticus = 1;
+	sizeShelltapper = 1;
+	sizeGeneric = 1;
+	growIncrement = 0.05;
+	gCurrentSize = 1.0;
+	
 	// Trace default properties
 	gdowntracelength = 50000;
 	gtracelength = 500000;
@@ -2735,6 +2896,8 @@ Components.Add(RightWingEmitter)
 	
 	defaultMaterial0=Material'thesis_characters.valkordia.CHA_valkordia_MAT'
 	defaultMaterial1=Material'thesis_characters.valkordia.CHA_valkordia_MAT'
-	
+	shelltapperMaterial=Material'shelltapper.Materials.Shelltapper_Rig_Shelltapper_Shader_01'
+	trumbruticusMaterial=Material'trumbruticus.Materials.Trumbrutticus_Shader'
+	valkordiaMaterial=Material'thesis_characters.valkordia.valkordia_01_Mat'
 	
 }
